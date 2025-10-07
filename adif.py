@@ -22,28 +22,28 @@ def check_field(t: dict):
     """Integrity checks on a single ADIF field
         TODO: implement value type check, if anyone ever needs it"""
     if t.get('field') is None:
-        raise AdifError("Field name doesn't exist")
+        raise AdifError("No field name found")
 
     field = t.get('field')
 
     if field.upper() not in ['EOH', 'EOR']:
         if t.get('len') is None:
-            raise AdifError("Invalid length value for field {field}")
+            raise AdifError(f"Invalid length value for field {field}")
 
         length = 0
         try:
             length = int(t.get('len'))
         except ValueError as e:
-            raise AdifError(f"Invalid length value for field {field}")
+            raise AdifError(f"Invalid length value for field {field} ({length})")
         except Exception as e:
             raise e
 
         if length <= 0:
-            raise AdifError("Invalid length, must be positive")
+            raise AdifError(f"Invalid length ({length}), must be positive")
 
         value = t.get('value')
         if len(value) < length:
-            raise AdifError("Field value too short")
+            raise AdifError(f"Field value too short ({len(value)}, expected {length})")
 
     # All tests passed
     return True
