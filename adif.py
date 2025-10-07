@@ -24,7 +24,9 @@ class QSO:
     def __init__(self, data: dict[str, str]):
         assert isinstance(data, dict[str, str])
 
+        # Internal data storage
         self._d: dict[str, str] = {}
+
         for key in dict.keys():
             value = data[key]
             # Only non-null fields are reported
@@ -114,5 +116,4 @@ if __name__ == '__main__':
         logging.warning("EOH field not found")
 
     # Discarding all header data, not used at the moment
-    while field_list.pop(0)['field'].upper() != 'EOH':
-        pass
+    del field_list[0:eoh_index+1]
