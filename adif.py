@@ -18,6 +18,23 @@ class AdifError(Exception):
     pass
 
 
+class QSO:
+    """Class representing a single QSO record"""
+
+    def __init__(self, data: dict[str, str]):
+        assert isinstance(data, dict[str, str])
+
+        self._d: dict[str, str] = {}
+        for key in dict.keys():
+            value = data[key]
+            # Only non-null fields are reported
+            if value is None or len(value) == 0:
+                logging.warning(f"Skipping key {key} with invalid value")
+            else:
+                # All keys are put uppercase and values are converted to string
+                self._d[key.upper()] = str(value)
+
+
 def check_field(t: dict):
     """Integrity checks on a single ADIF field
         TODO: implement value type check, if anyone ever needs it"""
