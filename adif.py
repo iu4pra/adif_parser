@@ -7,25 +7,12 @@
 #  https://www.adif.org/100/adif_100.htm
 #  https://regex101.com/
 
-import math
 import re
-from collections.abc import MutableMapping
 from datetime import datetime, timedelta, timezone
-from typing import Iterator
 
 
 class AdifError(Exception):
     """Base error."""
-    pass
-
-
-class AdifHeaderWithoutEOHError(AdifError):
-    """Error for header found, but not terminated with <EOH>"""
-    pass
-
-
-class AdifDuplicateFieldError(AdifError):
-    """Error for duplicate fileds in one QSO record or in the header."""
     pass
 
 
@@ -88,6 +75,7 @@ if __name__ == '__main__':
                     field = dict(zip(['field', 'len', 'type', 'value'], m))
                     field_list.append(field)
                     logging.debug(f"{field} \t Check: {check_field(field)}")
+
     while field_list.pop(0)['field'].upper() != 'EOH':
         logging.debug(field_list[0]['field'])
         pass
