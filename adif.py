@@ -117,4 +117,4 @@ if __name__ == '__main__':
 
     # Discarding all header data, not used at the moment
     del field_list[0:eoh_index+1]
-    logging.info(f"ADIF field list had {len(field_list)} entries")
+    logging.info(f"ADIF field list has {len(field_list)} entries")
