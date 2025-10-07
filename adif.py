@@ -58,7 +58,7 @@ if __name__ == '__main__':
     import logging
     logging.basicConfig(
         format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
-    logging.root.setLevel(logging.DEBUG)
+    # logging.root.setLevel(logging.DEBUG)
     # Example file
     LOGFILE = './iu4pra_sample_log.adi'
     logging.info(f"Analisi del file {os.path.basename(LOGFILE)}")
@@ -70,12 +70,27 @@ if __name__ == '__main__':
     with open(LOGFILE, 'rt') as f:
         for line in f.readlines():
             if FIELD_GENERIC_RE.match(line.strip()):
-                logging.info("Match generic")
+                logging.debug("Match found")
                 for m in FIELD_GENERIC_RE.findall(line):
                     field = dict(zip(['field', 'len', 'type', 'value'], m))
                     field_list.append(field)
                     logging.debug(f"{field} \t Check: {check_field(field)}")
+            else:
+                if len(line.strip()) > 0:
+                    logging.warning(f"Match not found on line:\n'{line.strip()}'")
 
+    # Searching for EOH field
+    eoh_found, eoh_index = False, 0
+    for index,field in enumerate(field_list):
+        if field['field'].upper() == 'EDH':
+            logging.info(f"EOH found at index {index}")
+            eoh_found = True
+            eoh_index = index
+            break
+    
+    if not eoh_found:
+        logging.warning("EOH field not found")
+
+    # Discarding all header data, not used at the moment
     while field_list.pop(0)['field'].upper() != 'EOH':
-        logging.debug(field_list[0]['field'])
         pass
