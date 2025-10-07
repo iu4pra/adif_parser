@@ -5,3 +5,7 @@ __init__.py
 # Do not track logs at the moment
 *.adi
 *.adif
+# VSCode specific files
+*.json
+# Cache
+__pycache__/**
