@@ -24,6 +24,7 @@ def check_field(t: dict):
     if t.get('field') is None:
         raise AdifError("No field name found")
 
+    # Field name (now it's valid)
     field = t.get('field')
 
     if field.upper() not in ['EOH', 'EOR']:
@@ -39,6 +40,7 @@ def check_field(t: dict):
         except Exception as e:
             raise e
 
+        # Field length is now valid
         if length <= 0:
             raise AdifError(f"Invalid length ({length}), must be positive")
 
