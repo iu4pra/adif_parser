@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
     # Field parsing
     with open(LOGFILE, 'rt') as f:
-        for line in f.readlines():
+        for line_no, line in enumerate(f.readlines(), 1):
             if FIELD_GENERIC_RE.match(line.strip()):
                 logging.debug("Match found")
                 for m in FIELD_GENERIC_RE.findall(line):
@@ -80,7 +80,7 @@ if __name__ == '__main__':
             else:
                 if len(line.strip()) > 0:
                     logging.warning(
-                        f"Match not found on line:\n'{line.strip()}'")
+                        f"Match not found on line {line_no}:\n'{line.strip()}'")
 
     # Searching for EOH field
     eoh_found, eoh_index = False, 0
