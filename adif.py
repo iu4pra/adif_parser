@@ -34,7 +34,8 @@ def check_field(t: dict):
         try:
             length = int(t.get('len'))
         except ValueError as e:
-            raise AdifError(f"Invalid length value for field {field} ({length})")
+            raise AdifError(
+                f"Invalid length value for field {field} ({length})")
         except Exception as e:
             raise e
 
@@ -43,7 +44,8 @@ def check_field(t: dict):
 
         value = t.get('value')
         if len(value) < length:
-            raise AdifError(f"Field value too short ({len(value)}, expected {length})")
+            raise AdifError(
+                f"Field value too short ({len(value)}, expected {length})")
 
     # All tests passed
     return True
@@ -83,7 +85,7 @@ if __name__ == '__main__':
     # Searching for EOH field
     eoh_found, eoh_index = False, 0
     for index, field in enumerate(field_list):
-        if field['field'].upper() == 'EDH':
+        if field['field'].upper() == 'EOH':
             logging.info(f"EOH found at index {index}")
             eoh_found = True
             eoh_index = index
