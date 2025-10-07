@@ -7,6 +7,8 @@
 #  https://www.adif.org/100/adif_100.htm
 #  https://regex101.com/
 
+import logging
+import os.path
 import re
 from datetime import datetime, timedelta, timezone
 
@@ -54,8 +56,6 @@ FIELD_GENERIC_RE = re.compile(
 
 # Testing code
 if __name__ == '__main__':
-    import os.path
-    import logging
     logging.basicConfig(
         format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
     # logging.root.setLevel(logging.DEBUG)
@@ -77,17 +77,18 @@ if __name__ == '__main__':
                     logging.debug(f"{field} \t Check: {check_field(field)}")
             else:
                 if len(line.strip()) > 0:
-                    logging.warning(f"Match not found on line:\n'{line.strip()}'")
+                    logging.warning(
+                        f"Match not found on line:\n'{line.strip()}'")
 
     # Searching for EOH field
     eoh_found, eoh_index = False, 0
-    for index,field in enumerate(field_list):
+    for index, field in enumerate(field_list):
         if field['field'].upper() == 'EDH':
             logging.info(f"EOH found at index {index}")
             eoh_found = True
             eoh_index = index
             break
-    
+
     if not eoh_found:
         logging.warning("EOH field not found")
 
