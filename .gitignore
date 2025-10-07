@@ -1,3 +1,7 @@
+# Do not track the reference library
+__init__.py
+# Do not track archives
 *.tar.gz
+# Do not track logs at the moment
 *.adi
 *.adif
