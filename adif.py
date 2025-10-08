@@ -19,7 +19,8 @@ class AdifError(Exception):
 
 
 class QSO:
-    """Class representing a single QSO record"""
+    """Class representing a single QSO record
+    TODO: move to separate file"""
 
     def __init__(self, data: dict[str, str]):
         assert isinstance(data, dict[str, str])
@@ -149,4 +150,4 @@ if __name__ == '__main__':
     # Move one element a time on a smaller support list until EOR is reached
     # If a key already exists raise an error
     # EOR found, discard it
-    # End of list found, raise error
+    # End of list found before EOR, raise error
