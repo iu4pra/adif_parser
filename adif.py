@@ -99,6 +99,7 @@ FIELD_GENERIC_RE = re.compile(
     r"<(?:(?P<field>\w+)(?:>|\:(?P<len>\d+)(?:\:(?P<type>\w+))?>(?P<value>[^<]+)?))", re.IGNORECASE)
 FIELD_GENERIC_RE_NO_VALUE = re.compile(
     r"<(?P<field>\w+)(?:>|\:(?P<len>\d+)(?:\:(?P<type>\w+))?>)", re.IGNORECASE)
+USE_NEW_REGEX = True
 
 # Testing code
 if __name__ == '__main__':
@@ -106,7 +107,7 @@ if __name__ == '__main__':
         format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
     # logging.root.setLevel(logging.DEBUG)
     # Example file
-    
+
     # LOGFILE = './iu4pra_sample_log.adi'
     LOGFILE = './sample_log.adi'
     logging.info(f"Analysis of file {os.path.basename(LOGFILE)}")
@@ -117,18 +118,51 @@ if __name__ == '__main__':
     # Field parsing
     with open(LOGFILE, 'rt') as f:
 
-        for line_no, line in enumerate(f.readlines(), 1):
-
-            if FIELD_GENERIC_RE.match(line.strip()):
-                logging.debug("Match found")
-                for m in FIELD_GENERIC_RE.findall(line):
-                    field = dict(zip(['field', 'len', 'type', 'value'], m))
+        if USE_NEW_REGEX:
+            # New regex
+            cursor = 0  # File cursor
+            # Read all the file
+            adif_log = f.read()
+            while len(adif_log) > 0 and cursor < (len(adif_log) - 1):
+                match = FIELD_GENERIC_RE_NO_VALUE.search(adif_log, cursor)
+                if match:
+                    # Match found
+                    logging.debug(
+                        f"Match found at position {match.start()} to {match.end()}")
+                    field = match.groupdict()
+                    if field.get('len'):
+                        field['value'] = adif_log[match.end():match.end() +
+                                                  int(field['len'])]
                     field_list.append(field)
+
                     logging.debug(f"{field} \t Check: {check_field(field)}")
-            else:
-                if len(line.strip()) > 0:
-                    logging.warning(
-                        f"Match not found on line {line_no}:\n'{line.strip()}'")
+
+                    # New cursor position
+                    cursor = match.end() + int(field['len'] or '0')
+                    
+                    logging.debug(
+                        f"Next match search will go from position {cursor} to {len(adif_log)-1}")
+                else:
+                    logging.debug(
+                        f"No match found starting from {cursor} to {len(adif_log)-1}")
+                    logging.info("No more matches, exiting")
+                    break
+
+        else:
+            # Old regex
+            for line_no, line in enumerate(f.readlines(), 1):
+
+                if FIELD_GENERIC_RE.match(line.strip()):
+                    logging.debug("Match found")
+                    for m in FIELD_GENERIC_RE.findall(line):
+                        field = dict(zip(['field', 'len', 'type', 'value'], m))
+                        field_list.append(field)
+                        logging.debug(
+                            f"{field} \t Check: {check_field(field)}")
+                else:
+                    if len(line.strip()) > 0:
+                        logging.warning(
+                            f"Match not found on line {line_no}:\n'{line.strip()}'")
 
     # Searching for EOH field
     eoh_found, eoh_index = False, 0
