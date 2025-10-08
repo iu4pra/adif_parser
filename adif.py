@@ -106,7 +106,7 @@ if __name__ == '__main__':
     # Example file
     #LOGFILE = './iu4pra_sample_log.adi'
     LOGFILE = './sample_log.adi'
-    logging.info(f"Analisi del file {os.path.basename(LOGFILE)}")
+    logging.info(f"Analysis of file {os.path.basename(LOGFILE)}")
 
     # Ordered list with all the fields parsed from the ADI file
     field_list = []
