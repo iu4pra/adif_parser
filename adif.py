@@ -72,6 +72,23 @@ def check_field(t: dict):
     return True
 
 
+def is_type(f: dict, type: str):
+    """Checks ADIF field type"""
+    assert isinstance(f.get('field'), str)
+    return f['field'].casefold() == type.casefold()
+
+
+def index_of(item_list: list, cond, cond_value: bool = True):
+    """Returns the index of the first element satisfying the condition or -1 if not found
+    If cond_value = False returns the index of the first element NOT satisfying the condition
+    Example usage:
+    index_of(field_list, lambda x: is_type(x, 'EOR'))"""
+    for index, item in enumerate(item_list):
+        if cond(item) == cond_value:
+            return index
+    return -1
+
+
 # Field parsing regex
 # field_generic_re = re.compile(r"<(?:(?P<field>\w+)(?:>|\:(?P<len>\d+)>(?P<value>[^<]+)?))", re.IGNORECASE)
 FIELD_GENERIC_RE = re.compile(
@@ -121,7 +138,7 @@ if __name__ == '__main__':
         f"ADIF field list has {len(field_list)} entries after stripping {eoh_index+1} header entries")
 
     # Group data into QSOs and create QSO objects
-    qso_list : list[QSO] = []
+    qso_list: list[QSO] = []
     # Move one element a time on a smaller support list until EOR is reached
     # If a key already exists raise an error
     # EOR found, discard it
