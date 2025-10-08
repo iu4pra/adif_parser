@@ -104,7 +104,8 @@ if __name__ == '__main__':
         format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
     # logging.root.setLevel(logging.DEBUG)
     # Example file
-    LOGFILE = './iu4pra_sample_log.adi'
+    #LOGFILE = './iu4pra_sample_log.adi'
+    LOGFILE = './sample_log.adi'
     logging.info(f"Analisi del file {os.path.basename(LOGFILE)}")
 
     # Ordered list with all the fields parsed from the ADI file
