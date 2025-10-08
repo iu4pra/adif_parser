@@ -131,6 +131,9 @@ if __name__ == '__main__':
                 if field.get('len'):
                     field['value'] = adif_log[match.end():match.end() +
                                               int(field['len'])]
+                else:
+                    field['value'] = None
+
                 field_list.append(field)
 
                 logging.debug(f"{field} \t Check: {check_field(field)}")
