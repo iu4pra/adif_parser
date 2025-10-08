@@ -117,4 +117,12 @@ if __name__ == '__main__':
 
     # Discarding all header data, not used at the moment
     del field_list[0:eoh_index+1]
-    logging.info(f"ADIF field list has {len(field_list)} entries")
+    logging.info(
+        f"ADIF field list has {len(field_list)} entries after stripping {eoh_index+1} header entries")
+
+    # Group data into QSOs and create QSO objects
+    qso_list : list[QSO] = []
+    # Move one element a time on a smaller support list until EOR is reached
+    # If a key already exists raise an error
+    # EOR found, discard it
+    # End of list found, raise error
