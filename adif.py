@@ -119,17 +119,21 @@ if __name__ == '__main__':
                 logging.debug(
                     f"Match found at position {match.start()} to {match.end()}")
                 field = match.groupdict()
+
+                # If the field has some length, copy the value it according to the declared size
                 if field.get('len'):
                     field['value'] = adif_log[match.end():match.end() +
                                               int(field['len'])]
+                    # TODO convert len to int?
                 else:
                     field['value'] = None
 
                 field_list.append(field)
 
+                # Field data checking
                 logging.debug(f"{field} \t Check: {check_field(field)}")
 
-                # New cursor position
+                # Update cursor position
                 cursor = match.end() + int(field['len'] or '0')
 
                 logging.debug(
