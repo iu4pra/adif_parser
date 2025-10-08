@@ -53,7 +53,8 @@ def check_field(t: dict):
 
         length = 0
         try:
-            length = int(t.get('len'))
+            length = t.get('len')
+            assert isinstance(length, int)
         except ValueError as e:
             raise AdifError(
                 f"Invalid length value for field {field} ({length})")
@@ -121,6 +122,7 @@ if __name__ == '__main__':
                 logging.debug("Match found")
                 for m in FIELD_GENERIC_RE.findall(line):
                     field = dict(zip(['field', 'len', 'type', 'value'], m))
+                    field['len'] = int(field['len'] or 0)
                     field_list.append(field)
                     logging.debug(f"{field} \t Check: {check_field(field)}")
             else:
