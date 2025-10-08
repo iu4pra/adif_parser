@@ -89,15 +89,6 @@ def index_of(item_list: list, cond, cond_value: bool = True):
     return -1
 
 
-# Field parsing regex
-# field_generic_re = re.compile(r"<(?:(?P<field>\w+)(?:>|\:(?P<len>\d+)>(?P<value>[^<]+)?))", re.IGNORECASE)
-
-# FIXME Doesn't work if there is a < inside the value
-#   Possible solution: don't look for the value and extract it from the text string based on the length
-#   However, this changes the way the ADIF string is handled
-FIELD_GENERIC_RE = re.compile(
-    r"<(?:(?P<field>\w+)(?:>|\:(?P<len>\d+)(?:\:(?P<type>\w+))?>(?P<value>[^<]+)?))", re.IGNORECASE)
-
 FIELD_GENERIC_RE_NO_VALUE = re.compile(
     r"<(?P<field>\w+)(?:>|\:(?P<len>\d+)(?:\:(?P<type>\w+))?>)", re.IGNORECASE)
 
@@ -106,8 +97,8 @@ if __name__ == '__main__':
     logging.basicConfig(
         format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
     # logging.root.setLevel(logging.DEBUG)
-    # Example file
 
+    # Example file s
     # LOGFILE = './iu4pra_sample_log.adi'
     LOGFILE = './sample_log.adi'
     logging.info(f"Analysis of file {os.path.basename(LOGFILE)}")
