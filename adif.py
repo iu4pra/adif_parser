@@ -97,6 +97,8 @@ def index_of(item_list: list, cond, cond_value: bool = True):
 #   However, this changes the way the ADIF string is handled
 FIELD_GENERIC_RE = re.compile(
     r"<(?:(?P<field>\w+)(?:>|\:(?P<len>\d+)(?:\:(?P<type>\w+))?>(?P<value>[^<]+)?))", re.IGNORECASE)
+FIELD_GENERIC_RE_NO_VALUE = re.compile(
+    r"<(?P<field>\w+)(?:>|\:(?P<len>\d+)(?:\:(?P<type>\w+))?>)", re.IGNORECASE)
 
 # Testing code
 if __name__ == '__main__':
@@ -104,7 +106,8 @@ if __name__ == '__main__':
         format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
     # logging.root.setLevel(logging.DEBUG)
     # Example file
-    #LOGFILE = './iu4pra_sample_log.adi'
+    
+    # LOGFILE = './iu4pra_sample_log.adi'
     LOGFILE = './sample_log.adi'
     logging.info(f"Analysis of file {os.path.basename(LOGFILE)}")
 
