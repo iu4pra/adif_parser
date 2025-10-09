@@ -99,6 +99,11 @@ def index_of(item_list: list, cond, cond_value: bool = True):
     return -1
 
 
+def adif_field_to_qso_field(_adif: dict):
+    """Convenience function to convert an ADIF field dict into a QSO field dict"""
+    return {_adif['field']: _adif['value']}
+
+
 FIELD_GENERIC_RE_NO_VALUE = re.compile(
     r"<(?P<field>\w+)(?:>|\:(?P<len>\d+)(?:\:(?P<type>\w+))?>)", re.IGNORECASE)
 
@@ -154,7 +159,8 @@ if __name__ == '__main__':
                         f"Impossible to fetch {field['len']} bytes from log, found {len(field['value'])}")
 
                 if field['value'] is not None and field['value'].find('<') >= 0:
-                    logging.warning(f"Possible len value too long for field {field['field']} ({field['value']})")
+                    logging.warning(
+                        f"Possible len value too long for field {field['field']} ({field['value']}), < detected")
 
                 field_list.append(field)
 
@@ -186,7 +192,36 @@ if __name__ == '__main__':
 
     # Group data into QSOs and create QSO objects
     qso_list: list[QSO] = []
-    # Move one element a time on a smaller support list until EOR is reached
-    # If a key already exists raise duplicate field error
-    # End of list found before EOR, raise error
-    # EOR found, discard it
+
+    field_list_temp = []
+
+    while len(field_list) > 0:
+        # Move one element a time on a smaller support list until EOR is reached
+
+        field_list_temp.append(field_list.pop(0))
+
+
+        if is_type(field_list_temp[-1], 'EOR'):
+            # EOR found, discard it and create QSO object
+            del field_list_temp[-1]
+
+            _dict = {} # Support dict for creating QSO
+            for f in field_list_temp:
+                # Raise an error if a field already exists for the QSO
+                if _dict.get(f['field']):
+                    raise AdifError(f"Duplicate field {f['field']} ({_dict.get(f['field'])})")
+                else:
+                    _dict.update(adif_field_to_qso_field(f))
+            
+            field_list_temp.clear()
+
+            logging.debug(f"Creating a QSO object based on {_dict}")
+            qso_list.append(QSO(_dict))
+        else:
+            if len(field_list) == 0:
+                # End of list found before EOR, raise error
+                raise AdifError("End of list found before EOR")
+
+    logging.info(f"QSO list contains {len(qso_list)} entries")
+    for q in qso_list:
+        logging.debug(q)
