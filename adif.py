@@ -39,6 +39,12 @@ class QSO:
                 # All keys are put uppercase and values are converted to string
                 self._d[key.upper()] = str(value)
 
+    def __str__(self):
+        _str = ''
+        for key in self._d.keys():
+            _str += f"{key} = {self._d[key]}\n"
+        return _str
+
 
 def check_field(t: dict):
     """Integrity checks on a single ADIF field
