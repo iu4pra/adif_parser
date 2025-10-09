@@ -80,7 +80,70 @@ def adif_field_to_qso_field(_adif: dict):
 FIELD_GENERIC_RE_NO_VALUE = re.compile(
     r"<(?P<field>\w+)(?:>|\:(?P<len>\d+)(?:\:(?P<type>\w+))?>)", re.IGNORECASE)
 
-# Testing code
+
+def parse_adif_string(_adif: str):
+    field_list = []
+    # String cursor
+    cursor = 0
+    while len(_adif) > 0 and cursor < (len(_adif) - 1):
+        match = FIELD_GENERIC_RE_NO_VALUE.search(_adif, cursor)
+        if match:
+            # Match found
+            logging.debug(
+                f"Match found at position {match.start()} to {match.end()}")
+
+            # Log discared data
+            discared_string_pretty = _adif[cursor:match.start()].replace(
+                '\n', '\\n')
+            logging.debug(
+                f"Discarded {match.start()-cursor} byte(s) ({discared_string_pretty})")
+
+            # Compile field from match
+            field = match.groupdict()
+
+            # Converting field length to int
+            field['len'] = int(field['len'] or 0)
+
+            # If the field has some length, copy the value according to the declared size
+            if field['len'] > 0:
+                field['value'] = _adif[match.end():match.end() +
+                                       field['len']]
+            else:
+                field['value'] = None
+
+            if field['len'] > 0 and len(field['value']) != field['len']:
+                raise AdifError(
+                    f"Impossible to fetch {field['len']} bytes from log, found {len(field['value'])}")
+
+            if field['value'] is not None and field['value'].find('<') >= 0:
+                logging.warning(
+                    f"Possible len value too long for field {field['field']} ({field['value']}), < detected")
+
+            field_list.append(field)
+
+            # Field data check
+            logging.debug(f"{field} \t Check: {check_field(field)}")
+
+            # Update cursor position
+            cursor = match.end() + field['len']
+
+            logging.debug(
+                f"Next match search will go from position {cursor} to {len(_adif)-1}")
+        else:
+            logging.debug(
+                f"No match found starting from {cursor} to {len(_adif)-1}")
+            logging.info("No more matches, exiting")
+            break
+    return field_list
+
+
+def parse_adif_file(filename: str):
+    """Parse an ADIF file and returns the ordered list of its fields"""
+    with open(filename, 'rt') as f:
+        field_list = parse_adif_string(f.read())
+    return field_list
+
+    # Testing code
 if __name__ == '__main__':
     logging.basicConfig(
         format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
@@ -92,64 +155,7 @@ if __name__ == '__main__':
     logging.info(f"Analysis of file {os.path.basename(LOGFILE)}")
 
     # Ordered list with all the fields parsed from the ADI file
-    field_list = []
-
-    # Field parsing
-    with open(LOGFILE, 'rt') as f:
-
-        # File cursor
-        cursor = 0
-        # Read the file
-        adif_log = f.read()
-        while len(adif_log) > 0 and cursor < (len(adif_log) - 1):
-            match = FIELD_GENERIC_RE_NO_VALUE.search(adif_log, cursor)
-            if match:
-                # Match found
-                logging.debug(
-                    f"Match found at position {match.start()} to {match.end()}")
-
-                # Log discared data
-                discared_string_pretty = adif_log[cursor:match.start()].replace(
-                    '\n', '\\n')
-                logging.debug(
-                    f"Discarded {match.start()-cursor} byte(s) ({discared_string_pretty})")
-
-                # Compile field from match
-                field = match.groupdict()
-
-                # Converting field length to int
-                field['len'] = int(field['len'] or 0)
-
-                # If the field has some length, copy the value according to the declared size
-                if field['len'] > 0:
-                    field['value'] = adif_log[match.end():match.end() +
-                                              field['len']]
-                else:
-                    field['value'] = None
-
-                if field['len'] > 0 and len(field['value']) != field['len']:
-                    raise AdifError(
-                        f"Impossible to fetch {field['len']} bytes from log, found {len(field['value'])}")
-
-                if field['value'] is not None and field['value'].find('<') >= 0:
-                    logging.warning(
-                        f"Possible len value too long for field {field['field']} ({field['value']}), < detected")
-
-                field_list.append(field)
-
-                # Field data check
-                logging.debug(f"{field} \t Check: {check_field(field)}")
-
-                # Update cursor position
-                cursor = match.end() + field['len']
-
-                logging.debug(
-                    f"Next match search will go from position {cursor} to {len(adif_log)-1}")
-            else:
-                logging.debug(
-                    f"No match found starting from {cursor} to {len(adif_log)-1}")
-                logging.info("No more matches, exiting")
-                break
+    field_list = parse_adif_file(LOGFILE)
 
     # Searching for EOH field
     eoh_index = index_of(field_list, lambda x: is_type(x, 'EOH'))
