@@ -91,20 +91,15 @@ def index_of(item_list: list, cond, cond_value: bool = True):
     return -1
 
 
-# Field parsing regex
-# field_generic_re = re.compile(r"<(?:(?P<field>\w+)(?:>|\:(?P<len>\d+)>(?P<value>[^<]+)?))", re.IGNORECASE)
-
-# FIXME Doesn't work if there is a < inside the value
-#   Possible solution: don't look for the value and extract it from the text string based on the length
-#   However, this changes the way the ADIF string is handled
-FIELD_GENERIC_RE = re.compile(
-    r"<(?:(?P<field>\w+)(?:>|\:(?P<len>\d+)(?:\:(?P<type>\w+))?>(?P<value>[^<]+)?))", re.IGNORECASE)
+FIELD_GENERIC_RE_NO_VALUE = re.compile(
+    r"<(?P<field>\w+)(?:>|\:(?P<len>\d+)(?:\:(?P<type>\w+))?>)", re.IGNORECASE)
 
 # Testing code
 if __name__ == '__main__':
     logging.basicConfig(
         format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
     # logging.root.setLevel(logging.DEBUG)
+
     # Example file
     # LOGFILE = './iu4pra_sample_log.adi'
     LOGFILE = './sample_log.adi'
@@ -116,19 +111,40 @@ if __name__ == '__main__':
     # Field parsing
     with open(LOGFILE, 'rt') as f:
 
-        for line_no, line in enumerate(f.readlines(), 1):
+        cursor = 0  # File cursor
+        # Read all the file
+        adif_log = f.read()
+        while len(adif_log) > 0 and cursor < (len(adif_log) - 1):
+            match = FIELD_GENERIC_RE_NO_VALUE.search(adif_log, cursor)
+            if match:
+                # Match found
+                logging.debug(
+                    f"Match found at position {match.start()} to {match.end()}")
+                field = match.groupdict()
 
-            if FIELD_GENERIC_RE.match(line.strip()):
-                logging.debug("Match found")
-                for m in FIELD_GENERIC_RE.findall(line):
-                    field = dict(zip(['field', 'len', 'type', 'value'], m))
-                    field['len'] = int(field['len'] or 0)
-                    field_list.append(field)
-                    logging.debug(f"{field} \t Check: {check_field(field)}")
+                # If the field has some length, copy the value it according to the declared size
+                if field.get('len'):
+                    field['value'] = adif_log[match.end():match.end() +
+                                              int(field['len'])]
+                    # TODO convert len to int?
+                else:
+                    field['value'] = None
+
+                field_list.append(field)
+
+                # Field data checking
+                logging.debug(f"{field} \t Check: {check_field(field)}")
+
+                # Update cursor position
+                cursor = match.end() + int(field['len'] or '0')
+
+                logging.debug(
+                    f"Next match search will go from position {cursor} to {len(adif_log)-1}")
             else:
-                if len(line.strip()) > 0:
-                    logging.warning(
-                        f"Match not found on line {line_no}:\n'{line.strip()}'")
+                logging.debug(
+                    f"No match found starting from {cursor} to {len(adif_log)-1}")
+                logging.info("No more matches, exiting")
+                break
 
     # Searching for EOH field
     eoh_found, eoh_index = False, 0
