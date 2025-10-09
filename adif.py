@@ -120,6 +120,8 @@ if __name__ == '__main__':
                 # Match found
                 logging.debug(
                     f"Match found at position {match.start()} to {match.end()}")
+                discared_string_pretty = adif_log[cursor:match.start()].replace('\n','\\n')
+                logging.debug(f"Discarded {match.start()-cursor} byte(s) ({discared_string_pretty})")
                 field = match.groupdict()
 
                 # Converting field length to int
@@ -149,15 +151,10 @@ if __name__ == '__main__':
                 break
 
     # Searching for EOH field
-    eoh_found, eoh_index = False, 0
-    for index, field in enumerate(field_list):
-        if field['field'].upper() == 'EOH':
-            logging.info(f"EOH found at index {index}")
-            eoh_found = True
-            eoh_index = index
-            break
-
-    if not eoh_found:
+    eoh_index = index_of(field_list, lambda x: is_type(x, 'EOH'))
+    if eoh_index > 0:
+        logging.info(f"EOH found at index {eoh_index}")
+    else:
         logging.warning("EOH field not found")
 
     # Discarding all header data, not used at the moment
