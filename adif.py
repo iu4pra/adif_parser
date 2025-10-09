@@ -111,8 +111,9 @@ if __name__ == '__main__':
     # Field parsing
     with open(LOGFILE, 'rt') as f:
 
-        cursor = 0  # File cursor
-        # Read all the file
+        # File cursor
+        cursor = 0
+        # Read the file
         adif_log = f.read()
         while len(adif_log) > 0 and cursor < (len(adif_log) - 1):
             match = FIELD_GENERIC_RE_NO_VALUE.search(adif_log, cursor)
@@ -140,7 +141,7 @@ if __name__ == '__main__':
 
                 field_list.append(field)
 
-                # Field data checking
+                # Field data check
                 logging.debug(f"{field} \t Check: {check_field(field)}")
 
                 # Update cursor position
@@ -169,6 +170,6 @@ if __name__ == '__main__':
     # Group data into QSOs and create QSO objects
     qso_list: list[QSO] = []
     # Move one element a time on a smaller support list until EOR is reached
-    # If a key already exists raise an error
-    # EOR found, discard it
+    # If a key already exists raise duplicate field error
     # End of list found before EOR, raise error
+    # EOR found, discard it
