@@ -120,8 +120,12 @@ if __name__ == '__main__':
                 # Match found
                 logging.debug(
                     f"Match found at position {match.start()} to {match.end()}")
+                
+                # Log discared data
                 discared_string_pretty = adif_log[cursor:match.start()].replace('\n','\\n')
                 logging.debug(f"Discarded {match.start()-cursor} byte(s) ({discared_string_pretty})")
+
+                # Compile field from match
                 field = match.groupdict()
 
                 # Converting field length to int
