@@ -106,7 +106,7 @@ if __name__ == '__main__':
         format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
     # logging.root.setLevel(logging.DEBUG)
     # Example file
-    #LOGFILE = './iu4pra_sample_log.adi'
+    # LOGFILE = './iu4pra_sample_log.adi'
     LOGFILE = './sample_log.adi'
     logging.info(f"Analysis of file {os.path.basename(LOGFILE)}")
 
