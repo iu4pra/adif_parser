@@ -9,6 +9,7 @@
 
 import logging
 import os.path
+from qso import QSO
 import re
 from datetime import datetime, timedelta, timezone
 
@@ -16,34 +17,6 @@ from datetime import datetime, timedelta, timezone
 class AdifError(Exception):
     """Base error."""
     pass
-
-
-class QSO:
-    """Class representing a single QSO record
-    TODO: move to separate file"""
-
-    def __init__(self, data: dict):
-
-        # Check input data
-        assert isinstance(data, dict)
-
-        # Internal data storage
-        self._d: dict = {}
-
-        for key in data.keys():
-            value = data[key]
-            # Only non-null fields are reported
-            if value is None or value == '':
-                logging.warning(f"Skipping key {key} with invalid value")
-            else:
-                # All keys are put uppercase and values are converted to string
-                self._d[key.upper()] = str(value)
-
-    def __str__(self):
-        _str = ''
-        for key in self._d.keys():
-            _str += f"{key} = {self._d[key]}\n"
-        return _str
 
 
 def check_field(t: dict):
@@ -200,19 +173,19 @@ if __name__ == '__main__':
 
         field_list_temp.append(field_list.pop(0))
 
-
         if is_type(field_list_temp[-1], 'EOR'):
             # EOR found, discard it and create QSO object
             del field_list_temp[-1]
 
-            _dict = {} # Support dict for creating QSO
+            _dict = {}  # Support dict for creating QSO
             for f in field_list_temp:
                 # Raise an error if a field already exists for the QSO
                 if _dict.get(f['field']):
-                    raise AdifError(f"Duplicate field {f['field']} ({_dict.get(f['field'])})")
+                    raise AdifError(
+                        f"Duplicate field {f['field']} ({_dict.get(f['field'])})")
                 else:
                     _dict.update(adif_field_to_qso_field(f))
-            
+
             field_list_temp.clear()
 
             logging.debug(f"Creating a QSO object based on {_dict}")
