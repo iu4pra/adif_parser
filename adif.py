@@ -149,6 +149,13 @@ if __name__ == '__main__':
                 else:
                     field['value'] = None
 
+                if field['len'] > 0 and len(field['value']) != field['len']:
+                    raise AdifError(
+                        f"Impossible to fetch {field['len']} bytes from log, found {len(field['value'])}")
+
+                if field['value'] is not None and field['value'].find('<') >= 0:
+                    logging.warning(f"Possible len value too long for field {field['field']} ({field['value']})")
+
                 field_list.append(field)
 
                 # Field data check
