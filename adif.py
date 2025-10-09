@@ -22,16 +22,18 @@ class QSO:
     """Class representing a single QSO record
     TODO: move to separate file"""
 
-    def __init__(self, data: dict[str, str]):
-        assert isinstance(data, dict[str, str])
+    def __init__(self, data: dict):
+
+        # Check input data
+        assert isinstance(data, dict)
 
         # Internal data storage
-        self._d: dict[str, str] = {}
+        self._d: dict = {}
 
-        for key in dict.keys():
+        for key in data.keys():
             value = data[key]
             # Only non-null fields are reported
-            if value is None or len(value) == 0:
+            if value is None or value == '':
                 logging.warning(f"Skipping key {key} with invalid value")
             else:
                 # All keys are put uppercase and values are converted to string
@@ -121,10 +123,12 @@ if __name__ == '__main__':
                 # Match found
                 logging.debug(
                     f"Match found at position {match.start()} to {match.end()}")
-                
+
                 # Log discared data
-                discared_string_pretty = adif_log[cursor:match.start()].replace('\n','\\n')
-                logging.debug(f"Discarded {match.start()-cursor} byte(s) ({discared_string_pretty})")
+                discared_string_pretty = adif_log[cursor:match.start()].replace(
+                    '\n', '\\n')
+                logging.debug(
+                    f"Discarded {match.start()-cursor} byte(s) ({discared_string_pretty})")
 
                 # Compile field from match
                 field = match.groupdict()
