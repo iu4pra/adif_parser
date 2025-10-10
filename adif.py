@@ -139,6 +139,8 @@ def parse_adif_string(_adif: str):
 
 def parse_adif_file(filename: str):
     """Parse an ADIF file and returns the ordered list of its fields"""
+    # Input type check
+    assert isinstance(filename, str)
     with open(filename, 'rt') as f:
         field_list = parse_adif_string(f.read())
     return field_list
