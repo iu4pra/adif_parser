@@ -158,7 +158,7 @@ def remove_header(_adif_fields: list):
     del _adif_fields[0:eoh_index+1]
     logging.info(
         f"ADIF field list has {len(_adif_fields)} entries after stripping {eoh_index+1} header entries")
-    return _adif_fields
+    return _adif_fields, eoh_index
 
 
 # Testing code
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     # Ordered list with all the fields parsed from the ADI file
     field_list = parse_adif_file(LOGFILE)
 
-    field_list = remove_header(field_list)
+    field_list = remove_header(field_list)[0]
 
     # Group data into QSOs and create QSO objects
     qso_list: list[QSO] = []
