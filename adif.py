@@ -220,8 +220,6 @@ if __name__ == '__main__':
 
     # Ordered list with all the fields parsed from the ADI file
     field_list = parse_adif_file(LOGFILE)
-    # TODO: no longer explicitly required
-    field_list = remove_header(field_list)[0]
 
     # Create QSO objects
     qso_list: list[QSO] = adif_to_qso_list(field_list)
