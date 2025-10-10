@@ -7,5 +7,7 @@ __init__.py
 *.adif
 # VSCode specific files
 *.json
+# Binaries
+wkhtmlto*
 # Cache
 __pycache__/**
