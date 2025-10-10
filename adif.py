@@ -177,7 +177,6 @@ def adif_to_qso_list(_adif_fields: list):
 
     while len(_adif_fields) > 0:
         # Move one element a time on a smaller support list until EOR is reached
-
         field_list_temp.append(_adif_fields.pop(0))
 
         if is_type(field_list_temp[-1], 'EOR'):
@@ -218,7 +217,7 @@ if __name__ == '__main__':
 
     # Ordered list with all the fields parsed from the ADI file
     field_list = parse_adif_file(LOGFILE)
-
+    # TODO: no longer explicitly required
     field_list = remove_header(field_list)[0]
 
     # Create QSO objects
