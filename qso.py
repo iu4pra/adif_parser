@@ -7,7 +7,6 @@ class QSO:
     """Class representing a single QSO record"""
 
     def __init__(self, data: dict):
-
         # Check input data
         assert isinstance(data, dict)
 
@@ -24,6 +23,7 @@ class QSO:
                 self._d[key.upper()] = str(value)
 
     def __str__(self):
+        """String representation of the object"""
         _str = ''
         for key in self._d.keys():
             _str += f"{key} = {self._d[key]}\n"

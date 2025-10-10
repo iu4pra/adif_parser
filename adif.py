@@ -145,6 +145,7 @@ def parse_adif_file(filename: str):
 
 
 def remove_header(_adif_fields: list):
+    """Remove header data from an ADIF field list created by parse_adif_string() """
     # Input type check
     assert isinstance(_adif_fields, list)
     # Look for EOH
