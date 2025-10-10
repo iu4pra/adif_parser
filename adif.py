@@ -143,7 +143,25 @@ def parse_adif_file(filename: str):
         field_list = parse_adif_string(f.read())
     return field_list
 
-    # Testing code
+
+def remove_header(_adif_fields: list):
+    # Input type check
+    assert isinstance(_adif_fields, list)
+    # Look for EOH
+    eoh_index = index_of(_adif_fields, lambda x: is_type(x, 'EOH'))
+    if eoh_index > 0:
+        logging.info(f"EOH found at index {eoh_index}")
+    else:
+        logging.warning("EOH field not found")
+
+    # Remove header data
+    del _adif_fields[0:eoh_index+1]
+    logging.info(
+        f"ADIF field list has {len(_adif_fields)} entries after stripping {eoh_index+1} header entries")
+    return _adif_fields
+
+
+# Testing code
 if __name__ == '__main__':
     logging.basicConfig(
         format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
@@ -157,17 +175,7 @@ if __name__ == '__main__':
     # Ordered list with all the fields parsed from the ADI file
     field_list = parse_adif_file(LOGFILE)
 
-    # Searching for EOH field
-    eoh_index = index_of(field_list, lambda x: is_type(x, 'EOH'))
-    if eoh_index > 0:
-        logging.info(f"EOH found at index {eoh_index}")
-    else:
-        logging.warning("EOH field not found")
-
-    # Discarding all header data, not used at the moment
-    del field_list[0:eoh_index+1]
-    logging.info(
-        f"ADIF field list has {len(field_list)} entries after stripping {eoh_index+1} header entries")
+    field_list = remove_header(field_list)
 
     # Group data into QSOs and create QSO objects
     qso_list: list[QSO] = []
