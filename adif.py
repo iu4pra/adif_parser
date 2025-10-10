@@ -161,31 +161,24 @@ def remove_header(_adif_fields: list):
     return _adif_fields, eoh_index
 
 
-# Testing code
-if __name__ == '__main__':
-    logging.basicConfig(
-        format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
-    # logging.root.setLevel(logging.DEBUG)
+def adif_to_qso_list(_adif_fields: list):
+    """Parse QSO data from an ADIF list
+        Header is automatically stripped if not already done"""
+    # Input type check
+    assert isinstance(_adif_fields, list)
+    # Strip header
+    _adif_fields, eoh_index = remove_header(_adif_fields)
 
-    # Example file
-    # LOGFILE = './iu4pra_sample_log.adi'
-    LOGFILE = './sample_log.adi'
-    logging.info(f"Analysis of file {os.path.basename(LOGFILE)}")
+    logging.info(f"Automatic stripping: eoh_index {eoh_index}")
 
-    # Ordered list with all the fields parsed from the ADI file
-    field_list = parse_adif_file(LOGFILE)
-
-    field_list = remove_header(field_list)[0]
-
-    # Group data into QSOs and create QSO objects
-    qso_list: list[QSO] = []
+    _qso_list: list[QSO] = []
 
     field_list_temp = []
 
-    while len(field_list) > 0:
+    while len(_adif_fields) > 0:
         # Move one element a time on a smaller support list until EOR is reached
 
-        field_list_temp.append(field_list.pop(0))
+        field_list_temp.append(_adif_fields.pop(0))
 
         if is_type(field_list_temp[-1], 'EOR'):
             # EOR found, discard it and create QSO object
@@ -203,11 +196,33 @@ if __name__ == '__main__':
             field_list_temp.clear()
 
             logging.debug(f"Creating a QSO object based on {_dict}")
-            qso_list.append(QSO(_dict))
+            _qso_list.append(QSO(_dict))
         else:
-            if len(field_list) == 0:
+            if len(_adif_fields) == 0:
                 # End of list found before EOR, raise error
                 raise AdifError("End of list found before EOR")
+
+    return _qso_list
+
+
+# Testing code
+if __name__ == '__main__':
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
+    # logging.root.setLevel(logging.DEBUG)
+
+    # Example file
+    # LOGFILE = './iu4pra_sample_log.adi'
+    LOGFILE = './sample_log.adi'
+    logging.info(f"Analysis of file {os.path.basename(LOGFILE)}")
+
+    # Ordered list with all the fields parsed from the ADI file
+    field_list = parse_adif_file(LOGFILE)
+
+    field_list = remove_header(field_list)[0]
+
+    # Create QSO objects
+    qso_list: list[QSO] = adif_to_qso_list(field_list)
 
     logging.info(f"QSO list contains {len(qso_list)} entries")
     for q in qso_list:
