@@ -7,7 +7,7 @@ _ESSENTIAL_KEYS = [
     "QSO_DATE",
     "TIME_ON",
     "CALL",
-    # "FREQ", TODO is it really essential?
+    ["FREQ", "BAND"], # At least one must be present
     "MODE",
 ]
 
@@ -42,7 +42,15 @@ class QSO:
         """Checks if the QSO is valid"""
         # All essential fields must be present
         for key in _ESSENTIAL_KEYS:
-            if key not in self._d.keys() or not self._d[key]:
-                logging.warning(f"Essential field {key} not found, invalid QSO")
-                return False
+            # If the key itself is a list the check at least one of the elements is present
+            if isinstance(key, list):
+                if len([self._d.get(tuple_key) for tuple_key in key if self._d.get(tuple_key)]) == 0:
+                    logging.warning(
+                        f"No fields among {key} ({len([self._d.get(tuple_key) for tuple_key in key if self._d.get(tuple_key)])}) found, invalid QSO")
+                    return False
+            else:
+                if key not in self._d.keys() or not self._d.get(key):
+                    logging.warning(
+                        f"Essential field {key} not found, invalid QSO")
+                    return False
         return True
