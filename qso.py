@@ -2,6 +2,15 @@
 
 import logging
 
+# List of essential QSO keys
+_ESSENTIAL_KEYS = [
+    "QSO_DATE",
+    "TIME_ON",
+    "CALL",
+    "FREQ",
+    "MODE",
+]
+
 
 class QSO:
     """Class representing a single QSO record"""
