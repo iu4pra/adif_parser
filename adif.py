@@ -226,4 +226,5 @@ if __name__ == '__main__':
 
     logging.info(f"QSO list contains {len(qso_list)} entries")
     for q in qso_list:
-        logging.debug(q)
+        logging.info(q)
+        logging.info(f"is_valid: {q.is_valid()}")
