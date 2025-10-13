@@ -37,3 +37,12 @@ class QSO:
         for key in self._d.keys():
             _str += f"{key} = {self._d[key]}\n"
         return _str
+
+    def is_valid(self):
+        """Checks if the QSO is valid"""
+        # All essential fields must be present
+        for key in _ESSENTIAL_KEYS:
+            if key not in self._d.keys() or not self._d[key]:
+                logging.debug(f"Essential field {key} not found, invalid QSO")
+                return False
+        return True
