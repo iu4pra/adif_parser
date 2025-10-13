@@ -9,10 +9,9 @@
 
 import logging
 import os.path
-from qso import QSO
 import re
 from datetime import datetime, timedelta, timezone
-
+from qso import QSO
 
 class AdifError(Exception):
     """Base error."""
