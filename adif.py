@@ -76,7 +76,8 @@ def adif_field_to_qso_field(_adif: dict):
     return {_adif['field']: _adif['value']}
 
 
-FIELD_GENERIC_RE_NO_VALUE = re.compile(
+# Regex to parse ADIF fields from the log (without value)
+_FIELD_GENERIC_RE_NO_VALUE = re.compile(
     r"<(?P<field>\w+)(?:>|\:(?P<len>\d+)(?:\:(?P<type>\w+))?>)", re.IGNORECASE)
 
 
@@ -85,7 +86,7 @@ def parse_adif_string(_adif: str):
     # String cursor
     cursor = 0
     while len(_adif) > 0 and cursor < (len(_adif) - 1):
-        match = FIELD_GENERIC_RE_NO_VALUE.search(_adif, cursor)
+        match = _FIELD_GENERIC_RE_NO_VALUE.search(_adif, cursor)
         if match:
             # Match found
             logging.debug(
