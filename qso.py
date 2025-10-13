@@ -7,7 +7,7 @@ _ESSENTIAL_KEYS = [
     "QSO_DATE",
     "TIME_ON",
     "CALL",
-    "FREQ",
+    # "FREQ", TODO is it really essential?
     "MODE",
 ]
 
@@ -43,6 +43,6 @@ class QSO:
         # All essential fields must be present
         for key in _ESSENTIAL_KEYS:
             if key not in self._d.keys() or not self._d[key]:
-                logging.debug(f"Essential field {key} not found, invalid QSO")
+                logging.warning(f"Essential field {key} not found, invalid QSO")
                 return False
         return True
