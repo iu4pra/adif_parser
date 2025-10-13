@@ -8,3 +8,5 @@ __init__.py
 wkhtmlto*
 # Cache
 __pycache__/**
+# Other files
+.env
