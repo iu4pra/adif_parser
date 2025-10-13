@@ -7,7 +7,7 @@ _ESSENTIAL_KEYS = [
     "QSO_DATE",
     "TIME_ON",
     "CALL",
-    ["FREQ", "BAND"], # At least one must be present
+    ["FREQ", "BAND"],  # At least one among these fields must be present
     "MODE",
 ]
 
