@@ -2,9 +2,6 @@
 __init__.py
 # Do not track archives
 *.tar.gz
-# Do not track logs at the moment
-*.adi
-*.adif
 # VSCode specific files
 *.json
 # Binaries
