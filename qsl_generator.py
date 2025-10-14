@@ -12,7 +12,7 @@ env = Environment(loader=FileSystemLoader('.'))
 template = env.get_template('template.html')
 
 # Rendering the template and storing the resultant text in variable output
-output = template.render(qso={'call': 'IZ4HUF'})
+output = template.render(qso={'call': 'IZ4HUF', 'rst_sent': 599})
 
 # Write output to stdout
 # print(output)
