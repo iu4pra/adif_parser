@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>QSL template</title>
+    <style type="text/css">
+      body { font-size: 14 px; font-family: Arial; }
+      span.field { font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <p>IU4PRA<br>
+      Generic fuffa about my super duper station</p>
+    <p>Confirming QSO with: <span class="field">{{ qso.call }}</span></p>
+    <table style="width: 450px;" border="0">
+      <tbody>
+        <tr>
+          <td>Date: <span class="field">{{ qso.qso_date }}</span></td>
+          <td>Time UTC: <span class="field">{{ qso.time_on }}</span> </td>
+        </tr>
+        <tr>
+          <td>Band: <span class="field">{{ qso.band }}</span></td>
+          <td>Freq: <span class="field">{{ qso.freq }}</span></td>
+        </tr>
+        <tr>
+          <td>Mode: <span class="field">{{ qso.mode }}</span></td>
+          <td>Ur sigs RST: <span class="field">{{ qso.rst_sent }}</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <span class="field"></span>
+    <p>PSE QSL via buro / TNX QSL</p>
+    
+  </body>
+</html>
