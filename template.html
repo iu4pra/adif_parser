@@ -19,8 +19,8 @@
           <td>Time UTC: <span class="field">{{ qso.time_on }}</span> </td>
         </tr>
         <tr>
-          <td>Band: <span class="field">{{ qso.band }}</span></td>
-          <td>Freq: <span class="field">{{ qso.freq }}</span></td>
+          {% if qso.band %}<td {% if not qso.mode %}colspan=2{% endif %}>Band: <span class="field">{{ qso.band }}</span></td>{% endif %}
+          {% if qso.freq %}<td {% if not qso.band %}colspan=2{% endif %}>Freq: <span class="field">{{ qso.freq }} MHz</span></td>{% endif %}
         </tr>
         <tr>
           <td>Mode: <span class="field">{{ qso.mode }}</span></td>
