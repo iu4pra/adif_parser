@@ -9,32 +9,44 @@ import unittest
 class ParsingTest(unittest.TestCase):
     """Test cases for the ADIF parser"""
 
-    def test_parse_empty_strings(self):
+    def test_parse_empty_string(self):
+        """Empty strings return no fields"""
         assert adif.parse_adif_string('') == []
-        assert adif.parse_adif_string('\n') == []
-        assert adif.parse_adif_string('\n'*3) == []
         assert adif.parse_adif_string('\0') == []
         assert adif.parse_adif_string('\0'*3) == []
+
+    def test_parse_newline(self):
+        """String with newlines only return no fields"""
+        assert adif.parse_adif_string('\n') == []
+        assert adif.parse_adif_string('\n'*3) == []
+
+    def test_parse_blank_string(self):
+        """String with whitespaces return no fields"""
         assert adif.parse_adif_string(' ') == []
         assert adif.parse_adif_string(' '*5) == []
 
     def test_parse_single_field(self):
+        """Parse a single, well formatted field"""
         assert adif.parse_adif_string('<CALL:6>IK4XYZ') == [
             {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}]
 
     def test_parse_single_field_with_blanks(self):
+        """Parse a single, well formatted field with extra whitespaces"""
         assert adif.parse_adif_string('<CALL:6>IK4XYZ  ') == [
             {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}]
 
     def test_parse_single_field_with_extra(self):
+        """Parse a single, well formatted field with extra characters"""
         assert adif.parse_adif_string('<CALL:6>IK4XYZABC') == [
             {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}]
 
     def test_parse_single_field_with_type(self):
+        """Parse a single, well formatted field with type identifier"""
         assert adif.parse_adif_string('<CALL:6:s>IK4XYZ') == [
             {'field': 'CALL', 'len': 6, 'type': 's', 'value': 'IK4XYZ'}]
 
     def test_parse_single_field_too_short(self):
+        """Single field with insufficient data to fill the value field"""
         with unittest.TestCase.assertRaises(self, adif.AdifError):
             adif.parse_adif_string('<CALL:6>IK4')
         with unittest.TestCase.assertRaises(self, adif.AdifError):
