@@ -78,7 +78,7 @@ def adif_field_to_qso_field(_adif: dict):
 
 # Regex to parse ADIF fields from the log (without value)
 _FIELD_GENERIC_RE_NO_VALUE = re.compile(
-    r"<(?P<field>\w+)(?:>|\:(?P<len>\d+)(?:\:(?P<type>\w+))?>)", re.IGNORECASE)
+    r"<(?P<field>\w+)(?:>|\:(?P<len>[-\d]+)(?:\:(?P<type>\w+))?>)", re.IGNORECASE)
 
 
 def parse_adif_string(_adif: str):
