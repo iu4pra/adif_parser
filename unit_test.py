@@ -9,23 +9,23 @@ import unittest
 class ParsingTest(unittest.TestCase):
     """Test cases for the ADIF parser"""
 
-    def test_parse_empty_string(self):
+    def test_empty_string(self):
         """Empty strings return no fields"""
         assert adif.parse_adif_string('') == []
         assert adif.parse_adif_string('\0') == []
         assert adif.parse_adif_string('\0'*3) == []
 
-    def test_parse_newline(self):
+    def test_newline(self):
         """String with newlines only return no fields"""
         assert adif.parse_adif_string('\n') == []
         assert adif.parse_adif_string('\n'*3) == []
 
-    def test_parse_blank_string(self):
+    def test_blank_string(self):
         """String with whitespaces return no fields"""
         assert adif.parse_adif_string(' ') == []
         assert adif.parse_adif_string(' '*5) == []
 
-    def test_parse_string_without_fields(self):
+    def test_string_without_fields(self):
         """String with no valid fields"""
         _test_string = """QRZLogbook download for iu4pra
     Date: Mon Oct  6 11:30:36 2025
@@ -33,37 +33,37 @@ class ParsingTest(unittest.TestCase):
     Records: 200"""
         assert adif.parse_adif_string(_test_string) == []
 
-    def test_parse_single_field(self):
+    def test_single_field(self):
         """Parse a single, well formatted field"""
         assert adif.parse_adif_string('<CALL:6>IK4XYZ') == [
             {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}]
 
-    def test_parse_single_field_with_blanks(self):
+    def test_single_field_with_blanks(self):
         """Parse a single, well formatted field with extra whitespaces"""
         assert adif.parse_adif_string('<CALL:6>IK4XYZ  ') == [
             {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}]
 
-    def test_parse_single_field_with_extra(self):
+    def test_single_field_with_extra(self):
         """Parse a single, well formatted field with extra characters"""
         assert adif.parse_adif_string('<CALL:6>IK4XYZABC') == [
             {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}]
 
-    def test_parse_single_field_with_type(self):
+    def test_single_field_with_type(self):
         """Parse a single, well formatted field with type identifier"""
         assert adif.parse_adif_string('<CALL:6:s>IK4XYZ') == [
             {'field': 'CALL', 'len': 6, 'type': 's', 'value': 'IK4XYZ'}]
 
-    def test_parse_single_field_no_len(self):
+    def test_single_field_no_len(self):
         """Parse a single field with a wrong length"""
         assert adif.parse_adif_string('<EOR>') == [
             {'field': 'EOR', 'len': 0, 'type': None, 'value': None}]
 
-    def test_parse_single_field_wrong_len(self):
+    def test_single_field_wrong_len(self):
         """Parse a single field with a wrong length"""
         with unittest.TestCase.assertRaises(self, adif.AdifError):
             adif.parse_adif_string('<CALL:-1>IK4XYZ')
 
-    def test_parse_single_field_too_short(self):
+    def test_single_field_too_short(self):
         """Single field with insufficient data to fill the value field"""
         with unittest.TestCase.assertRaises(self, adif.AdifError):
             adif.parse_adif_string('<CALL:6>IK4')
