@@ -104,6 +104,10 @@ def parse_adif_string(_adif: str):
             # Converting field length to int
             field['len'] = int(field['len'] or 0)
 
+            # Field lengths must be non negative
+            if field['len'] < 0:
+                raise AdifError("Field lenght must be non negative")
+
             # If the field has some length, copy the value according to the declared size
             if field['len'] > 0:
                 field['value'] = _adif[match.end():match.end() +
