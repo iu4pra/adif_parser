@@ -53,6 +53,16 @@ class ParsingTest(unittest.TestCase):
         assert adif.parse_adif_string('<CALL:6:s>IK4XYZ') == [
             {'field': 'CALL', 'len': 6, 'type': 's', 'value': 'IK4XYZ'}]
 
+    def test_parse_single_field_no_len(self):
+        """Parse a single field with a wrong length"""
+        assert adif.parse_adif_string('<EOR>') == [
+            {'field': 'EOR', 'len': 0, 'type': None, 'value': None}]
+
+    def test_parse_single_field_wrong_len(self):
+        """Parse a single field with a wrong length"""
+        with unittest.TestCase.assertRaises(self, adif.AdifError):
+            adif.parse_adif_string('<CALL:-1>IK4XYZ')
+
     def test_parse_single_field_too_short(self):
         """Single field with insufficient data to fill the value field"""
         with unittest.TestCase.assertRaises(self, adif.AdifError):
