@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+# Unit test for the application
+# This is the only file at the moment, might be split in the future if it becomes too big
+
 import adif
 import logging
 from qso import QSO
@@ -16,12 +19,12 @@ class ParsingTest(unittest.TestCase):
         self.assertEqual(adif.parse_adif_string('\0'*3), [])
 
     def test_newline(self):
-        """String with newlines only return no fields"""
+        """String with only newlines return no fields"""
         self.assertEqual(adif.parse_adif_string('\n'), [])
         self.assertEqual(adif.parse_adif_string('\n'*3), [])
 
     def test_blank_string(self):
-        """String with whitespaces return no fields"""
+        """String with only whitespaces return no fields"""
         self.assertEqual(adif.parse_adif_string(' '), [])
         self.assertEqual(adif.parse_adif_string(' '*5), [])
 
@@ -63,8 +66,13 @@ class ParsingTest(unittest.TestCase):
 
     def test_single_field_wrong_len(self):
         """Parse a single field with a wrong length"""
-        with self.assertRaises(adif.AdifError):
-            adif.parse_adif_string('<CALL:-1>IK4XYZ')
+        for i in range(-5, 1):
+            with self.assertRaises(adif.AdifError):
+                adif.parse_adif_string(f'<CALL:{i}>IK4XYZ')
+
+    def test_single_field_invalid_len(self):
+        """Parse a single field with a non-numeric length"""
+        self.assertEqual(adif.parse_adif_string('<CALL:d>IK4XYZ'), [])
 
     def test_single_field_too_short(self):
         """Single field with insufficient data to fill the value field"""
