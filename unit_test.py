@@ -11,19 +11,19 @@ class ParsingTest(unittest.TestCase):
 
     def test_empty_string(self):
         """Empty strings return no fields"""
-        assert adif.parse_adif_string('') == []
-        assert adif.parse_adif_string('\0') == []
-        assert adif.parse_adif_string('\0'*3) == []
+        self.assertEqual(adif.parse_adif_string(''), [])
+        self.assertEqual(adif.parse_adif_string('\0'), [])
+        self.assertEqual(adif.parse_adif_string('\0'*3), [])
 
     def test_newline(self):
         """String with newlines only return no fields"""
-        assert adif.parse_adif_string('\n') == []
-        assert adif.parse_adif_string('\n'*3) == []
+        self.assertEqual(adif.parse_adif_string('\n'), [])
+        self.assertEqual(adif.parse_adif_string('\n'*3), [])
 
     def test_blank_string(self):
         """String with whitespaces return no fields"""
-        assert adif.parse_adif_string(' ') == []
-        assert adif.parse_adif_string(' '*5) == []
+        self.assertEqual(adif.parse_adif_string(' '), [])
+        self.assertEqual(adif.parse_adif_string(' '*5), [])
 
     def test_string_without_fields(self):
         """String with no valid fields"""
@@ -31,35 +31,35 @@ class ParsingTest(unittest.TestCase):
     Date: Mon Oct  6 11:30:36 2025
     Bookid: 312206
     Records: 200"""
-        assert adif.parse_adif_string(_test_string) == []
+        self.assertEqual(adif.parse_adif_string(_test_string), [])
 
     def test_single_field(self):
         """Parse a single, well formatted field"""
-        assert adif.parse_adif_string('<CALL:6>IK4XYZ') == [
-            {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}]
+        self.assertEqual(adif.parse_adif_string('<CALL:6>IK4XYZ'), [
+                         {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}])
 
     def test_single_field_with_blanks(self):
         """Parse a single, well formatted field with extra whitespaces"""
-        assert adif.parse_adif_string('<CALL:6>IK4XYZ  ') == [
-            {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}]
+        self.assertEqual(adif.parse_adif_string('<CALL:6>IK4XYZ  '), [
+                         {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}])
 
     def test_single_field_with_extra(self):
         """Parse a single, well formatted field with extra characters"""
-        assert adif.parse_adif_string('<CALL:6>IK4XYZABC') == [
-            {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}]
+        self.assertEqual(adif.parse_adif_string('<CALL:6>IK4XYZABC'), [
+                         {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}])
 
     def test_single_field_with_type(self):
         """Parse a single, well formatted field with type identifier"""
-        assert adif.parse_adif_string('<CALL:6:s>IK4XYZ') == [
-            {'field': 'CALL', 'len': 6, 'type': 's', 'value': 'IK4XYZ'}]
+        self.assertEqual(adif.parse_adif_string('<CALL:6:s>IK4XYZ'), [
+                         {'field': 'CALL', 'len': 6, 'type': 's', 'value': 'IK4XYZ'}])
 
     def test_single_field_wrong_type(self):
         self.assertEqual(adif.parse_adif_string('<:6>IK4XYZ'), [])
 
     def test_single_field_no_len(self):
         """Parse a single, well formatted field without length"""
-        assert adif.parse_adif_string('<EOR>') == [
-            {'field': 'EOR', 'len': 0, 'type': None, 'value': None}]
+        self.assertEqual(adif.parse_adif_string('<EOR>'), [
+                         {'field': 'EOR', 'len': 0, 'type': None, 'value': None}])
 
     def test_single_field_wrong_len(self):
         """Parse a single field with a wrong length"""
@@ -79,15 +79,15 @@ class QSOTest(unittest.TestCase):
 
     def test_blank_qso_not_valid(self):
         """A blank QSO must not be valid"""
-        assert not QSO({}).is_valid()
+        self.assertFalse(QSO({}).is_valid())
 
     def test_qso_essential_fields(self):
         """A QSO must contain all essential fields"""
         _adif_string = adif.parse_adif_string(
             '<QSO_DATE:8>20251005 <TIME_ON:6>123000 <CALL:6>IW9YZA <BAND:3>12m <MODE:3>FT8 <RST_SENT:2>-- <RST_RCVD:2>-- <EOR>')
         _qso_list = adif.adif_to_qso_list(_adif_string)
-        assert len(_qso_list) == 1
-        assert _qso_list[0].is_valid()
+        self.assertEqual(len(_qso_list), 1)
+        self.assertTrue(_qso_list[0].is_valid())
 
 
 # Automatically run tests when this module is executed
