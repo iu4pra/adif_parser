@@ -2,6 +2,7 @@
 
 # QSL generator
 # Generates a printable QSO starting from an HTML template with Jinja2
+# wkhtmltox reference https://wkhtmltopdf.org/downloads.html
 from jinja2 import Environment, FileSystemLoader
 import os.path
 
