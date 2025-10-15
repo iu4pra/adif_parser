@@ -96,9 +96,8 @@ if __name__ == '__main__':
     logging.basicConfig(
         format='%(asctime)s %(levelname)s: %(message)s', level=logging.CRITICAL)
     # Use this to conditionally disable all logging output
-    # TODO doesn't work at the moment
     DISABLE_LOGGING = True
     if DISABLE_LOGGING:
-        logging.basicConfig(handlers=[logging.NullHandler()])
+        logging.basicConfig(handlers=[logging.NullHandler()], force=True)
 
     unittest.main()
