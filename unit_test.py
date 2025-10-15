@@ -31,27 +31,27 @@ class ParsingTest(unittest.TestCase):
     Date: Mon Oct  6 11:30:36 2025
     Bookid: 312206
     Records: 200"""
-        self.assertEqual(adif.parse_adif_string(_test_string), [])
+        assert adif.parse_adif_string(_test_string) == []
 
     def test_single_field(self):
         """Parse a single, well formatted field"""
-        self.assertEqual(adif.parse_adif_string('<CALL:6>IK4XYZ'), [
-                         {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}])
+        assert adif.parse_adif_string('<CALL:6>IK4XYZ') == [
+            {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}]
 
     def test_single_field_with_blanks(self):
         """Parse a single, well formatted field with extra whitespaces"""
-        self.assertEqual(adif.parse_adif_string('<CALL:6>IK4XYZ  '), [
-                         {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}])
+        assert adif.parse_adif_string('<CALL:6>IK4XYZ  ') == [
+            {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}]
 
     def test_single_field_with_extra(self):
         """Parse a single, well formatted field with extra characters"""
-        self.assertEqual(adif.parse_adif_string('<CALL:6>IK4XYZABC'), [
-                         {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}])
+        assert adif.parse_adif_string('<CALL:6>IK4XYZABC') == [
+            {'field': 'CALL', 'len': 6, 'type': None, 'value': 'IK4XYZ'}]
 
     def test_single_field_with_type(self):
         """Parse a single, well formatted field with type identifier"""
-        self.assertEqual(adif.parse_adif_string('<CALL:6:s>IK4XYZ'), [
-                         {'field': 'CALL', 'len': 6, 'type': 's', 'value': 'IK4XYZ'}])
+        assert adif.parse_adif_string('<CALL:6:s>IK4XYZ') == [
+            {'field': 'CALL', 'len': 6, 'type': 's', 'value': 'IK4XYZ'}]
 
     def test_single_field_wrong_type(self):
         self.assertEqual(adif.parse_adif_string('<:6>IK4XYZ'), [])
