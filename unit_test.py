@@ -53,8 +53,11 @@ class ParsingTest(unittest.TestCase):
         assert adif.parse_adif_string('<CALL:6:s>IK4XYZ') == [
             {'field': 'CALL', 'len': 6, 'type': 's', 'value': 'IK4XYZ'}]
 
+    def test_single_field_wrong_type(self):
+        self.assertEqual(adif.parse_adif_string('<:6>IK4XYZ'), [])
+
     def test_single_field_no_len(self):
-        """Parse a single field with a wrong length"""
+        """Parse a single, well formatted field without length"""
         assert adif.parse_adif_string('<EOR>') == [
             {'field': 'EOR', 'len': 0, 'type': None, 'value': None}]
 
