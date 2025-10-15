@@ -1,7 +1,9 @@
 # Do not track the reference library
 __init__.py
 # Do not track archives
+*.tar
 *.tar.gz
+*.tar.bz2
 # VSCode specific files
 *.json
 # Binaries
