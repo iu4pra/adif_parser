@@ -16,7 +16,10 @@ class QSOTest(unittest.TestCase):
 # Automatically run tests when this module is executed
 if __name__ == '__main__':
     # Override logging configuration to show only critical errors
-    # TODO conditionally disable all logging
     logging.basicConfig(
-        format='%(asctime)s %(levelname)s: %(message)s', level=logging.CRITICAL)
+        format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
+    # Use this to conditionally disable all logging output
+    DISABLE_LOGGING = True
+    if DISABLE_LOGGING:
+        logging.basicConfig(handlers=[logging.NullHandler()])
     unittest.main()
