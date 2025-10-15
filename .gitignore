@@ -13,5 +13,4 @@ __pycache__/**
 # Other files
 .env
 # Output files
-*.tar.gz
 template_out.html
