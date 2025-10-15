@@ -63,14 +63,14 @@ class ParsingTest(unittest.TestCase):
 
     def test_single_field_wrong_len(self):
         """Parse a single field with a wrong length"""
-        with self.assertRaises(self, adif.AdifError):
+        with self.assertRaises(adif.AdifError):
             adif.parse_adif_string('<CALL:-1>IK4XYZ')
 
     def test_single_field_too_short(self):
         """Single field with insufficient data to fill the value field"""
-        with self.assertRaises(self, adif.AdifError):
+        with self.assertRaises(adif.AdifError):
             adif.parse_adif_string('<CALL:6>IK4')
-        with self.assertRaises(self, adif.AdifError):
+        with self.assertRaises(adif.AdifError):
             adif.parse_adif_string('<CALL:6:s>IK4')
 
 
