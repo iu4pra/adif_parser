@@ -9,6 +9,7 @@
 
 import logging
 import os.path
+import pickle
 import re
 from datetime import datetime, timedelta, timezone
 from qso import QSO
@@ -232,3 +233,7 @@ if __name__ == '__main__':
     for q in qso_list:
         logging.debug(q)
         logging.debug(f"is_valid(): {q.is_valid()}")
+
+    # Dumping the QSO list for the QSL generator module
+    with open(os.path.splitext(LOGFILE)[0]+'.dump', 'wb') as f:
+        pickle.dump(qso_list, f)
