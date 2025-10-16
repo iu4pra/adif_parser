@@ -12,6 +12,7 @@ wkhtmlto*
 __pycache__/**
 # Other files
 .env
-*.pdf
+# Other temporary files
+*.dump
 # Output files
 template_out.html
