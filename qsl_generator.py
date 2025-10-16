@@ -45,7 +45,7 @@ cmd_options = {"--page-width": "14cm", "--page-height": "9cm"}
 # Delete previous files
 unlink_if_exists(PDF_OUTPUT)
 unlink_if_exists(TEMPLATE_TEMP_FILENAME)
-subprocess.run(['rm', '-rf', '*.pdf'])
+subprocess.run("rm -vf *.pdf", shell=True, capture_output=True)
 
 # Loading the environment
 env = Environment(loader=FileSystemLoader('.'))
@@ -81,3 +81,5 @@ writer.close()
 
 # Delete temporary files
 unlink_if_exists(TEMPLATE_TEMP_FILENAME)
+# Delete qso_*.pdf
+result = subprocess.run(f"rm -fv {PDF_TEMP_BASE_NAME.replace('%04d','*')}", shell=True)
