@@ -5,6 +5,7 @@
 # wkhtmltox reference https://wkhtmltopdf.org/downloads.html
 from jinja2 import Environment, FileSystemLoader
 import os
+import pickle
 import pypdf
 import subprocess
 
@@ -26,31 +27,57 @@ def dict_to_cmd_list(_cmd_options: dict):
             cmd_list.append(v)
     return cmd_list
 
+
+# QSO list
+# TODO dumpfile for testing only!
+QSO_DUMP_FILE = './sample_log.dump'
+# Compiled template filename
+TEMPLATE_TEMP_FILENAME = './template_out.html'
+# Temporary PDF base name
+# Usage: filename = PDF_TEMP_BASE_NAME % index
+PDF_TEMP_BASE_NAME = './qsl_%04d.pdf'
+# Final PDF_filename
+PDF_OUTPUT = './out.pdf'
+
+# Command options for wkhtmltopdf
+cmd_options = {"--page-width": "14cm", "--page-height": "9cm"}
+
+# Delete previous files
+unlink_if_exists(PDF_OUTPUT)
+unlink_if_exists(TEMPLATE_TEMP_FILENAME)
+subprocess.run(['rm', '-rf', '*.pdf'])
+
 # Loading the environment
 env = Environment(loader=FileSystemLoader('.'))
 
 # Loading the template
 template = env.get_template('template.html')
 
-# Rendering the template and storing the resulting text in variable output
-output = template.render(
-    qso={'call': 'IZ4HUF', 'band': '12M', 'freq': '14.080', 'rst_sent': 599})
+# Unpickle data
+# FIXME for testing only!
+with open(QSO_DUMP_FILE, 'rb') as f:
+    qso_list = pickle.load(f)
 
-# Delete previous files
-TEMPLATE_TEMP_FILENAME = './template_out.html'
-PDF_OUTPUT = './out.pdf'
-unlink_if_exists(PDF_OUTPUT)
-unlink_if_exists(TEMPLATE_TEMP_FILENAME)
+for i, _qso in enumerate(qso_list):
+    # Rendering the template and storing the resulting text in variable output
+    qso_data_lowercase = {}
+    for key, value in _qso._d.items():
+        qso_data_lowercase[key.casefold()] = value
+    output = template.render(qso=qso_data_lowercase)
 
-# Write to file
-with open(TEMPLATE_TEMP_FILENAME, 'wt', encoding='utf-8') as f:
-    f.write(output)
+    # Write compiled template to file
+    with open(TEMPLATE_TEMP_FILENAME, 'wt', encoding='utf-8') as f:
+        f.write(output)
 
-cmd_options = {"--page-width": "14cm", "--page-height": "9cm"}
+    # Convert template page to PDF
+    subprocess.run(["./wkhtmltopdf"] + dict_to_cmd_list(cmd_options) +
+                   [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])
 
-# Convert single page to PDF
-subprocess.run(["./wkhtmltopdf"] + dict_to_cmd_list(cmd_options) +
-               [TEMPLATE_TEMP_FILENAME, PDF_OUTPUT])
+writer = pypdf.PdfWriter()
+for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))]:
+    writer.append(pdf)
+writer.write(PDF_OUTPUT)
+writer.close()
 
 # Delete temporary files
 unlink_if_exists(TEMPLATE_TEMP_FILENAME)
