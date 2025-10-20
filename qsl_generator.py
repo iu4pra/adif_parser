@@ -41,7 +41,7 @@ def generate_qsl_pdf(qso_list: list):
 
     # Loading Jinja environment
     # TODO separate folder for templates
-    env = Environment(loader=FileSystemLoader('.'))
+    env = Environment(loader=FileSystemLoader('./templates/'))
 
     # Loading HTML template
     template = env.get_template('template.html')
