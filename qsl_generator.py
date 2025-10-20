@@ -105,8 +105,8 @@ if __name__ == '__main__':
                         type=str, help='Log file to process')
     parser.add_argument('outname', metavar='output_file',
                         nargs='?', default='out.pdf', type=str, help='Output file name')
-    parser.add_argument('--pdf', default=True,
-                        action='store_true', help='Output as multipage PDF')
+    parser.add_argument('--pdf', action='store_true',
+                        help='Output as multipage PDF')
     parser.add_argument('--image', default=False,
                         action='store_true', help='Output as images')
     # parser.add_argument(
@@ -121,7 +121,15 @@ if __name__ == '__main__':
     if not os.path.isfile(filename):
         raise FileNotFoundError(f"File {filename} doesn't exist")
 
-    if not args.pdf and not args.image:
+    # If no output is specified fallback to PDF
+    if not args.image and not args.pdf:
+        args.pdf = True
+
+    # If only --image is specified do not generate PDF
+    if args.image and not args.pdf:
+        args.pdf = False
+
+    if not args.pdf and args.pdf is not None and args.image == False:
         raise Exception("At least one output option must be specified")
     # File extension
     ext = filename.split('.')[-1]
@@ -139,4 +147,8 @@ if __name__ == '__main__':
     else:
         raise Exception("Unrecognized file extension")
 
-    generate_qsl_pdf(qso_list)
+    if args.pdf:
+        generate_qsl_pdf(qso_list)
+
+    if args.image:
+        raise NotImplementedError("Not yet implemented")
