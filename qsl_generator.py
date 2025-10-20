@@ -15,6 +15,9 @@ import pypdf
 import shutil
 import subprocess
 
+# Default template filename
+TEMPLATE_DEFAULT_FILE = 'template.html'
+TEMPLATE_FOLDER = './templates'
 # Temporary folder
 TEMP_FOLDER = './tmp/'
 # Compiled template filename
@@ -47,9 +50,14 @@ def dict_to_cmd_list(_cmd_options: dict):
     return cmd_list
 
 
-def generate_qsl_pdf(qso_list: list[QSO]):
+def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE):
     """Generates a PDF file qith the QSLs contained in the given QSO list"""
     assert isinstance(qso_list, list)
+
+    # Template file full path
+    template_path = os.path.join(TEMPLATE_FOLDER, _template)
+    if not os.path.isfile(template_path):
+        raise FileNotFoundError(f"Template file {template_path} not found")
 
     # Create temporary folder if not present
     if not os.path.exists(TEMP_FOLDER):
@@ -62,10 +70,10 @@ def generate_qsl_pdf(qso_list: list[QSO]):
     unlink_if_exists(PDF_OUTPUT)
 
     # Loading Jinja environment
-    env = Environment(loader=FileSystemLoader('./templates/'))
+    env = Environment(loader=FileSystemLoader(TEMPLATE_FOLDER))
 
     # Loading HTML template
-    template = env.get_template('template.html')
+    template = env.get_template(_template)
 
     for i, _qso in enumerate(qso_list):
         assert isinstance(_qso, QSO)
@@ -110,11 +118,14 @@ if __name__ == '__main__':
                         help='Output as multipage PDF')
     parser.add_argument('--image', default=False,
                         action='store_true', help='Output as images')
+    parser.add_argument('--template', metavar='template_file', type=str,
+                        default=TEMPLATE_DEFAULT_FILE, help='Template file to use')
+
     # parser.add_argument(
     #    '--log', default=sys.stdout, type=argparse.FileType('w'),
     #    help='the file where the sum should be written')
     args = parser.parse_args()
-
+    
     # Filename to be processed
     filename = os.path.relpath(args.filename)
 
@@ -148,7 +159,7 @@ if __name__ == '__main__':
         raise Exception("Unrecognized file extension")
 
     if args.pdf:
-        generate_qsl_pdf(qso_list)
+        generate_qsl_pdf(qso_list, args.template)
 
     if args.image:
         raise NotImplementedError("Not yet implemented")
