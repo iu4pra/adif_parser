@@ -62,7 +62,6 @@ def generate_qsl_pdf(qso_list: list[QSO]):
     unlink_if_exists(PDF_OUTPUT)
 
     # Loading Jinja environment
-    # TODO separate folder for templates
     env = Environment(loader=FileSystemLoader('./templates/'))
 
     # Loading HTML template
@@ -138,8 +137,7 @@ if __name__ == '__main__':
 
     if ext.casefold() in ['adi', 'adif']:
         print(f"Proceeding to parse ADIF file {args.filename}")
-        qso_list = adif.adif_to_qso_list(adif.parse_adif_file(
-            filename))  # TODO create single function!
+        qso_list = adif.qso_list_from_file(filename)
 
     elif ext.casefold() in ['dump',]:
         print("TEST ONLY dump file")
