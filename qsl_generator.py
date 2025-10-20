@@ -39,10 +39,11 @@ def generate_qsl_pdf(qso_list: list):
     unlink_if_exists(TEMPLATE_TEMP_FILENAME)
     subprocess.run("rm -vf *.pdf", shell=True, capture_output=True)
 
-    # Loading the environment
+    # Loading Jinja environment
+    # TODO separate folder for templates
     env = Environment(loader=FileSystemLoader('.'))
 
-    # Loading the template
+    # Loading HTML template
     template = env.get_template('template.html')
 
     for i, _qso in enumerate(qso_list):
