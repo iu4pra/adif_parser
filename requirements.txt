@@ -1,9 +1,10 @@
+<<<<<<< HEAD
 argparse
 jinja2 # Template engine
 logging
-pickle
 pypdf # PDF concatenation
-re
-shutil
-subprocess
-unittest
+=======
+jinja2 # Template engine
+logging
+pypdf # PDF concatenation
+>>>>>>> master
