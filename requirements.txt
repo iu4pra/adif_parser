@@ -1,3 +1,6 @@
-# argparse TODO later on for entry point
+argparse
 jinja2 # Template engine
+pickle
 pypdf # PDF concatenation
+shutil
+subprocess

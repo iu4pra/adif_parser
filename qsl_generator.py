@@ -5,7 +5,8 @@
 # wkhtmltox reference https://wkhtmltopdf.org/downloads.html
 from jinja2 import Environment, FileSystemLoader
 from qso import QSO
-# TODO for entry point import argparse
+import adif
+import argparse
 import os
 import pickle
 import pypdf
@@ -44,7 +45,7 @@ def dict_to_cmd_list(_cmd_options: dict):
     return cmd_list
 
 
-def generate_qsl_pdf(qso_list: list):
+def generate_qsl_pdf(qso_list: list[QSO]):
     """Generates a PDF file qith the QSLs contained in the given QSO list"""
     assert isinstance(qso_list, list)
 
@@ -96,9 +97,32 @@ def generate_qsl_pdf(qso_list: list):
 # TODO dumpfile for testing only!
 QSO_DUMP_FILE = './sample_log.dump'
 
-# Unpickle data
-# FIXME for testing only!
-with open(QSO_DUMP_FILE, 'rb') as f:
-    qso_list = pickle.load(f)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description="Generate a .pdf file from a QSO list in .adi o .dump format")
+    parser.add_argument('filename', metavar='input_file',
+                        type=str, help='Log file to process')
+    parser.add_argument('outname', metavar='output_file',
+                        nargs='?', default='out.pdf', type=str, help='Output file name')
+    # parser.add_argument(
+    #    '--log', default=sys.stdout, type=argparse.FileType('w'),
+    #    help='the file where the sum should be written')
+    args = parser.parse_args()
 
-generate_qsl_pdf(qso_list)
+    # Filename to be processed
+    filename = os.path.relpath(args.filename)
+    ext = filename.split('.')[-1]
+    if ext.casefold() in ['adi', 'adif']:
+        print("ADIF file")
+        qso_list = adif.adif_to_qso_list(adif.parse_adif_file(
+            filename))  # TODO create single function!
+
+    elif ext.casefold() in ['dump',]:
+        print("TEST ONLY dump file")
+        # Unpickle data
+        with open(args.filename, 'rb') as f:
+            qso_list = pickle.load(f)
+    else:
+        raise Exception("Wrong file extension")
+
+    generate_qsl_pdf(qso_list)
