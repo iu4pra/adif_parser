@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+# This software under the MIT License
 # Unit test for the application
 # This is the only file at the moment, might be split in the future if it becomes too big
 
