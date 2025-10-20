@@ -14,6 +14,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from qso import QSO
 
+
 class AdifError(Exception):
     """Base error."""
     pass
@@ -21,6 +22,7 @@ class AdifError(Exception):
 
 def check_field(t: dict):
     """Integrity checks on a single ADIF field
+
         TODO: implement value type check, if anyone ever needs it"""
     if t.get('field') is None:
         raise AdifError("No field name found")
@@ -63,9 +65,12 @@ def is_type(f: dict, type: str):
 
 def index_of(item_list: list, cond, cond_value: bool = True):
     """Returns the index of the first element satisfying the condition or -1 if not found
+
     If cond_value = False returns the index of the first element NOT satisfying the condition
+
     Example usage:
-    index_of(field_list, lambda x: is_type(x, 'EOR'))"""
+
+        index_of(field_list, lambda x: is_type(x, 'EOR'))"""
     for index, item in enumerate(item_list):
         if cond(item) == cond_value:
             return index
@@ -171,6 +176,7 @@ def remove_header(_adif_fields: list):
 
 def adif_to_qso_list(_adif_fields: list):
     """Parse QSO data from an ADIF list
+
         Header is automatically stripped if not already done"""
     # Input type check
     assert isinstance(_adif_fields, list)
