@@ -9,6 +9,7 @@ from qso import QSO
 import os
 import pickle
 import pypdf
+import shutil
 import subprocess
 
 # Temporary folder
@@ -48,8 +49,11 @@ def generate_qsl_pdf(qso_list: list):
     assert isinstance(qso_list, list)
 
     # Create temporary folder if not present
-    if not os.path.isdir(TEMP_FOLDER):
+    if not os.path.exists(TEMP_FOLDER):
         os.makedirs(TEMP_FOLDER)
+    else:
+        if not os.path.isdir(TEMP_FOLDER):
+            os.unlink(TEMP_FOLDER)
 
     # Delete previous output file(s)
     unlink_if_exists(PDF_OUTPUT)
@@ -84,9 +88,8 @@ def generate_qsl_pdf(qso_list: list):
     writer.close()
 
     # Delete temporary folder and its content
-    for file in os.listdir(TEMP_FOLDER):
-        os.unlink(os.path.join(TEMP_FOLDER,file))
-    os.rmdir(TEMP_FOLDER)
+    if os.path.exists(TEMP_FOLDER):
+        shutil.rmtree(TEMP_FOLDER)
 
 
 # QSO list
