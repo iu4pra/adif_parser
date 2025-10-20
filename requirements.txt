@@ -1,10 +1,4 @@
-<<<<<<< HEAD
 argparse
 jinja2 # Template engine
 logging
 pypdf # PDF concatenation
-=======
-jinja2 # Template engine
-logging
-pypdf # PDF concatenation
->>>>>>> master
