@@ -93,10 +93,6 @@ def generate_qsl_pdf(qso_list: list[QSO]):
         shutil.rmtree(TEMP_FOLDER)
 
 
-# QSO list
-# TODO dumpfile for testing only!
-QSO_DUMP_FILE = './sample_log.dump'
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Generate a .pdf file from a QSO list in .adi o .dump format")
