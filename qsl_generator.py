@@ -83,12 +83,6 @@ def generate_qsl_pdf(qso_list: list):
     writer.write(PDF_OUTPUT)
     writer.close()
 
-    # Delete temporary files
-    unlink_if_exists(TEMPLATE_TEMP_FILENAME)
-    # Delete qso_*.pdf
-    # result = subprocess.run(
-    #    f"rm -fv {PDF_TEMP_BASE_NAME.replace('%04d','*')}", shell=True)
-
     # Delete temporary folder and its content
     for file in os.listdir(TEMP_FOLDER):
         os.unlink(os.path.join(TEMP_FOLDER,file))
