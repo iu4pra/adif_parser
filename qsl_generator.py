@@ -4,6 +4,8 @@
 # Generates a printable QSL starting from an HTML template with Jinja2
 # wkhtmltox reference https://wkhtmltopdf.org/downloads.html
 from jinja2 import Environment, FileSystemLoader
+from qso import QSO
+# import argparse TODO later on for entry point
 import os
 import pickle
 import pypdf
@@ -59,6 +61,7 @@ with open(QSO_DUMP_FILE, 'rb') as f:
     qso_list = pickle.load(f)
 
 for i, _qso in enumerate(qso_list):
+    assert isinstance(_qso, QSO)
     # Rendering the template and storing the resulting text in variable output
     qso_data_lowercase = {}
     for key, value in _qso._d.items():
@@ -82,4 +85,5 @@ writer.close()
 # Delete temporary files
 unlink_if_exists(TEMPLATE_TEMP_FILENAME)
 # Delete qso_*.pdf
-result = subprocess.run(f"rm -fv {PDF_TEMP_BASE_NAME.replace('%04d','*')}", shell=True)
+result = subprocess.run(
+    f"rm -fv {PDF_TEMP_BASE_NAME.replace('%04d','*')}", shell=True)
