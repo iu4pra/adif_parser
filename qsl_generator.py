@@ -86,6 +86,7 @@ def generate_qsl_pdf(qso_list: list[QSO]):
         subprocess.run(["./wkhtmltopdf"] + dict_to_cmd_list(cmd_options_pdf) +
                        [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])
 
+    # Concatenate all files to create a single PDF to print
     writer = pypdf.PdfWriter()
     for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))]:
         writer.append(pdf)
@@ -104,6 +105,10 @@ if __name__ == '__main__':
                         type=str, help='Log file to process')
     parser.add_argument('outname', metavar='output_file',
                         nargs='?', default='out.pdf', type=str, help='Output file name')
+    parser.add_argument('--pdf', default=True,
+                        action='store_true', help='Output as multipage PDF')
+    parser.add_argument('--image', default=False,
+                        action='store_true', help='Output as images')
     # parser.add_argument(
     #    '--log', default=sys.stdout, type=argparse.FileType('w'),
     #    help='the file where the sum should be written')
@@ -111,6 +116,13 @@ if __name__ == '__main__':
 
     # Filename to be processed
     filename = os.path.relpath(args.filename)
+
+    # Arguments check
+    if not os.path.isfile(filename):
+        raise FileNotFoundError(f"File {filename} doesn't exist")
+
+    if not args.pdf and not args.image:
+        raise Exception("At least one output option must be specified")
     # File extension
     ext = filename.split('.')[-1]
 
@@ -125,6 +137,6 @@ if __name__ == '__main__':
         with open(args.filename, 'rb') as f:
             qso_list = pickle.load(f)
     else:
-        raise Exception("Wrong file extension")
+        raise Exception("Unrecognized file extension")
 
     generate_qsl_pdf(qso_list)
