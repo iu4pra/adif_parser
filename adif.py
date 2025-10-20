@@ -218,6 +218,13 @@ def adif_to_qso_list(_adif_fields: list):
     return _qso_list
 
 
+def qso_list_from_file(filename: str):
+    """Convenience function to convert an ADIF file into a QSO list"""
+    field_list = parse_adif_file(filename)
+    qso_list: list[QSO] = adif_to_qso_list(field_list)
+    return qso_list
+
+
 # Testing code
 if __name__ == '__main__':
     logging.basicConfig(
@@ -229,11 +236,8 @@ if __name__ == '__main__':
     LOGFILE = './sample_log.adi'
     logging.info(f"Analysis of file {os.path.basename(LOGFILE)}")
 
-    # Ordered list with all the fields parsed from the ADI file
-    field_list = parse_adif_file(LOGFILE)
-
     # Create QSO objects
-    qso_list: list[QSO] = adif_to_qso_list(field_list)
+    qso_list: list[QSO] = qso_list_from_file(LOGFILE)
 
     logging.info(f"QSO list contains {len(qso_list)} entries")
     for q in qso_list:

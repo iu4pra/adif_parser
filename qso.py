@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+# This software under the MIT License
+
 import logging
 
 # List of essential QSO keys
