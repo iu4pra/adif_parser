@@ -1,2 +1,6 @@
+logging
 jinja2 # Template engine
+pickle
 pypdf # PDF concatenation
+re
+unittest
