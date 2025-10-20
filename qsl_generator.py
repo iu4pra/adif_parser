@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 
+# This software under the MIT License
 # QSL generator
 # Generates a printable QSL starting from an HTML template with Jinja2
 # wkhtmltox reference https://wkhtmltopdf.org/downloads.html
+
 from jinja2 import Environment, FileSystemLoader
 from qso import QSO
 import adif
