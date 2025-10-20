@@ -5,11 +5,24 @@
 # wkhtmltox reference https://wkhtmltopdf.org/downloads.html
 from jinja2 import Environment, FileSystemLoader
 from qso import QSO
-# import argparse TODO later on for entry point
+# TODO for entry point import argparse
 import os
 import pickle
 import pypdf
 import subprocess
+
+# Temporary folder
+TEMP_FOLDER = './tmp/'
+# Compiled template filename
+TEMPLATE_TEMP_FILENAME = os.path.join(TEMP_FOLDER, 'template_out.html')
+# Temporary PDF base name
+# Usage: filename = PDF_TEMP_BASE_NAME % index
+PDF_TEMP_BASE_NAME = os.path.join(TEMP_FOLDER, './qsl_%04d.pdf')
+# Final PDF_filename
+PDF_OUTPUT = './out.pdf'
+
+# Command options for wkhtmltopdf
+cmd_options = {"--page-width": "14cm", "--page-height": "9cm"}
 
 
 def unlink_if_exists(path):
@@ -34,10 +47,12 @@ def generate_qsl_pdf(qso_list: list):
     """Generates a PDF file qith the QSLs contained in the given QSO list"""
     assert isinstance(qso_list, list)
 
-    # Delete previous files
+    # Create temporary folder if not present
+    if not os.path.isdir(TEMP_FOLDER):
+        os.makedirs(TEMP_FOLDER)
+
+    # Delete previous output file(s)
     unlink_if_exists(PDF_OUTPUT)
-    unlink_if_exists(TEMPLATE_TEMP_FILENAME)
-    subprocess.run("rm -vf *.pdf", shell=True, capture_output=True)
 
     # Loading Jinja environment
     # TODO separate folder for templates
@@ -71,23 +86,18 @@ def generate_qsl_pdf(qso_list: list):
     # Delete temporary files
     unlink_if_exists(TEMPLATE_TEMP_FILENAME)
     # Delete qso_*.pdf
-    result = subprocess.run(
-        f"rm -fv {PDF_TEMP_BASE_NAME.replace('%04d','*')}", shell=True)
+    # result = subprocess.run(
+    #    f"rm -fv {PDF_TEMP_BASE_NAME.replace('%04d','*')}", shell=True)
+
+    # Delete temporary folder and its content
+    for file in os.listdir(TEMP_FOLDER):
+        os.unlink(os.path.join(TEMP_FOLDER,file))
+    os.rmdir(TEMP_FOLDER)
 
 
 # QSO list
 # TODO dumpfile for testing only!
 QSO_DUMP_FILE = './sample_log.dump'
-# Compiled template filename
-TEMPLATE_TEMP_FILENAME = './template_out.html'
-# Temporary PDF base name
-# Usage: filename = PDF_TEMP_BASE_NAME % index
-PDF_TEMP_BASE_NAME = './qsl_%04d.pdf'
-# Final PDF_filename
-PDF_OUTPUT = './out.pdf'
-
-# Command options for wkhtmltopdf
-cmd_options = {"--page-width": "14cm", "--page-height": "9cm"}
 
 # Unpickle data
 # FIXME for testing only!
