@@ -111,7 +111,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Generate a .pdf file from a QSO list in .adi o .dump format")
     parser.add_argument('filename', metavar='input_file',
-                        type=str, help='Log file to process')
+                        type=str, help='Log file to process (ADIF format)')
     parser.add_argument('outname', metavar='output_file',
                         nargs='?', default='out.pdf', type=str, help='Output file name')
     parser.add_argument('--pdf', action='store_true',
