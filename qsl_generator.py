@@ -32,7 +32,19 @@ def dict_to_cmd_list(_cmd_options: dict):
 
 def generate_qsl_pdf(qso_list: list):
     """Generates a PDF file qith the QSLs contained in the given QSO list"""
-    assert isinstance(qso_list, list(QSO({})))
+    assert isinstance(qso_list, list)
+
+    # Delete previous files
+    unlink_if_exists(PDF_OUTPUT)
+    unlink_if_exists(TEMPLATE_TEMP_FILENAME)
+    subprocess.run("rm -vf *.pdf", shell=True, capture_output=True)
+
+    # Loading the environment
+    env = Environment(loader=FileSystemLoader('.'))
+
+    # Loading the template
+    template = env.get_template('template.html')
+
     for i, _qso in enumerate(qso_list):
         assert isinstance(_qso, QSO)
         # Rendering the template and storing the resulting text in variable output
@@ -75,17 +87,6 @@ PDF_OUTPUT = './out.pdf'
 
 # Command options for wkhtmltopdf
 cmd_options = {"--page-width": "14cm", "--page-height": "9cm"}
-
-# Delete previous files
-unlink_if_exists(PDF_OUTPUT)
-unlink_if_exists(TEMPLATE_TEMP_FILENAME)
-subprocess.run("rm -vf *.pdf", shell=True, capture_output=True)
-
-# Loading the environment
-env = Environment(loader=FileSystemLoader('.'))
-
-# Loading the template
-template = env.get_template('template.html')
 
 # Unpickle data
 # FIXME for testing only!
