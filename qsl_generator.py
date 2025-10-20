@@ -24,7 +24,7 @@ PDF_TEMP_BASE_NAME = os.path.join(TEMP_FOLDER, './qsl_%04d.pdf')
 PDF_OUTPUT = './out.pdf'
 
 # Command options for wkhtmltopdf
-cmd_options = {"--page-width": "14cm", "--page-height": "9cm"}
+cmd_options_pdf = {"--page-width": "14cm", "--page-height": "9cm"}
 
 
 def unlink_if_exists(path):
@@ -68,18 +68,22 @@ def generate_qsl_pdf(qso_list: list[QSO]):
 
     for i, _qso in enumerate(qso_list):
         assert isinstance(_qso, QSO)
+
         # Rendering the template and storing the resulting text in variable output
         qso_data_lowercase = {}
         for key, value in _qso._d.items():
+            # Converting all keys into lowercase
             qso_data_lowercase[key.casefold()] = value
         output = template.render(qso=qso_data_lowercase)
+
+        print(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
 
         # Write compiled template to file
         with open(TEMPLATE_TEMP_FILENAME, 'wt', encoding='utf-8') as f:
             f.write(output)
 
         # Convert template page to PDF
-        subprocess.run(["./wkhtmltopdf"] + dict_to_cmd_list(cmd_options) +
+        subprocess.run(["./wkhtmltopdf"] + dict_to_cmd_list(cmd_options_pdf) +
                        [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])
 
     writer = pypdf.PdfWriter()
@@ -107,9 +111,11 @@ if __name__ == '__main__':
 
     # Filename to be processed
     filename = os.path.relpath(args.filename)
+    # File extension
     ext = filename.split('.')[-1]
+
     if ext.casefold() in ['adi', 'adif']:
-        print("ADIF file")
+        print(f"Proceeding to parse ADIF file {args.filename}")
         qso_list = adif.adif_to_qso_list(adif.parse_adif_file(
             filename))  # TODO create single function!
 
