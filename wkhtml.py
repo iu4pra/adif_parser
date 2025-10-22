@@ -1,9 +1,8 @@
 #!/usr/bin/python3
 
 # This software under the MIT License
-# wkhtmltox wrapper
+# Simple wkhtmltox wrapper
 
-import os
 import platform
 import subprocess
 
