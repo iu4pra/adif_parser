@@ -15,6 +15,10 @@ import pypdf
 import shutil
 import subprocess
 
+# QSL standard size in centimeters
+QSL_WIDTH = 14
+QSL_HEIGHT = 9
+
 # Default template filename
 TEMPLATE_DEFAULT_FILE = 'template.html'
 TEMPLATE_FOLDER = './templates'
@@ -37,11 +41,12 @@ def cm_to_px(cm, dpi):
 
 
 # Command options for wkhtmltopdf
-cmd_options_pdf = {"--page-width": "14cm", "--page-height": "9cm"}
+cmd_options_pdf = {"--page-width": f"{QSL_WIDTH}cm",
+                   "--page-height": f"{QSL_HEIGHT}cm"}
 
 # Command options for wkhtmltoimage
 cmd_options_image = {
-    "--width": str(cm_to_px(14, 75)), "--height": str(cm_to_px(9, 75))}
+    "--width": str(cm_to_px(QSL_WIDTH, 75)), "--height": str(cm_to_px(QSL_HEIGHT, 75))}
 
 
 def unlink_if_exists(path):
