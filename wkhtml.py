@@ -7,6 +7,7 @@ import os.path
 import platform
 import subprocess
 
+# Base path for executables
 WKHTMLTOX_BASE_PATH = "./"
 
 
