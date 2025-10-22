@@ -222,7 +222,9 @@ if __name__ == '__main__':
         raise Exception("Unrecognized file extension")
 
     if args.pdf:
+        # Output as PDF
         generate_qsl_pdf(qso_list, args.template)
 
     if args.image:
+        # Output as images
         generate_qsl_image(qso_list, args.template)
