@@ -28,7 +28,3 @@ def wkhtmltopdf(args: list = []):
         subprocess.run(["./wkhtmltopdf"] + args)
     else:
         raise NotImplementedError("Not implemented for the given OS")
-
-
-wkhtmltoimage()
-wkhtmltopdf()
