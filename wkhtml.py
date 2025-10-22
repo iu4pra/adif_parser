@@ -7,6 +7,7 @@ import os
 import platform
 import subprocess
 
+
 def wkhtmltoimage(args: list = []):
     """Invokes wkhtmltoimage with the given arguments"""
     _os = platform.uname()[0]
@@ -14,7 +15,8 @@ def wkhtmltoimage(args: list = []):
         subprocess.run(["./wkhtmltoimage.exe"] + args)
     elif _os == 'Linux':
         subprocess.run(["./wkhtmltoimage"] + args)
-    return NotImplementedError("Not implemented for the given OS")
+    raise NotImplementedError("Not implemented for the given OS")
+
 
 def wkhtmltopdf(args: list = []):
     """Invokes wkhtmltopdf with the given arguments"""
@@ -23,7 +25,8 @@ def wkhtmltopdf(args: list = []):
         subprocess.run(["./wkhtmltopdf.exe"] + args)
     elif _os == 'Linux':
         subprocess.run(["./wkhtmltopdf"] + args)
-    return NotImplementedError("Not implemented for the given OS")
+    raise NotImplementedError("Not implemented for the given OS")
+
 
 wkhtmltoimage()
 wkhtmltopdf()
