@@ -77,6 +77,7 @@ def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE
     else:
         if not os.path.isdir(TEMP_FOLDER):
             os.unlink(TEMP_FOLDER)
+            os.makedirs(TEMP_FOLDER)
 
     # Delete previous output file(s)
     # TODO create out/ folder
@@ -140,6 +141,7 @@ def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FI
     else:
         if not os.path.isdir(TEMP_FOLDER):
             os.unlink(TEMP_FOLDER)
+            os.makedirs(TEMP_FOLDER)
 
     # Loading Jinja environment
     env = Environment(loader=FileSystemLoader(TEMPLATE_FOLDER))
