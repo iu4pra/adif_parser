@@ -15,7 +15,8 @@ def wkhtmltoimage(args: list = []):
         subprocess.run(["./wkhtmltoimage.exe"] + args)
     elif _os == 'Linux':
         subprocess.run(["./wkhtmltoimage"] + args)
-    raise NotImplementedError("Not implemented for the given OS")
+    else:
+        raise NotImplementedError("Not implemented for the given OS")
 
 
 def wkhtmltopdf(args: list = []):
@@ -25,7 +26,8 @@ def wkhtmltopdf(args: list = []):
         subprocess.run(["./wkhtmltopdf.exe"] + args)
     elif _os == 'Linux':
         subprocess.run(["./wkhtmltopdf"] + args)
-    raise NotImplementedError("Not implemented for the given OS")
+    else:
+        raise NotImplementedError("Not implemented for the given OS")
 
 
 wkhtmltoimage()
