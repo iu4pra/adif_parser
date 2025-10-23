@@ -14,7 +14,6 @@ import os
 import pickle
 import pypdf
 import shutil
-import subprocess
 
 # QSL standard size in centimeters
 QSL_WIDTH = 14
