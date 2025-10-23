@@ -22,14 +22,18 @@ QSL_HEIGHT = 9
 
 # Default template filename
 TEMPLATE_DEFAULT_FILE = 'template.html'
+# Template folder
 TEMPLATE_FOLDER = './templates'
+
 # Temporary folder
 TEMP_FOLDER = './tmp/'
-# Compiled template filename
+# Compiled template temporary filename
 TEMPLATE_TEMP_FILENAME = os.path.join(TEMP_FOLDER, 'template_out.html')
+
 # Temporary PDF base name
 # Usage: filename = PDF_TEMP_BASE_NAME % index
 PDF_TEMP_BASE_NAME = os.path.join(TEMP_FOLDER, './qsl_%04d.pdf')
+
 # Output image base name
 IMG_TEMP_BASE_NAME = os.path.join(TEMP_FOLDER, './qsl_%04d.jpg')
 # Final PDF_filename
