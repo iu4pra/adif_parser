@@ -7,6 +7,7 @@
 
 from jinja2 import Environment, FileSystemLoader
 from qso import QSO
+from wkhtml import wkhtmltoimage, wkhtmltopdf
 import adif
 import argparse
 import os
@@ -111,8 +112,8 @@ def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE
             f.write(output)
 
         # Convert template page to PDF
-        subprocess.run(["./wkhtmltopdf"] + dict_to_cmd_list(cmd_options_pdf) +
-                       [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])
+        wkhtmltopdf(dict_to_cmd_list(cmd_options_pdf) +
+                    [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])
 
     # Concatenate all files to create a single PDF to print
     writer = pypdf.PdfWriter()
@@ -171,8 +172,8 @@ def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FI
             f.write(output)
 
         # Convert template page to PDF
-        subprocess.run(["./wkhtmltoimage"] + dict_to_cmd_list(cmd_options_image) +
-                       [TEMPLATE_TEMP_FILENAME, (IMG_TEMP_BASE_NAME % i)])
+        wkhtmltoimage(dict_to_cmd_list(cmd_options_image) +
+                      [TEMPLATE_TEMP_FILENAME, (IMG_TEMP_BASE_NAME % i)])
 
 
 if __name__ == '__main__':
