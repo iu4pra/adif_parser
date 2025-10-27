@@ -211,6 +211,8 @@ if __name__ == '__main__':
                         action='store_true', help='Output as images')
     parser.add_argument('--template', metavar='template_file', type=str,
                         default=TEMPLATE_DEFAULT_FILE, help='Template file to use')
+    parser.add_argument('--output-dir', metavar='output_folder', type=str,
+                        default=OUT_FOLDER, help='Output folder')
 
     # parser.add_argument(
     #    '--log', default=sys.stdout, type=argparse.FileType('w'),
@@ -251,8 +253,10 @@ if __name__ == '__main__':
 
     if args.pdf:
         # Output as PDF
-        generate_qsl_pdf(qso_list, args.template)
+        generate_qsl_pdf(qso_list, _template=args.template,
+                         _out_folder=args.output_dir)
 
     if args.image:
         # Output as images
-        generate_qsl_image(qso_list, args.template)
+        generate_qsl_image(qso_list, _template=args.template,
+                           _out_folder=args.output_dir)
