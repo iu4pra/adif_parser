@@ -200,7 +200,7 @@ def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FI
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="Generate a .pdf file from a QSO list in .adi o .dump format")
+        description="Generate a .pdf file from a QSO list in .adi or .dump format")
     parser.add_argument('filename', metavar='input_file',
                         type=str, help='Log file to process (ADIF format)')
     parser.add_argument('outname', metavar='output_file',
@@ -210,9 +210,9 @@ if __name__ == '__main__':
     parser.add_argument('--image', default=False,
                         action='store_true', help='Output as images')
     parser.add_argument('--template', metavar='template_file', type=str,
-                        default=TEMPLATE_DEFAULT_FILE, help='Template file to use')
+                        default=TEMPLATE_DEFAULT_FILE, help=f'Template to use from {TEMPLATE_FOLDER} folder (default {TEMPLATE_DEFAULT_FILE})')
     parser.add_argument('--output-dir', metavar='output_folder', type=str,
-                        default=OUT_FOLDER, help='Output folder')
+                        default=OUT_FOLDER, help=f'Output folder (default {OUT_FOLDER})')
 
     # parser.add_argument(
     #    '--log', default=sys.stdout, type=argparse.FileType('w'),
