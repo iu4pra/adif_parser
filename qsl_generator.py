@@ -33,8 +33,11 @@ TEMPLATE_TEMP_FILENAME = os.path.join(TEMP_FOLDER, 'template_out.html')
 # Usage: filename = PDF_TEMP_BASE_NAME % index
 PDF_TEMP_BASE_NAME = os.path.join(TEMP_FOLDER, './qsl_%04d.pdf')
 
+# Output folder
+OUT_FOLDER = './out/'
+
 # Output image base name
-IMG_TEMP_BASE_NAME = os.path.join(TEMP_FOLDER, './qsl_%04d.jpg')
+IMG_OUT_BASE_NAME = './qsl_%04d.jpg'
 # Final PDF_filename
 PDF_OUTPUT = './out.pdf'
 
@@ -71,7 +74,7 @@ def dict_to_cmd_list(_cmd_options: dict):
     return cmd_list
 
 
-def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE):
+def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE, _out_folder: str = OUT_FOLDER):
     """Generates a PDF file qith the QSLs contained in the given QSO list"""
     assert isinstance(qso_list, list)
 
@@ -89,8 +92,15 @@ def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE
             os.makedirs(TEMP_FOLDER)
 
     # Delete previous output file(s)
-    # TODO create out/ folder
     unlink_if_exists(PDF_OUTPUT)
+
+    # Create output folder
+    if not os.path.exists(_out_folder):
+        os.makedirs(_out_folder)
+    else:
+        if not os.path.isdir(_out_folder):
+            os.unlink(_out_folder)
+            os.makedirs(_out_folder)
 
     # Loading Jinja environment
     env = Environment(loader=FileSystemLoader(TEMPLATE_FOLDER))
@@ -119,10 +129,11 @@ def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE
                     [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])
 
     # Concatenate all files to create a single PDF to print
+    out_name = os.path.join(_out_folder, PDF_OUTPUT)
     writer = pypdf.PdfWriter()
     for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))]:
         writer.append(pdf)
-    writer.write(PDF_OUTPUT)
+    writer.write(out_name)
     writer.close()
 
     # Delete temporary folder and its content
@@ -130,7 +141,7 @@ def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE
         shutil.rmtree(TEMP_FOLDER)
 
 
-def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE):
+def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE, _out_folder: str = OUT_FOLDER):
     """Generates one QSL image per QSO in the given list"""
     assert isinstance(qso_list, list)
 
@@ -140,7 +151,6 @@ def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FI
         raise FileNotFoundError(f"Template file {template_path} not found")
 
     # Delete previous output file(s)
-    # TODO create out/ folder
     if os.path.exists(TEMP_FOLDER):
         shutil.rmtree(TEMP_FOLDER)
 
@@ -151,6 +161,14 @@ def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FI
         if not os.path.isdir(TEMP_FOLDER):
             os.unlink(TEMP_FOLDER)
             os.makedirs(TEMP_FOLDER)
+
+    # Create output folder
+    if not os.path.exists(_out_folder):
+        os.makedirs(_out_folder)
+    else:
+        if not os.path.isdir(_out_folder):
+            os.unlink(_out_folder)
+            os.makedirs(_out_folder)
 
     # Loading Jinja environment
     env = Environment(loader=FileSystemLoader(TEMPLATE_FOLDER))
@@ -175,8 +193,9 @@ def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FI
             f.write(output)
 
         # Convert template page to PDF
+        out_name = os.path.join(_out_folder, (IMG_OUT_BASE_NAME % i))
         wkhtmltoimage(dict_to_cmd_list(cmd_options_image) +
-                      [TEMPLATE_TEMP_FILENAME, (IMG_TEMP_BASE_NAME % i)])
+                      [TEMPLATE_TEMP_FILENAME, out_name])
 
 
 if __name__ == '__main__':
