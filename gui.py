@@ -19,6 +19,10 @@ class App():
         frame = tk.Frame(master)
         frame.grid()
 
+        self.quit_button = tk.Button(frame, text="Quit")
+        self.quit_button['command'] = master.destroy
+        self.quit_button.pack(side=tk.RIGHT)
+
         self.start_button = tk.Button(frame, text="Generate QSL")
         self.start_button['command'] = self.generate_qsl
         self.start_button.pack(side=tk.RIGHT)
@@ -28,7 +32,8 @@ class App():
         self.choose_file_button.pack(side=tk.RIGHT)
 
     def logfile_chooser(self):
-        self.logfile = tkfile.askopenfilename(filetypes=('ADIF file {adi adif}',))
+        self.logfile = tkfile.askopenfilename(
+            filetypes=('ADIF file {adi adif}',))
         print(f"File chosen: {self.logfile}")
 
     def generate_qsl(self):
@@ -51,3 +56,5 @@ if __name__ == '__main__':
 
     app = App(root)
     root.mainloop()
+
+    print("Program terminated")
