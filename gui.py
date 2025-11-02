@@ -17,17 +17,20 @@ class App():
         frame = tk.Frame(master)
         frame.grid()
 
+        # Quit button
         self.quit_button = tk.Button(frame, text="Quit")
         self.quit_button['command'] = master.destroy
-        self.quit_button.pack(side=tk.RIGHT)
+        self.quit_button.grid(row = 0, column = 2)
 
+        # Start generation button
         self.start_button = tk.Button(frame, text="Generate QSL")
         self.start_button['command'] = self.generate_qsl
-        self.start_button.pack(side=tk.RIGHT)
+        self.start_button.grid(row = 0, column = 1)
 
+        # File chooser button
         self.choose_file_button = tk.Button(frame, text="Open file...")
         self.choose_file_button['command'] = self.logfile_chooser
-        self.choose_file_button.pack(side=tk.RIGHT)
+        self.choose_file_button.grid(row = 0, column = 0)
 
     def logfile_chooser(self):
         self.logfile = tkfile.askopenfilename(
