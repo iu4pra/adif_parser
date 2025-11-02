@@ -33,12 +33,13 @@ class App():
         self.choose_file_button.grid(row = 0, column = 0)
 
     def logfile_chooser(self):
+        """Open file chooser for log file"""
         self.logfile = tkfile.askopenfilename(
             filetypes=('ADIF file {adi adif}',))
         print(f"File chosen: {self.logfile}")
 
     def generate_qsl(self):
-
+        """QSL generator callback"""
         if hasattr(self, 'logfile'):
             qsl_generator.generate_qsl_pdf(
                 adif.qso_list_from_file(self.logfile))
