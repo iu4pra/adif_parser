@@ -13,7 +13,9 @@ import tkinter.filedialog as tkfile
 class App():
 
     def __init__(self, master: tk.Tk):
+        """Create and initialize widgets"""
 
+        # Main frame
         frame = tk.Frame(master)
         frame.grid()
 
