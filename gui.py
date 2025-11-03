@@ -17,7 +17,7 @@ class App():
 
         # Main frame
         frame = tk.Frame(master)
-        frame.grid()
+        frame.grid(padx=5, pady=5)
 
         # Frame for checkboxes
         self.input_frame = tk.Frame(master)
