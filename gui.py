@@ -35,7 +35,7 @@ class App():
     def logfile_chooser(self):
         """Open file chooser for log file"""
         self.logfile = tkfile.askopenfilename(
-            filetypes=('ADIF file {adi adif}',))
+            filetypes=(("ADIF file", "*.adi *.adif"),))
         print(f"File chosen: {self.logfile}")
 
     def generate_qsl(self):
