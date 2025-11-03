@@ -83,7 +83,7 @@ class App():
         self.quit_button.grid(row=1, column=2, padx=5, pady=5)
 
         # Logging
-        self.logbox = tkscroll.ScrolledText(master, state='disabled')
+        self.logbox = tkscroll.ScrolledText(master, state='disabled', width=50, height=10)
         self.logbox.grid(row=2, column=0, columnspan=3)
         
         self.logger = logging.getLogger('app')
