@@ -86,34 +86,34 @@ class App():
         self.logbox = tkscroll.ScrolledText(master, state='disabled')
         self.logbox.grid(row=2, column=0, columnspan=3)
         
-        logger = logging.getLogger('app')
+        self.logger = logging.getLogger('app')
         log_handler = TextHandler(self.logbox)
         log_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
-        logger.addHandler(log_handler)
-        logger.setLevel(logging.INFO)
+        self.logger.addHandler(log_handler)
+        self.logger.setLevel(logging.INFO)
 
     def logfile_chooser(self):
         """Open file chooser for log file"""
         self.logfile = tkfile.askopenfilename(
             filetypes=(("ADIF file", "*.adi *.adif"),))
-        print(f"File chosen: {self.logfile}")
+        self.logger.info(f"File chosen: {self.logfile}")
 
     def generate_qsl(self):
         """QSL generator callback"""
         if hasattr(self, 'logfile'):
             qso_list = adif.qso_list_from_file(self.logfile)
             if self.out_pdf.get() == 1:
-                print("Proceeding to output as PDF")
+                self.logger.info("Proceeding to output as PDF")
                 qsl_generator.generate_qsl_pdf(qso_list)
             else:
-                print("No PDF output")
+                self.logger.info("No PDF output")
             if self.out_img.get() == 1:
-                print("Proceeding to output as image")
+                self.logger.info("Proceeding to output as image")
                 qsl_generator.generate_qsl_image(qso_list)
             else:
-                print("No image output")
+                self.logger.info("No image output")
         else:
-            print("ERROR: No logfile chosen!")
+            self.logger.error("No logfile chosen!")
 
 
 if __name__ == '__main__':
