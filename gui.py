@@ -34,6 +34,11 @@ class TextHandler(logging.Handler):
             self.text.yview(tk.END)
         # This is necessary because we can't modify the Text from other threads
         self.text.after(0, append)
+    
+    def clear(self):
+        self.text.configure(state='normal')
+        self.text.delete(1.0, tk.END)
+        self.text.configure(state='disabled')
 
 
 class App():
@@ -72,6 +77,10 @@ class App():
         self.buttons_frame = tk.Frame(master)
         self.buttons_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
 
+        # Clear log button
+        self.clear_log_button = tk.Button(self.buttons_frame, text="Clear Log")
+        self.clear_log_button.grid(row=1, column=0, padx=5, pady=5)
+
         # Start generation button
         self.start_button = tk.Button(self.buttons_frame, text="Generate QSL")
         self.start_button['command'] = self.generate_qsl
@@ -82,15 +91,19 @@ class App():
         self.quit_button['command'] = master.destroy
         self.quit_button.grid(row=1, column=2, padx=5, pady=5)
 
-        # Logging
+        # Logging text box
         self.logbox = tkscroll.ScrolledText(master, state='disabled', width=50, height=10)
         self.logbox.grid(row=2, column=0, columnspan=3)
         
+        # Logger configuration
         self.logger = logging.getLogger('app')
         log_handler = TextHandler(self.logbox)
         log_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
         self.logger.addHandler(log_handler)
         self.logger.setLevel(logging.INFO)
+
+        # Bind clear log command
+        self.clear_log_button['command'] = log_handler.clear
 
     def logfile_chooser(self):
         """Open file chooser for log file"""
