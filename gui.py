@@ -34,7 +34,7 @@ class TextHandler(logging.Handler):
             self.text.yview(tk.END)
         # This is necessary because we can't modify the Text from other threads
         self.text.after(0, append)
-    
+
     def clear(self):
         self.text.configure(state='normal')
         self.text.delete(1.0, tk.END)
@@ -92,13 +92,15 @@ class App():
         self.quit_button.grid(row=1, column=2, padx=5, pady=5)
 
         # Logging text box
-        self.logbox = tkscroll.ScrolledText(master, state='disabled', width=50, height=10)
+        self.logbox = tkscroll.ScrolledText(
+            master, state='disabled', width=50, height=10)
         self.logbox.grid(row=2, column=0, columnspan=3)
-        
+
         # Logger configuration
         self.logger = logging.getLogger('app')
         log_handler = TextHandler(self.logbox)
-        log_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
+        log_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s'))
         self.logger.addHandler(log_handler)
         self.logger.setLevel(logging.INFO)
 
