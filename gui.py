@@ -25,12 +25,12 @@ class App():
         self.out_pdf.set(1)
         c_pdf = tk.Checkbutton(self.checkbox_frame, text="PDF Output", variable=self.out_pdf,
                                onvalue=1, offvalue=0)
-        c_pdf.grid(row=0, column=0)
+        c_pdf.grid(row=0, column=0, sticky='w')
 
         self.out_img = tk.IntVar()
         c_img = tk.Checkbutton(self.checkbox_frame, text="Image Output",
                                variable=self.out_img, onvalue=1, offvalue=0)
-        c_img.grid(row=1, column=0)
+        c_img.grid(row=1, column=0, sticky='w')
 
         # Frame for main buttons
         self.buttons_frame = tk.Frame(master)
