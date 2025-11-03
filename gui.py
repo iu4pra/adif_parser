@@ -21,12 +21,15 @@ class App():
         self.checkbox_frame = tk.Frame(master)
         self.checkbox_frame.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
 
-        self.out_pdf = 0
-        self.out_img = 0
-        tk.Checkbutton(self.checkbox_frame, text="PDF", variable=self.out_pdf,
-                       onvalue=1, offvalue=0).grid(row=0, column=0)
-        tk.Checkbutton(self.checkbox_frame, text="Image",
-                       variable=self.out_img, onvalue=1, offvalue=0).grid(row=1, column=0)
+        self.out_pdf = tk.IntVar()
+        self.out_img = tk.IntVar()
+        c_pdf = tk.Checkbutton(self.checkbox_frame, text="PDF", variable=self.out_pdf,
+                               onvalue=1, offvalue=0)
+        c_pdf.grid(row=0, column=0)
+
+        c_img = tk.Checkbutton(self.checkbox_frame, text="Image",
+                               variable=self.out_img, onvalue=1, offvalue=0)
+        c_img.grid(row=1, column=0)
 
         # Frame for main buttons
         self.buttons_frame = tk.Frame(master)
@@ -57,8 +60,17 @@ class App():
     def generate_qsl(self):
         """QSL generator callback"""
         if hasattr(self, 'logfile'):
-            qsl_generator.generate_qsl_pdf(
-                adif.qso_list_from_file(self.logfile))
+            qso_list = adif.qso_list_from_file(self.logfile)
+            if self.out_pdf.get() == 1:
+                print("Proceeding to output as PDF")
+                qsl_generator.generate_qsl_pdf(qso_list)
+            else:
+                print("No PDF output")
+            if self.out_img.get() == 1:
+                print("Proceeding to output as image")
+                qsl_generator.generate_qsl_image(qso_list)
+            else:
+                print("No image output")
         else:
             print("ERROR: No logfile chosen!")
 
