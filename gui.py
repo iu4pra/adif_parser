@@ -49,12 +49,12 @@ class App():
         # Quit button
         self.quit_button = tk.Button(self.buttons_frame, text="Quit")
         self.quit_button['command'] = master.destroy
-        self.quit_button.grid(row=1, column=2)
+        self.quit_button.grid(row=1, column=2, padx=5, pady=5)
 
         # Start generation button
         self.start_button = tk.Button(self.buttons_frame, text="Generate QSL")
         self.start_button['command'] = self.generate_qsl
-        self.start_button.grid(row=1, column=1)
+        self.start_button.grid(row=1, column=1, padx=5, pady=5)
 
     def logfile_chooser(self):
         """Open file chooser for log file"""
