@@ -21,16 +21,24 @@ class App():
         self.checkbox_frame = tk.Frame(master)
         self.checkbox_frame.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
 
+        # Checkbox for PDF output
         self.out_pdf = tk.IntVar()
         self.out_pdf.set(1)
         c_pdf = tk.Checkbutton(self.checkbox_frame, text="PDF Output", variable=self.out_pdf,
                                onvalue=1, offvalue=0)
-        c_pdf.grid(row=0, column=0, sticky='w')
+        c_pdf.grid(row=0, column=1, sticky='w')
 
+        # Checkbox for image output
         self.out_img = tk.IntVar()
         c_img = tk.Checkbutton(self.checkbox_frame, text="Image Output",
                                variable=self.out_img, onvalue=1, offvalue=0)
-        c_img.grid(row=1, column=0, sticky='w')
+        c_img.grid(row=1, column=1, sticky='w')
+
+        # File chooser button
+        self.choose_file_button = tk.Button(
+            self.checkbox_frame, text="Open file...")
+        self.choose_file_button['command'] = self.logfile_chooser
+        self.choose_file_button.grid(row=0, column=0, rowspan=2)
 
         # Frame for main buttons
         self.buttons_frame = tk.Frame(master)
@@ -45,12 +53,6 @@ class App():
         self.start_button = tk.Button(self.buttons_frame, text="Generate QSL")
         self.start_button['command'] = self.generate_qsl
         self.start_button.grid(row=1, column=1)
-
-        # File chooser button
-        self.choose_file_button = tk.Button(
-            self.buttons_frame, text="Open file...")
-        self.choose_file_button['command'] = self.logfile_chooser
-        self.choose_file_button.grid(row=1, column=0)
 
     def logfile_chooser(self):
         """Open file chooser for log file"""
