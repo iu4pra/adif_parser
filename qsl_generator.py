@@ -125,8 +125,9 @@ def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE
             f.write(output)
 
         # Convert template page to PDF
-        wkhtmltopdf(dict_to_cmd_list(cmd_options_pdf) +
-                    [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])
+        ret = wkhtmltopdf(dict_to_cmd_list(cmd_options_pdf) +
+                          [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])
+        print(f"wkhtmltopdf returned {ret.returncode}")
 
     # Concatenate all files to create a single PDF to print
     out_name = os.path.join(_out_folder, PDF_OUTPUT)
@@ -194,8 +195,9 @@ def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FI
 
         # Convert template page to PDF
         out_name = os.path.join(_out_folder, (IMG_OUT_BASE_NAME % i))
-        wkhtmltoimage(dict_to_cmd_list(cmd_options_image) +
-                      [TEMPLATE_TEMP_FILENAME, out_name])
+        ret = wkhtmltoimage(dict_to_cmd_list(cmd_options_image) +
+                            [TEMPLATE_TEMP_FILENAME, out_name])
+        print(f"wkhtmltoimage returned {ret.returncode}")
 
 
 if __name__ == '__main__':
