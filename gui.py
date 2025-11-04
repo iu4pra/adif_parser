@@ -7,6 +7,7 @@ import adif
 import qsl_generator
 
 import logging
+import os.path
 import tkinter as tk
 import tkinter.filedialog as tkfile
 import tkinter.scrolledtext as tkscroll
@@ -111,11 +112,14 @@ class App():
         """Open file chooser for log file"""
         self.logfile = tkfile.askopenfilename(
             filetypes=(("ADIF file", "*.adi *.adif"),))
-        self.logger.info(f"File chosen: {self.logfile}")
+        if self.logfile:
+            self.logger.info(f"File chosen: {self.logfile}")
+        else:
+            self.logger.info("No logfile chosen")
 
     def generate_qsl(self):
         """QSL generator callback"""
-        if hasattr(self, 'logfile'):
+        if hasattr(self, 'logfile') and os.path.isfile(self.logfile):
             qso_list = adif.qso_list_from_file(self.logfile)
             if self.out_pdf.get() == 1:
                 self.logger.info("Proceeding to output as PDF")
