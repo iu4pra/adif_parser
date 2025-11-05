@@ -76,7 +76,7 @@ class App():
 
         # File validation button
         self.validate_file_button = tk.Button(
-            self.input_frame, text="Validate")
+            self.input_frame, text="Validate log")
         self.validate_file_button['command'] = self.validate_logfile
         self.validate_file_button.grid(row=1, column=0)
 
