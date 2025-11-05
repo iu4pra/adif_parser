@@ -72,7 +72,13 @@ class App():
         self.choose_file_button = tk.Button(
             self.input_frame, text="Open file...")
         self.choose_file_button['command'] = self.logfile_chooser
-        self.choose_file_button.grid(row=0, column=0, rowspan=2)
+        self.choose_file_button.grid(row=0, column=0)
+
+        # File validation button
+        self.validate_file_button = tk.Button(
+            self.input_frame, text="Validate")
+        self.validate_file_button['command'] = self.validate_logfile
+        self.validate_file_button.grid(row=1, column=0)
 
         # Frame for main buttons
         self.buttons_frame = tk.Frame(master)
