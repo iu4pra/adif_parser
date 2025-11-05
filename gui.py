@@ -113,9 +113,26 @@ class App():
         self.logfile = tkfile.askopenfilename(
             filetypes=(("ADIF file", "*.adi *.adif"),))
         if self.logfile:
-            self.logger.info(f"File chosen: {self.logfile}")
+            self.logger.info(f"File chosen: {os.path.basename(self.logfile)}")
         else:
             self.logger.info("No logfile chosen")
+
+    def validate_logfile(self):
+        """Callback for log file validation"""
+        if hasattr(self, 'logfile') and os.path.isfile(self.logfile):
+            try:
+                _result = True  # Validation result
+                adif.parse_adif_file(self.logfile)
+            except Exception as e:
+                self.logger.error(e)
+                _result = False
+            finally:
+                if _result == True:
+                    self.logger.info("Validation passed")
+                else:
+                    self.logger.error("Validation failed")
+        else:
+            self.logger.error("No logfile chosen!")
 
     def generate_qsl(self):
         """QSL generator callback"""
