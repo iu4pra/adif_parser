@@ -76,7 +76,7 @@ class App():
 
         # File validation button
         self.validate_file_button = tk.Button(
-            self.input_frame, text="Validate log")
+            self.input_frame, state=tk.DISABLED, text="Validate log")
         self.validate_file_button['command'] = self.validate_logfile
         self.validate_file_button.grid(row=1, column=0)
 
@@ -100,7 +100,7 @@ class App():
 
         # Logging text box
         self.logbox = tkscroll.ScrolledText(
-            master, state='disabled', width=50, height=10)
+            master, state=tk.DISABLED, width=50, height=10)
         self.logbox.grid(row=2, column=0, columnspan=3)
 
         # Logger configuration
@@ -120,8 +120,10 @@ class App():
             filetypes=(("ADIF file", "*.adi *.adif"),))
         if self.logfile:
             self.logger.info(f"File chosen: {os.path.basename(self.logfile)}")
+            self.validate_file_button.config(state=tk.NORMAL)
         else:
             self.logger.info("No logfile chosen")
+            self.validate_file_button.config(state=tk.DISABLED)
 
     def validate_logfile(self):
         """Callback for log file validation"""
