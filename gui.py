@@ -18,13 +18,14 @@ class TextHandler(logging.Handler):
     # Adapted from Moshe Kaplan: https://gist.github.com/moshekaplan/c425f861de7bbf28ef06
     # Source: https://stackoverflow.com/questions/13318742/python-logging-to-tkinter-text-widget
 
-    def __init__(self, text):
+    def __init__(self, text: tkscroll.ScrolledText):
         # run the regular Handler __init__
         logging.Handler.__init__(self)
         # Store a reference to the Text it will log to
         self.text = text
 
     def emit(self, record):
+        """Actually log the specified logging record, required by superclass"""
         msg = self.format(record)
 
         def append():
@@ -37,12 +38,14 @@ class TextHandler(logging.Handler):
         self.text.after(0, append)
 
     def clear(self):
+        """Clear the textbox"""
         self.text.configure(state='normal')
         self.text.delete(1.0, tk.END)
         self.text.configure(state='disabled')
 
 
 class App():
+    """Main application class"""
 
     def __init__(self, master: tk.Tk):
         """Create and initialize widgets"""
@@ -163,12 +166,12 @@ class App():
 if __name__ == '__main__':
 
     # Run the module
-
     root = tk.Tk()
     root.wm_title("QSL generator by IU4PRA")
     root.wm_resizable(False, False)
     root.minsize(300, 100)
 
+    # Run the app
     app = App(root)
     root.mainloop()
 
