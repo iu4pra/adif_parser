@@ -18,13 +18,14 @@ class TextHandler(logging.Handler):
     # Adapted from Moshe Kaplan: https://gist.github.com/moshekaplan/c425f861de7bbf28ef06
     # Source: https://stackoverflow.com/questions/13318742/python-logging-to-tkinter-text-widget
 
-    def __init__(self, text):
+    def __init__(self, text: tkscroll.ScrolledText):
         # run the regular Handler __init__
         logging.Handler.__init__(self)
         # Store a reference to the Text it will log to
         self.text = text
 
     def emit(self, record):
+        """Actually log the specified logging record, required by superclass"""
         msg = self.format(record)
 
         def append():
@@ -37,12 +38,14 @@ class TextHandler(logging.Handler):
         self.text.after(0, append)
 
     def clear(self):
+        """Clear the textbox"""
         self.text.configure(state='normal')
         self.text.delete(1.0, tk.END)
         self.text.configure(state='disabled')
 
 
 class App():
+    """Main application class"""
 
     def __init__(self, master: tk.Tk):
         """Create and initialize widgets"""
@@ -72,7 +75,13 @@ class App():
         self.choose_file_button = tk.Button(
             self.input_frame, text="Open file...")
         self.choose_file_button['command'] = self.logfile_chooser
-        self.choose_file_button.grid(row=0, column=0, rowspan=2)
+        self.choose_file_button.grid(row=0, column=0)
+
+        # File validation button
+        self.validate_file_button = tk.Button(
+            self.input_frame, state=tk.DISABLED, text="Validate log")
+        self.validate_file_button['command'] = self.validate_logfile
+        self.validate_file_button.grid(row=1, column=0)
 
         # Frame for main buttons
         self.buttons_frame = tk.Frame(master)
@@ -94,7 +103,7 @@ class App():
 
         # Logging text box
         self.logbox = tkscroll.ScrolledText(
-            master, state='disabled', width=50, height=10)
+            master, state=tk.DISABLED, width=50, height=10)
         self.logbox.grid(row=2, column=0, columnspan=3)
 
         # Logger configuration
@@ -113,9 +122,28 @@ class App():
         self.logfile = tkfile.askopenfilename(
             filetypes=(("ADIF file", "*.adi *.adif"),))
         if self.logfile:
-            self.logger.info(f"File chosen: {self.logfile}")
+            self.logger.info(f"File chosen: {os.path.basename(self.logfile)}")
+            self.validate_file_button.config(state=tk.NORMAL)
         else:
             self.logger.info("No logfile chosen")
+            self.validate_file_button.config(state=tk.DISABLED)
+
+    def validate_logfile(self):
+        """Callback for log file validation"""
+        if hasattr(self, 'logfile') and os.path.isfile(self.logfile):
+            try:
+                _result = True  # Validation result
+                adif.parse_adif_file(self.logfile)
+            except Exception as e:
+                self.logger.error(e)
+                _result = False
+            finally:
+                if _result == True:
+                    self.logger.info("Validation passed")
+                else:
+                    self.logger.error("Validation failed")
+        else:
+            self.logger.error("No logfile chosen!")
 
     def generate_qsl(self):
         """QSL generator callback"""
@@ -138,12 +166,12 @@ class App():
 if __name__ == '__main__':
 
     # Run the module
-
     root = tk.Tk()
     root.wm_title("QSL generator by IU4PRA")
     root.wm_resizable(False, False)
     root.minsize(300, 100)
 
+    # Run the app
     app = App(root)
     root.mainloop()
 
