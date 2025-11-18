@@ -135,8 +135,8 @@ class App():
                 _result = True  # Validation result
                 adif.parse_adif_file(self.logfile)
             except Exception as e:
-                self.logger.error(e)
                 _result = False
+                self.logger.error(e)
             finally:
                 if _result == True:
                     self.logger.info("Validation passed!")
