@@ -122,10 +122,10 @@ class App():
         self.logfile = tkfile.askopenfilename(
             filetypes=(("ADIF file", "*.adi *.adif"),))
         if self.logfile:
-            self.logger.info(f"File chosen: {os.path.basename(self.logfile)}")
+            self.logger.info(f"Log file chosen: {os.path.basename(self.logfile)}")
             self.validate_file_button.config(state=tk.NORMAL)
         else:
-            self.logger.info("No logfile chosen")
+            self.logger.info("No log file chosen")
             self.validate_file_button.config(state=tk.DISABLED)
 
     def validate_logfile(self):
@@ -139,9 +139,9 @@ class App():
                 _result = False
             finally:
                 if _result == True:
-                    self.logger.info("Validation passed")
+                    self.logger.info("Validation passed!")
                 else:
-                    self.logger.error("Validation failed")
+                    self.logger.error("Validation failed!")
         else:
             self.logger.error("No logfile chosen!")
 
@@ -174,5 +174,3 @@ if __name__ == '__main__':
     # Run the app
     app = App(root)
     root.mainloop()
-
-    print("Program terminated")
