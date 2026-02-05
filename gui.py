@@ -76,6 +76,7 @@ class App():
             self.input_frame, text="Open file...")
         self.choose_file_button['command'] = self.logfile_chooser
         self.choose_file_button.grid(row=0, column=0)
+        self.logfile = None
 
         # File validation button
         self.validate_file_button = tk.Button(
@@ -89,7 +90,7 @@ class App():
         self.choose_template_button['command'] = self.template_chooser
         self.choose_template_button.grid(row=0, column=2)
         # Template default file initialization
-        self.template_file = qsl_generator.TEMPLATE_DEFAULT_FILE
+        self.template_file = None
 
         # Frame for main buttons
         self.buttons_frame = tk.Frame(master)
@@ -128,7 +129,7 @@ class App():
     def template_chooser(self):
         """Open file chooser for template file"""
         self.template_file = tkfile.askopenfilename(
-            filetypes=(("QSL template", "*.html *.htm"),))
+            filetypes=(("QSL template", "*.html *.htm"),)) or self.template_file
         if self.template_file:
             self.template_file = os.path.basename(self.template_file)
             self.logger.info(
@@ -142,7 +143,7 @@ class App():
     def logfile_chooser(self):
         """Open file chooser for log file"""
         self.logfile = tkfile.askopenfilename(
-            filetypes=(("ADIF file", "*.adi *.adif"),))
+            filetypes=(("ADIF file", "*.adi *.adif"),)) or self.logfile
         if self.logfile:
             self.logger.info(
                 f"Log file chosen: {os.path.basename(self.logfile)}")
