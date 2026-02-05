@@ -134,7 +134,8 @@ class App():
             self.logger.info(
                 f"Template chosen: {self.template_file}")
         else:
-            self.template_file = os.path.basename(qsl_generator.TEMPLATE_DEFAULT_FILE)
+            self.template_file = os.path.basename(
+                qsl_generator.TEMPLATE_DEFAULT_FILE)
             self.logger.info("No template chosen, default %s selected" %
                              self.template_file)
 
@@ -174,13 +175,15 @@ class App():
             # Check if PDF output checkbox is ticked
             if self.out_pdf.get() == 1:
                 self.logger.info("Proceeding to output as PDF")
-                qsl_generator.generate_qsl_pdf(qso_list, _template = self.template_file or qsl_generator.TEMPLATE_DEFAULT_FILE)
+                qsl_generator.generate_qsl_pdf(
+                    qso_list, _template=self.template_file or qsl_generator.TEMPLATE_DEFAULT_FILE)
             else:
                 self.logger.info("No PDF output")
             # Check if image output checkbox is ticked
             if self.out_img.get() == 1:
                 self.logger.info("Proceeding to output as image")
-                qsl_generator.generate_qsl_image(qso_list, _template = self.template_file or qsl_generator.TEMPLATE_DEFAULT_FILE)
+                qsl_generator.generate_qsl_image(
+                    qso_list, _template=self.template_file or qsl_generator.TEMPLATE_DEFAULT_FILE)
             else:
                 self.logger.info("No image output")
         else:
