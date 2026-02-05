@@ -149,11 +149,13 @@ class App():
         """QSL generator callback"""
         if hasattr(self, 'logfile') and os.path.isfile(self.logfile):
             qso_list = adif.qso_list_from_file(self.logfile)
+            # Check if PDF output checkbox is ticked
             if self.out_pdf.get() == 1:
                 self.logger.info("Proceeding to output as PDF")
                 qsl_generator.generate_qsl_pdf(qso_list)
             else:
                 self.logger.info("No PDF output")
+            # Check if image output checkbox is ticked
             if self.out_img.get() == 1:
                 self.logger.info("Proceeding to output as image")
                 qsl_generator.generate_qsl_image(qso_list)
