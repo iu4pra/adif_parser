@@ -83,6 +83,14 @@ class App():
         self.validate_file_button['command'] = self.validate_logfile
         self.validate_file_button.grid(row=1, column=0)
 
+        # Template chooser button
+        self.choose_template_button = tk.Button(
+            self.input_frame, text="Choose template...")
+        self.choose_template_button['command'] = self.template_chooser
+        self.choose_template_button.grid(row=0, column=2)
+        # Template default file initialization
+        self.template_file = qsl_generator.TEMPLATE_DEFAULT_FILE
+
         # Frame for main buttons
         self.buttons_frame = tk.Frame(master)
         self.buttons_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
@@ -117,12 +125,25 @@ class App():
         # Bind clear log command
         self.clear_log_button['command'] = log_handler.clear
 
+    def template_chooser(self):
+        """Open file chooser for template file"""
+        self.template_file = tkfile.askopenfilename(
+            filetypes=(("QSL template", "*.html *.htm"),))
+        if self.template_file:
+            self.logger.info(
+                f"Template chosen: {os.path.basename(self.template_file)}")
+        else:
+            self.template_file = os.path.basename(qsl_generator.TEMPLATE_DEFAULT_FILE)
+            self.logger.info("No template chosen, default %s selected" %
+                             self.template_file)
+
     def logfile_chooser(self):
         """Open file chooser for log file"""
         self.logfile = tkfile.askopenfilename(
             filetypes=(("ADIF file", "*.adi *.adif"),))
         if self.logfile:
-            self.logger.info(f"Log file chosen: {os.path.basename(self.logfile)}")
+            self.logger.info(
+                f"Log file chosen: {os.path.basename(self.logfile)}")
             self.validate_file_button.config(state=tk.NORMAL)
         else:
             self.logger.info("No log file chosen")
