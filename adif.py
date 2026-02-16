@@ -229,10 +229,16 @@ def qso_list_from_file(filename: str):
 if __name__ == '__main__':
     logging.basicConfig(
         format='%(asctime)s %(levelname)s: %(message)s', level=logging.INFO)
-    # logging.root.setLevel(logging.DEBUG)
 
-    # Example file
-    # LOGFILE = './iu4pra_sample_log.adi'
+    # Use this to add debug info
+    ADIF_DEBUG = True
+    if ADIF_DEBUG:
+        logging.root.setLevel(logging.DEBUG)
+
+    # Example files:
+    #   './iu4pra_sample_log.adi'
+    #   './sample_log.adi'
+    #   './sample_2qso.adi'
     LOGFILE = './sample_log.adi'
     logging.info(f"Analysis of file {os.path.basename(LOGFILE)}")
 

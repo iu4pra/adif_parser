@@ -104,8 +104,10 @@ if __name__ == '__main__':
     # Override logging configuration to show only critical errors
     logging.basicConfig(
         format='%(asctime)s %(levelname)s: %(message)s', level=logging.CRITICAL)
+
     # Use this to conditionally disable all logging output
     DISABLE_LOGGING = True
+
     if DISABLE_LOGGING:
         logging.basicConfig(handlers=[logging.NullHandler()], force=True)
 

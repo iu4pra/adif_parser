@@ -217,9 +217,6 @@ if __name__ == '__main__':
     parser.add_argument('--output-dir', metavar='output_folder', type=str,
                         default=OUT_FOLDER, help=f'Output folder (default {OUT_FOLDER})')
 
-    # parser.add_argument(
-    #    '--log', default=sys.stdout, type=argparse.FileType('w'),
-    #    help='the file where the sum should be written')
     args = parser.parse_args()
 
     # Filename to be processed
