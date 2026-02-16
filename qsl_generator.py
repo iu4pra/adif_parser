@@ -10,6 +10,7 @@ from qso import QSO
 from wkhtml import wkhtmltoimage, wkhtmltopdf
 import adif
 import argparse
+import logging
 import os
 import pickle
 import pypdf
@@ -118,7 +119,7 @@ def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE
             qso_data_lowercase[key.casefold()] = value
         output = template.render(qso=qso_data_lowercase)
 
-        print(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
+        logging.info(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
 
         # Write compiled template to file
         with open(TEMPLATE_TEMP_FILENAME, 'wt', encoding='utf-8') as f:
@@ -127,7 +128,7 @@ def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE
         # Convert template page to PDF
         ret = wkhtmltopdf(dict_to_cmd_list(cmd_options_pdf) +
                           [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])
-        print(f"wkhtmltopdf returned {ret.returncode}")
+        logging.info(f"wkhtmltopdf returned {ret.returncode}")
 
     # Concatenate all files to create a single PDF to print
     out_name = os.path.join(_out_folder, PDF_OUTPUT)
@@ -187,7 +188,7 @@ def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FI
             qso_data_lowercase[key.casefold()] = value
         output = template.render(qso=qso_data_lowercase)
 
-        print(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
+        logging.info(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
 
         # Write compiled template to file
         with open(TEMPLATE_TEMP_FILENAME, 'wt', encoding='utf-8') as f:
@@ -197,7 +198,7 @@ def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FI
         out_name = os.path.join(_out_folder, (IMG_OUT_BASE_NAME % i))
         ret = wkhtmltoimage(dict_to_cmd_list(cmd_options_image) +
                             [TEMPLATE_TEMP_FILENAME, out_name])
-        print(f"wkhtmltoimage returned {ret.returncode}")
+        logging.info(f"wkhtmltoimage returned {ret.returncode}")
 
 
 if __name__ == '__main__':
@@ -242,11 +243,11 @@ if __name__ == '__main__':
     ext = filename.split('.')[-1]
 
     if ext.casefold() in ['adi', 'adif']:
-        print(f"Proceeding to parse ADIF file {args.filename}")
+        logging.info(f"Proceeding to parse ADIF file {args.filename}")
         qso_list = adif.qso_list_from_file(filename)
 
     elif ext.casefold() in ['dump',]:
-        print("TEST ONLY dump file")
+        logging.warning("TEST ONLY dump file, not for production!")
         # Unpickle data
         with open(args.filename, 'rb') as f:
             qso_list = pickle.load(f)
