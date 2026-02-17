@@ -150,7 +150,7 @@ class App():
     def logfile_chooser(self):
         """
         Opens a file dialog to select the ADIF log file.
-        
+
         Action:
             - Opens system file picker for .adi/.adif files.
             - Stores the path in self.logfile.
@@ -169,7 +169,7 @@ class App():
     def validate_logfile(self):
         """
         Runs the ADIF parser on the selected file to check for errors.
-        
+
         Action:
             - Calls adif.parse_adif_file().
             - Logs 'Validation passed' if successful.
@@ -193,7 +193,7 @@ class App():
     def generate_qsl(self):
         """
         Main execution function triggered by the 'Generate QSL' button.
-        
+
         Action:
             1. Reads the ADIF file and converts it to a list of QSO objects.
             2. Checks the state of PDF and Image checkboxes.

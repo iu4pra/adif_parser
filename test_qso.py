@@ -1,5 +1,11 @@
+#!/usr/bin/python3
+
+# This software under the MIT License
+# Unit test for QSO class
+
 import unittest
 from qso import QSO
+
 
 class TestQSO(unittest.TestCase):
 
@@ -40,12 +46,13 @@ class TestQSO(unittest.TestCase):
 
     def test_normalization(self):
         # Test that lowercase input keys are converted to uppercase
-        data = {'call': 'k1abc'} # lowercase key
+        data = {'call': 'k1abc'}  # lowercase key
         q = QSO(data)
-        
+
         # Internal dictionary should have 'CALL'
         self.assertIn('CALL', q._d)
         self.assertEqual(q._d['CALL'], 'k1abc')
+
 
 if __name__ == '__main__':
     unittest.main()

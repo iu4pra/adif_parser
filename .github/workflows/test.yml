@@ -23,5 +23,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Run tests
-        run: python -m unittest unit_test.py test_adif.py test_qso.py
+      - name: Unit Test - general
+        run: python -m unittest unit_test.py
+      - name: Unit Test - ADIF parser
+        run: python -m unittest test_adif.py
+      - name: Unit Test - QSO class
+        run: python -m unittest test_qso.py
