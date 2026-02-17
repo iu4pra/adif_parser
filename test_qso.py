@@ -1,3 +1,8 @@
+#!/usr/bin/python3
+
+# This software under the MIT License
+# Unit test for QSO class
+
 import unittest
 from qso import QSO
 

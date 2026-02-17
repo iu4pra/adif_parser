@@ -1,3 +1,8 @@
+#!/usr/bin/python3
+
+# This software under the MIT License
+# Unit test for ADIF parser
+
 import unittest
 import adif
 
