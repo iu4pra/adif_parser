@@ -1,15 +1,3 @@
-Here is a completely revamped `README.md`.
-
-I have restructured it to be much more friendly to new users. Key improvements include:
-
-1. **Clear Pre-requisites:** explicit instructions on installing the non-Python dependency (`wkhtmltox`).
-2. **Step-by-Step Installation:** A dedicated section for setting up the environment.
-3. **Usage Instructions:** Separate commands for running the GUI versus the Command Line Interface.
-4. **File Guide:** A brief explanation of the core files we just edited, so users understand the project structure.
-
-### Updated `README.md`
-
-```markdown
 # ADIF Parser and QSL Generator
 
 A Python tool to parse ADIF (Amateur Data Interchange Format) log files and generate personalized QSL cards using HTML/Jinja2 templates. The tool can output multi-page PDFs or individual image files for each contact.
@@ -39,20 +27,14 @@ Before running the Python scripts, you must install the **wkhtmltox** suite (wkh
 
 2.  **Install Python Dependencies:**
     It is recommended to use a virtual environment.
-    ```bash
-    pip install jinja2 pypdf
-    ```
-    *(Note: If a `requirements.txt` file is present, you can run `pip install -r requirements.txt`)*
+    `pip install -r requirements.txt`
 
 ## How to Run
 
 ### Option 1: Graphical Interface (Recommended)
 The easiest way to use the tool is via the built-in GUI.
 
-```bash
 python gui.py
-
-```
 
 1. Click **"Open file..."** to select your `.adi` log file.
 2. (Optional) Click **"Choose template..."** to select a custom HTML template.
@@ -93,7 +75,5 @@ This software is released under the MIT License.
 
 73,
 **IU4PRA**
-
-```
 
 ```
