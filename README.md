@@ -73,5 +73,4 @@ python qsl_generator.py my_log.adi --image --template templates/my_custom_card.h
 
 This software is released under the MIT License.
 
-73,
-**IU4PRA**
+73 de IU4PRA
