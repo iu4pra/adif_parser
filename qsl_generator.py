@@ -16,6 +16,15 @@ import pickle
 import pypdf
 import shutil
 
+# ==========================================
+# EXTERNAL DEPENDENCY WARNING
+# ==========================================
+# This script relies on the 'wkhtmltox' suite (wkhtmltopdf / wkhtmltoimage)
+# to render HTML into PDF or Image formats.
+# These are system-level binaries that must be installed separately.
+# Download them here: https://wkhtmltopdf.org/downloads.html
+# ==========================================
+
 # QSL standard size in centimeters
 QSL_WIDTH = 14
 QSL_HEIGHT = 9
@@ -112,7 +121,15 @@ def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE
     for i, _qso in enumerate(qso_list):
         assert isinstance(_qso, QSO)
 
-        # Rendering the template and storing the resulting text in variable output
+        # ---------------------------------------------------------------------
+        # DATA FLOW: Python -> Jinja -> HTML
+        # 1. We extract the raw dictionary from the QSO object (_qso._d).
+        # 2. We convert all keys to lowercase (e.g., 'CALL' -> 'call').
+        #    This is done because Jinja templates usually prefer lowercase variables.
+        # 3. We pass this dictionary to the template context as 'qso'.
+        #    This allows the HTML template to access variables like {{ qso.call }}
+        #    or {{ qso.band }}.
+        # ---------------------------------------------------------------------
         qso_data_lowercase = {}
         for key, value in _qso._d.items():
             # Converting all keys into lowercase

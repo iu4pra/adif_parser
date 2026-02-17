@@ -13,6 +13,7 @@ import tkinter.filedialog as tkfile
 import tkinter.scrolledtext as tkscroll
 
 
+# --- Helper Classes ---
 class TextHandler(logging.Handler):
     # This class allows you to log to a Tkinter Text or ScrolledText widget
     # Adapted from Moshe Kaplan: https://gist.github.com/moshekaplan/c425f861de7bbf28ef06
@@ -50,6 +51,7 @@ class App():
     def __init__(self, master: tk.Tk):
         """Create and initialize widgets"""
 
+        # --- UI Layout ---
         # Main frame
         frame = tk.Frame(master)
         frame.grid(padx=5, pady=5)
@@ -126,8 +128,13 @@ class App():
         # Bind clear log command
         self.clear_log_button['command'] = log_handler.clear
 
+    # --- Event Handlers ---
+
     def template_chooser(self):
-        """Open file chooser for template file"""
+        """
+        Opens a file dialog to select an HTML template.
+        If the user cancels, it defaults to TEMPLATE_DEFAULT_FILE.
+        """
         self.template_file = tkfile.askopenfilename(
             filetypes=(("QSL template", "*.html *.htm"),)) or self.template_file
         if self.template_file:
@@ -141,7 +148,14 @@ class App():
                              self.template_file)
 
     def logfile_chooser(self):
-        """Open file chooser for log file"""
+        """
+        Opens a file dialog to select the ADIF log file.
+        
+        Action:
+            - Opens system file picker for .adi/.adif files.
+            - Stores the path in self.logfile.
+            - Enables the 'Validate log' button if a valid file is picked.
+        """
         self.logfile = tkfile.askopenfilename(
             filetypes=(("ADIF file", "*.adi *.adif"),)) or self.logfile
         if self.logfile:
@@ -153,7 +167,14 @@ class App():
             self.validate_file_button.config(state=tk.DISABLED)
 
     def validate_logfile(self):
-        """Callback for log file validation"""
+        """
+        Runs the ADIF parser on the selected file to check for errors.
+        
+        Action:
+            - Calls adif.parse_adif_file().
+            - Logs 'Validation passed' if successful.
+            - Logs specific error messages if the parser fails.
+        """
         if hasattr(self, 'logfile') and os.path.isfile(self.logfile):
             try:
                 _result = True  # Validation result
@@ -170,7 +191,14 @@ class App():
             self.logger.error("No logfile chosen!")
 
     def generate_qsl(self):
-        """QSL generator callback"""
+        """
+        Main execution function triggered by the 'Generate QSL' button.
+        
+        Action:
+            1. Reads the ADIF file and converts it to a list of QSO objects.
+            2. Checks the state of PDF and Image checkboxes.
+            3. Calls the appropriate functions in qsl_generator (generate_qsl_pdf or generate_qsl_image).
+        """
         if hasattr(self, 'logfile') and os.path.isfile(self.logfile):
             qso_list = adif.qso_list_from_file(self.logfile)
             # Check if PDF output checkbox is ticked

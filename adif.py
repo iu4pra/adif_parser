@@ -3,9 +3,20 @@
 # ADIF file parser
 # This software under the MIT License
 # Sources:
-#  https://pypi.org/project/adif-io/
-#  https://www.adif.org/100/adif_100.htm
-#  https://regex101.com/
+#   https://pypi.org/project/adif-io/
+#   https://www.adif.org/100/adif_100.htm
+#   https://regex101.com/
+
+"""
+ADIF Parser Module
+
+This module handles the parsing of Amateur Data Interchange Format (ADIF) files.
+It is responsible for:
+1. Reading raw .adi files.
+2. Splitting the content into individual ADIF tags (fields).
+3. Validating the integrity of these fields (checking lengths and types).
+4. Converting the raw fields into structured QSO objects.
+"""
 
 import logging
 import os.path
@@ -83,6 +94,20 @@ def adif_field_to_qso_field(_adif: dict):
 
 
 # Regex to parse ADIF fields from the log (without value)
+# Explanation of the pattern:
+#   <             : Matches the opening bracket of an ADIF tag.
+#   (?P<field>\w+): Captures the field name (alphanumeric) into group 'field'.
+#   (?:           : Non-capturing group for the rest of the tag logic.
+#     >           : Matches a closing bracket (simple tag like <EOR>).
+#     |           : OR
+#     \:          : Matches a colon separator.
+#     (?P<len>[-\d]+) : Captures the length (digits/hyphens) into group 'len'.
+#     (?:         : Optional non-capturing group for the data type.
+#       \:        : Matches a colon separator.
+#       (?P<type>\w+) : Captures the data type into group 'type'.
+#     )?          : End optional type group.
+#   )             : End non-capturing group.
+#   >             : Matches the closing bracket.
 _FIELD_GENERIC_RE_NO_VALUE = re.compile(
     r"<(?P<field>\w+)(?:>|\:(?P<len>[-\d]+)(?:\:(?P<type>\w+))?>)", re.IGNORECASE)
 
