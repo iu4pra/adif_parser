@@ -24,4 +24,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run tests
-        run: python -m unittest unit_test.py test_adif.py test_qso.py
+        run: python -m unittest unit_test.py
+             python -m unittest test_adif.py
+             python -m unittest test_qso.py
