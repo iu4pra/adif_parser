@@ -75,5 +75,3 @@ This software is released under the MIT License.
 
 73,
 **IU4PRA**
-
-```
