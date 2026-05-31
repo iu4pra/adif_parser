@@ -16,9 +16,9 @@ class TestAdifParser(unittest.TestCase):
 
         # Expecting 2 fields: CALL and EOR
         self.assertEqual(len(fields), 2)
-        self.assertEqual(fields[0]['field'], 'CALL')
-        self.assertEqual(fields[0]['value'], 'W1AW')  # Now this will match
-        self.assertEqual(fields[1]['field'], 'EOR')
+        self.assertEqual(fields[0]["field"], "CALL")
+        self.assertEqual(fields[0]["value"], "W1AW")  # Now this will match
+        self.assertEqual(fields[1]["field"], "EOR")
 
     def test_parse_complex_types(self):
         # Testing fields with data types (e.g., <FREQ:6:N>)
@@ -26,9 +26,9 @@ class TestAdifParser(unittest.TestCase):
         # Note: I also ensured MODE length matches "FT8" (3 chars)
         fields = adif.parse_adif_string(data)
 
-        self.assertEqual(fields[0]['field'], 'FREQ')
-        self.assertEqual(fields[0]['value'], '14.074')
-        self.assertEqual(fields[0]['type'], 'N')  # Type check
+        self.assertEqual(fields[0]["field"], "FREQ")
+        self.assertEqual(fields[0]["value"], "14.074")
+        self.assertEqual(fields[0]["type"], "N")  # Type check
 
     def test_header_stripping(self):
         # Test if the parser correctly removes the header
@@ -39,8 +39,8 @@ class TestAdifParser(unittest.TestCase):
         clean_fields, eoh_index = adif.remove_header(fields)
 
         # After stripping, only CALL and EOR should remain
-        self.assertEqual(clean_fields[0]['field'], 'CALL')
-        self.assertEqual(clean_fields[1]['field'], 'EOR')
+        self.assertEqual(clean_fields[0]["field"], "CALL")
+        self.assertEqual(clean_fields[1]["field"], "EOR")
 
     def test_qso_list_creation(self):
         # Test converting raw fields into a list of QSO objects
@@ -50,9 +50,9 @@ class TestAdifParser(unittest.TestCase):
         qso_list = adif.adif_to_qso_list(fields)
 
         self.assertEqual(len(qso_list), 2)
-        self.assertEqual(qso_list[0]._d['CALL'], 'K1A')
-        self.assertEqual(qso_list[1]._d['CALL'], 'K2B')
+        self.assertEqual(qso_list[0]._d["CALL"], "K1A")
+        self.assertEqual(qso_list[1]._d["CALL"], "K2B")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,43 @@
+name: Format Python code with Black
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install black
+        run: pip install black
+
+      - name: Run black formatter
+        run: black .
+
+      - name: Commit and push changes if needed
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          if [[ `git status --porcelain` ]]; then
+            git add .
+            git commit -m "ci: format Python code with Black [auto]"
+            git push
+          else
+            echo "No formatting changes to commit."
+          fi
+  
