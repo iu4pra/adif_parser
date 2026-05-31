@@ -193,7 +193,10 @@ def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FI
             os.makedirs(_out_folder)
 
     # Loading Jinja environment
-    env = Environment(loader=FileSystemLoader(TEMPLATE_FOLDER))
+    env = Environment(
+        loader=FileSystemLoader(TEMPLATE_FOLDER),
+        autoescape=select_autoescape(['html', 'htm', 'xml'])
+    )
 
     # Loading HTML template
     template = env.get_template(_template)
