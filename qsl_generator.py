@@ -30,40 +30,41 @@ QSL_WIDTH = 14
 QSL_HEIGHT = 9
 
 # Default template filename
-TEMPLATE_DEFAULT_FILE = 'template.html'
+TEMPLATE_DEFAULT_FILE = "template.html"
 # Template folder
-TEMPLATE_FOLDER = './templates'
+TEMPLATE_FOLDER = "./templates"
 
 # Temporary folder
-TEMP_FOLDER = './tmp/'
+TEMP_FOLDER = "./tmp/"
 # Compiled template temporary filename
-TEMPLATE_TEMP_FILENAME = os.path.join(TEMP_FOLDER, 'template_out.html')
+TEMPLATE_TEMP_FILENAME = os.path.join(TEMP_FOLDER, "template_out.html")
 
 # Temporary PDF base name
 # Usage: filename = PDF_TEMP_BASE_NAME % index
-PDF_TEMP_BASE_NAME = os.path.join(TEMP_FOLDER, './qsl_%04d.pdf')
+PDF_TEMP_BASE_NAME = os.path.join(TEMP_FOLDER, "./qsl_%04d.pdf")
 
 # Output folder
-OUT_FOLDER = './out/'
+OUT_FOLDER = "./out/"
 
 # Output image base name
-IMG_OUT_BASE_NAME = './qsl_%04d.jpg'
+IMG_OUT_BASE_NAME = "./qsl_%04d.jpg"
 # Final PDF_filename
-PDF_OUTPUT = './out.pdf'
+PDF_OUTPUT = "./out.pdf"
 
 
 def cm_to_px(cm, dpi):
     """Converts centimeters to pixels given a DPI value"""
-    return int(cm*dpi/2.54)
+    return int(cm * dpi / 2.54)
 
 
 # Command options for wkhtmltopdf
-cmd_options_pdf = {"--page-width": f"{QSL_WIDTH}cm",
-                   "--page-height": f"{QSL_HEIGHT}cm"}
+cmd_options_pdf = {"--page-width": f"{QSL_WIDTH}cm", "--page-height": f"{QSL_HEIGHT}cm"}
 
 # Command options for wkhtmltoimage
 cmd_options_image = {
-    "--width": str(cm_to_px(QSL_WIDTH, 75)), "--height": str(cm_to_px(QSL_HEIGHT, 75))}
+    "--width": str(cm_to_px(QSL_WIDTH, 75)),
+    "--height": str(cm_to_px(QSL_HEIGHT, 75)),
+}
 
 
 def unlink_if_exists(path):
@@ -84,7 +85,11 @@ def dict_to_cmd_list(_cmd_options: dict):
     return cmd_list
 
 
-def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE, _out_folder: str = OUT_FOLDER):
+def generate_qsl_pdf(
+    qso_list: list[QSO],
+    _template: str = TEMPLATE_DEFAULT_FILE,
+    _out_folder: str = OUT_FOLDER,
+):
     """Generates a PDF file qith the QSLs contained in the given QSO list"""
     assert isinstance(qso_list, list)
 
@@ -115,7 +120,7 @@ def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE
     # Loading Jinja environment
     env = Environment(
         loader=FileSystemLoader(TEMPLATE_FOLDER),
-        autoescape=select_autoescape(['html', 'htm', 'xml'])
+        autoescape=select_autoescape(["html", "htm", "xml"]),
     )
 
     # Loading HTML template
@@ -142,12 +147,14 @@ def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE
         logging.info(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
 
         # Write compiled template to file
-        with open(TEMPLATE_TEMP_FILENAME, 'wt', encoding='utf-8') as f:
+        with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
             f.write(output)
 
         # Convert template page to PDF
-        ret = wkhtmltopdf(dict_to_cmd_list(cmd_options_pdf) +
-                          [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])
+        ret = wkhtmltopdf(
+            dict_to_cmd_list(cmd_options_pdf)
+            + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
+        )
         logging.info(f"wkhtmltopdf returned {ret.returncode}")
 
     # Concatenate all files to create a single PDF to print
@@ -163,7 +170,11 @@ def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE
         shutil.rmtree(TEMP_FOLDER)
 
 
-def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE, _out_folder: str = OUT_FOLDER):
+def generate_qsl_image(
+    qso_list: list[QSO],
+    _template: str = TEMPLATE_DEFAULT_FILE,
+    _out_folder: str = OUT_FOLDER,
+):
     """Generates one QSL image per QSO in the given list"""
     assert isinstance(qso_list, list)
 
@@ -195,7 +206,7 @@ def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FI
     # Loading Jinja environment
     env = Environment(
         loader=FileSystemLoader(TEMPLATE_FOLDER),
-        autoescape=select_autoescape(['html', 'htm', 'xml'])
+        autoescape=select_autoescape(["html", "htm", "xml"]),
     )
 
     # Loading HTML template
@@ -214,31 +225,53 @@ def generate_qsl_image(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FI
         logging.info(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
 
         # Write compiled template to file
-        with open(TEMPLATE_TEMP_FILENAME, 'wt', encoding='utf-8') as f:
+        with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
             f.write(output)
 
         # Convert template page to PDF
         out_name = os.path.join(_out_folder, (IMG_OUT_BASE_NAME % i))
-        ret = wkhtmltoimage(dict_to_cmd_list(cmd_options_image) +
-                            [TEMPLATE_TEMP_FILENAME, out_name])
+        ret = wkhtmltoimage(
+            dict_to_cmd_list(cmd_options_image) + [TEMPLATE_TEMP_FILENAME, out_name]
+        )
         logging.info(f"wkhtmltoimage returned {ret.returncode}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Generate a .pdf file from a QSO list in .adi or .dump format")
-    parser.add_argument('filename', metavar='input_file',
-                        type=str, help='Log file to process (ADIF format)')
-    parser.add_argument('outname', metavar='output_file',
-                        nargs='?', default='out.pdf', type=str, help='Output file name')
-    parser.add_argument('--pdf', action='store_true',
-                        help='Output as multipage PDF')
-    parser.add_argument('--image', default=False,
-                        action='store_true', help='Output as images')
-    parser.add_argument('--template', metavar='template_file', type=str,
-                        default=TEMPLATE_DEFAULT_FILE, help=f'Template to use from {TEMPLATE_FOLDER} folder (default {TEMPLATE_DEFAULT_FILE})')
-    parser.add_argument('--output-dir', metavar='output_folder', type=str,
-                        default=OUT_FOLDER, help=f'Output folder (default {OUT_FOLDER})')
+        description="Generate a .pdf file from a QSO list in .adi or .dump format"
+    )
+    parser.add_argument(
+        "filename",
+        metavar="input_file",
+        type=str,
+        help="Log file to process (ADIF format)",
+    )
+    parser.add_argument(
+        "outname",
+        metavar="output_file",
+        nargs="?",
+        default="out.pdf",
+        type=str,
+        help="Output file name",
+    )
+    parser.add_argument("--pdf", action="store_true", help="Output as multipage PDF")
+    parser.add_argument(
+        "--image", default=False, action="store_true", help="Output as images"
+    )
+    parser.add_argument(
+        "--template",
+        metavar="template_file",
+        type=str,
+        default=TEMPLATE_DEFAULT_FILE,
+        help=f"Template to use from {TEMPLATE_FOLDER} folder (default {TEMPLATE_DEFAULT_FILE})",
+    )
+    parser.add_argument(
+        "--output-dir",
+        metavar="output_folder",
+        type=str,
+        default=OUT_FOLDER,
+        help=f"Output folder (default {OUT_FOLDER})",
+    )
 
     args = parser.parse_args()
 
@@ -260,26 +293,28 @@ if __name__ == '__main__':
     if not args.pdf and args.pdf is not None and args.image == False:
         raise Exception("At least one output option must be specified")
     # File extension
-    ext = filename.split('.')[-1]
+    ext = filename.split(".")[-1]
 
-    if ext.casefold() in ['adi', 'adif']:
+    if ext.casefold() in ["adi", "adif"]:
         logging.info(f"Proceeding to parse ADIF file {args.filename}")
         qso_list = adif.qso_list_from_file(filename)
 
-    elif ext.casefold() in ['dump',]:
+    elif ext.casefold() in [
+        "dump",
+    ]:
         logging.warning("TEST ONLY dump file, not for production!")
         # Unpickle data
-        with open(args.filename, 'rb') as f:
+        with open(args.filename, "rb") as f:
             qso_list = pickle.load(f)
     else:
         raise Exception("Unrecognized file extension")
 
     if args.pdf:
         # Output as PDF
-        generate_qsl_pdf(qso_list, _template=args.template,
-                         _out_folder=args.output_dir)
+        generate_qsl_pdf(qso_list, _template=args.template, _out_folder=args.output_dir)
 
     if args.image:
         # Output as images
-        generate_qsl_image(qso_list, _template=args.template,
-                           _out_folder=args.output_dir)
+        generate_qsl_image(
+            qso_list, _template=args.template, _out_folder=args.output_dir
+        )
