@@ -6,7 +6,7 @@ A Python tool to parse ADIF (Amateur Data Interchange Format) log files and gene
 * **ADIF Parsing:** Robust parsing of standard `.adi` log files.
 * **Custom Templates:** Design QSL cards using standard HTML and CSS.
 * **Dual Output:** Generate printable PDFs or digital JPEG images.
-* **Cross-Platform:** Works on Windows, Linux, and macOS.
+* **Cross-Platform:** Works on Windows and Linux
 * **GUI & CLI:** Includes a simple Tkinter GUI for ease of use and a CLI for scripting.
 
 ## Prerequisites
