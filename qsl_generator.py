@@ -5,7 +5,7 @@
 # Generates a printable QSL starting from an HTML template with Jinja2
 # wkhtmltox reference https://wkhtmltopdf.org/downloads.html
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from qso import QSO
 from wkhtml import wkhtmltoimage, wkhtmltopdf
 import adif
@@ -113,7 +113,10 @@ def generate_qsl_pdf(qso_list: list[QSO], _template: str = TEMPLATE_DEFAULT_FILE
             os.makedirs(_out_folder)
 
     # Loading Jinja environment
-    env = Environment(loader=FileSystemLoader(TEMPLATE_FOLDER))
+    env = Environment(
+        loader=FileSystemLoader(TEMPLATE_FOLDER),
+        autoescape=select_autoescape(['html', 'htm', 'xml'])
+    )
 
     # Loading HTML template
     template = env.get_template(_template)
