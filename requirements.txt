@@ -1,4 +1,2 @@
-argparse
-jinja2 # Template engine
-logging
-pypdf # PDF concatenation
+jinja2>=3.0  # Template engine for HTML QSL card generation
+pypdf>=3.0   # PDF manipulation and concatenation
