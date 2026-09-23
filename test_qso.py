@@ -41,12 +41,12 @@ class TestQSO(unittest.TestCase):
 
     def test_normalization(self):
         # Test that lowercase input keys are converted to uppercase
-        data = {"call": "k1abc"}  # lowercase key
+        data = {"call": "K1ABC"}  # lowercase key
         q = QSO(data)
 
         # Internal dictionary should have 'CALL'
         self.assertIn("CALL", q._d)
-        self.assertEqual(q._d["CALL"], "k1abc")
+        self.assertEqual(q._d["CALL"], "K1ABC")
 
 
 if __name__ == "__main__":

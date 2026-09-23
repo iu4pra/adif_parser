@@ -2,12 +2,13 @@
 
 # This software under the MIT License
 # Unit test for the application
-# This is the only file at the moment, might be split in the future if it becomes too big
 
+from qso import QSO
 import adif
 import logging
-from qso import QSO
+import qsl_generator as qslgen
 import unittest
+from unittest.mock import patch
 
 
 class ParsingTest(unittest.TestCase):
@@ -108,6 +109,19 @@ class QSOTest(unittest.TestCase):
         _qso_list = adif.adif_to_qso_list(_adif_string)
         self.assertEqual(len(_qso_list), 1)
         self.assertTrue(_qso_list[0].is_valid())
+
+
+class QSLGeneratorTest(unittest.TestCase):
+
+    @patch("sys.argv", ["qsl_generator.py", ""])
+    def test_no_args(self):
+        with self.assertRaises(Exception):
+            qslgen.main()
+
+    @patch("sys.argv", ["qsl_generator.py", "pippo.txt"])
+    def test_nonexistent_file(self):
+        with self.assertRaises(FileNotFoundError):
+            qslgen.main()
 
 
 # Automatically run tests when this module is executed

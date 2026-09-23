@@ -26,11 +26,16 @@ import shutil
 # ==========================================
 
 # QSL standard size in centimeters
-QSL_WIDTH = 14
-QSL_HEIGHT = 9
+QSL_WIDTH = 14.0
+QSL_HEIGHT = 9.0
+# Maximum size
+QSL_WIDTH_MAX = 700.0
+QSL_HEIGHT_MAX = 180.0
 
 # Default DPI
 DPI = 150
+# Maximum DPI
+DPI_MAX = 1500
 
 # Default template filename
 TEMPLATE_DEFAULT_FILE = "template.html"
@@ -232,16 +237,20 @@ def generate_qsl_image_pdf(
     rmtree_if_exists(TEMP_FOLDER)
 
 
-if __name__ == "__main__":
+# Main module function
+def main():
+    # Define parser and its arguments
     parser = argparse.ArgumentParser(
         description="Generate a .pdf file from a QSO list in .adi or .dump format"
     )
+
     parser.add_argument(
         "filename",
         metavar="input_file",
         type=str,
         help="Log file to process (ADIF format)",
     )
+
     parser.add_argument(
         "outname",
         metavar="output_file",
@@ -250,10 +259,13 @@ if __name__ == "__main__":
         type=str,
         help="Output file name",
     )
+
     parser.add_argument("--pdf", action="store_true", help="Output as multi-page PDF")
+
     parser.add_argument(
         "--image", default=False, action="store_true", help="Output as images"
     )
+
     parser.add_argument(
         "--template",
         metavar="template_file",
@@ -261,6 +273,7 @@ if __name__ == "__main__":
         default=TEMPLATE_DEFAULT_FILE,
         help=f"Template to use from {TEMPLATE_FOLDER} folder (default {TEMPLATE_DEFAULT_FILE})",
     )
+
     parser.add_argument(
         "--output-dir",
         metavar="output_folder",
@@ -268,6 +281,7 @@ if __name__ == "__main__":
         default=OUT_FOLDER,
         help=f"Output folder (default {OUT_FOLDER})",
     )
+
     parser.add_argument(
         "--image_format",
         metavar="image_format",
@@ -275,6 +289,23 @@ if __name__ == "__main__":
         default=IMG_OUT_EXTENSION,
         help=f"Output image format (default {IMG_OUT_EXTENSION})",
     )
+
+    parser.add_argument(
+        "--width",
+        metavar="width",
+        type=float,
+        default=QSL_WIDTH,
+        help=f"QSL width in centimeters (default {QSL_WIDTH})",
+    )
+
+    parser.add_argument(
+        "--height",
+        metavar="height",
+        type=float,
+        default=QSL_HEIGHT,
+        help=f"QSL height in centimeters (default {QSL_HEIGHT})",
+    )
+
     parser.add_argument(
         "--dpi",
         metavar="dpi",
@@ -283,6 +314,7 @@ if __name__ == "__main__":
         help=f"Tentative DPI value (default {DPI})",
     )
 
+    # Parse arguments
     args = parser.parse_args()
 
     # Filename to be processed
@@ -302,6 +334,7 @@ if __name__ == "__main__":
 
     if not args.pdf and args.pdf is not None and args.image == False:
         raise Exception("At least one output option must be specified")
+
     # File extension
     ext = filename.split(".")[-1]
 
@@ -309,6 +342,7 @@ if __name__ == "__main__":
         logging.info(f"Proceeding to parse ADIF file {args.filename}")
         qso_list = adif.qso_list_from_file(filename)
 
+    # TODO to be removed, test code for .dump files
     elif ext.casefold() in [
         "dump",
     ]:
@@ -319,6 +353,23 @@ if __name__ == "__main__":
     else:
         raise Exception("Unrecognized file extension")
 
+    # Optional parameters validation
+    if args.width <= 0:
+        raise ValueError("--width must be positive")
+    elif args.width > QSL_WIDTH_MAX:
+        raise ValueError(f"--width must be <= {QSL_WIDTH_MAX}")
+
+    if args.height <= 0:
+        raise ValueError("--height must be positive")
+    elif args.height > QSL_HEIGHT_MAX:
+        raise ValueError(f"--height must be <= {QSL_HEIGHT_MAX}")
+
+    if args.dpi <= 0:
+        raise ValueError("--dpi must be positive")
+    elif args.dpi > DPI_MAX:
+        raise ValueError(f"--dpi must be <= {DPI_MAX}")
+
+    # All OK, generate QSLs
     generate_qsl_image_pdf(
         qso_list,
         _image=args.image,
@@ -326,5 +377,11 @@ if __name__ == "__main__":
         _template=args.template,
         _out_folder=args.output_dir,
         _format=args.image_format,
+        _width=args.width,
+        _height=args.height,
         _dpi=args.dpi,
     )
+
+
+if __name__ == "__main__":
+    main()
