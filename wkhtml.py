@@ -10,6 +10,9 @@ import subprocess
 # Base path for executables
 WKHTMLTOX_BASE_PATH = "./"
 
+# Default value for DPI
+WKHTMLTOX_BASE_DPI = 96
+
 
 def wkhtmltoimage(args: list = []):
     """Invokes wkhtmltoimage with the given arguments"""

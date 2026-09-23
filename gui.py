@@ -12,8 +12,9 @@ import tkinter as tk
 import tkinter.filedialog as tkfile
 import tkinter.scrolledtext as tkscroll
 
-
 # --- Helper Classes ---
+
+
 class TextHandler(logging.Handler):
     # This class allows you to log to a Tkinter Text or ScrolledText widget
     # Adapted from Moshe Kaplan: https://gist.github.com/moshekaplan/c425f861de7bbf28ef06
