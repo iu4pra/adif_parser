@@ -130,6 +130,7 @@ def generate_qsl_image_pdf(
     _image: bool = False,
     _pdf: bool = False,
     _template: str = TEMPLATE_DEFAULT_FILE,
+    _out_filename: str = PDF_OUTPUT,
     _out_folder: str = OUT_FOLDER,
     _format: str = IMG_OUT_EXTENSION,
     _width: float = QSL_WIDTH,
@@ -163,7 +164,7 @@ def generate_qsl_image_pdf(
 
     if _pdf:
         # Delete previous output file(s)
-        unlink_if_exists(PDF_OUTPUT)
+        unlink_if_exists(_out_filename)
 
     # Create output folder
     if not os.path.exists(_out_folder):
@@ -226,7 +227,7 @@ def generate_qsl_image_pdf(
             )
     if _pdf:
         # Concatenate all files to create a single PDF to print
-        out_name = os.path.join(_out_folder, PDF_OUTPUT)
+        out_name = os.path.join(_out_folder, _out_filename)
         writer = pypdf.PdfWriter()
         for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))]:
             writer.append(pdf)
@@ -252,12 +253,12 @@ def main():
     )
 
     parser.add_argument(
-        "outname",
+        "outfile",
         metavar="output_file",
         nargs="?",
         default="out.pdf",
         type=str,
-        help="Output file name",
+        help="Output file name (base for images)",
     )
 
     parser.add_argument("--pdf", action="store_true", help="Output as multi-page PDF")
@@ -375,6 +376,7 @@ def main():
         _image=args.image,
         _pdf=args.pdf,
         _template=args.template,
+        _out_filename=args.outfile,
         _out_folder=args.output_dir,
         _format=args.image_format,
         _width=args.width,
