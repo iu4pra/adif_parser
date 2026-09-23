@@ -107,15 +107,23 @@ def dict_to_cmd_list(_cmd_options: dict):
     return cmd_list
 
 
-def generate_qsl_pdf(
+def generate_qsl_image_pdf(
     qso_list: list[QSO],
+    _image: bool = False,
+    _pdf: bool = False,
     _template: str = TEMPLATE_DEFAULT_FILE,
     _out_folder: str = OUT_FOLDER,
     _width: float = QSL_WIDTH,
     _height: float = QSL_HEIGHT,
     _dpi: int = DPI,
 ):
-    """Generates a PDF file qith the QSLs contained in the given QSO list"""
+    """Generates either, one QSL image per QSO in the given list,
+    a PDF file qith the QSLs contained in the given QSO list, or both"""
+
+    if not _image and not _pdf:
+        logging.error("No output specified!")
+        return
+
     assert isinstance(qso_list, list)
 
     # Template file full path
@@ -123,7 +131,11 @@ def generate_qsl_pdf(
     if not os.path.isfile(template_path):
         raise FileNotFoundError(f"Template file {template_path} not found")
 
-    # Create temporary folder if not present
+    # Delete previous output file(s) if present
+    if os.path.exists(TEMP_FOLDER):
+        shutil.rmtree(TEMP_FOLDER)
+
+    # Re-create temporary folder
     if not os.path.exists(TEMP_FOLDER):
         os.makedirs(TEMP_FOLDER)
     else:
@@ -131,8 +143,10 @@ def generate_qsl_pdf(
             os.unlink(TEMP_FOLDER)
             os.makedirs(TEMP_FOLDER)
 
-    # Delete previous output file(s)
-    unlink_if_exists(PDF_OUTPUT)
+    if _pdf:
+        # Delete previous output file(s)
+        unlink_if_exists(PDF_OUTPUT)
+
 
     # Create output folder
     if not os.path.exists(_out_folder):
@@ -164,7 +178,9 @@ def generate_qsl_pdf(
         #    This allows the HTML template to access variables like {{ qso.call }}
         #    or {{ qso.band }}.
         # ---------------------------------------------------------------------
+
         qso_data_lowercase = {}
+        
         for key, value in _qso._d.items():
             # Converting all keys into lowercase
             qso_data_lowercase[key.casefold()] = value
@@ -176,95 +192,32 @@ def generate_qsl_pdf(
         with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
             f.write(output)
 
-        # Convert template page to PDF
-        ret = wkhtmltopdf(
-            dict_to_cmd_list(generate_options_pdf(_dpi,_width,_height))
-            + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
-        )
-        logging.info(f"wkhtmltopdf returned {ret.returncode}")
+        # Convert template page to image
+        if _image:
+            out_name = os.path.join(_out_folder, (IMG_OUT_BASE_NAME % i))
+            ret = wkhtmltoimage(
+                dict_to_cmd_list(generate_options_image(_dpi,_width,_height)) + [TEMPLATE_TEMP_FILENAME, out_name]
+            )
+            logging.info(f"wkhtmltoimage returned {ret.returncode}")
 
-    # Concatenate all files to create a single PDF to print
-    out_name = os.path.join(_out_folder, PDF_OUTPUT)
-    writer = pypdf.PdfWriter()
-    for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))]:
-        writer.append(pdf)
-    writer.write(out_name)
-    writer.close()
+        # Convert template page to PDF
+        if _pdf:
+            ret = wkhtmltopdf(
+                dict_to_cmd_list(generate_options_pdf(_dpi,_width,_height))
+                + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
+            )
+    if _pdf:
+        # Concatenate all files to create a single PDF to print
+        out_name = os.path.join(_out_folder, PDF_OUTPUT)
+        writer = pypdf.PdfWriter()
+        for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))]:
+            writer.append(pdf)
+        writer.write(out_name)
+        writer.close()
 
     # Delete temporary folder and its content
     if os.path.exists(TEMP_FOLDER):
         shutil.rmtree(TEMP_FOLDER)
-
-
-def generate_qsl_image(
-    qso_list: list[QSO],
-    _template: str = TEMPLATE_DEFAULT_FILE,
-    _out_folder: str = OUT_FOLDER,
-    _width: float = QSL_WIDTH,
-    _height: float = QSL_HEIGHT,
-    _dpi: int = DPI,
-):
-    """Generates one QSL image per QSO in the given list"""
-    assert isinstance(qso_list, list)
-
-    # Template file full path
-    template_path = os.path.join(TEMPLATE_FOLDER, _template)
-    if not os.path.isfile(template_path):
-        raise FileNotFoundError(f"Template file {template_path} not found")
-
-    # Delete previous output file(s)
-    if os.path.exists(TEMP_FOLDER):
-        shutil.rmtree(TEMP_FOLDER)
-
-    # Create temporary folder if not present
-    if not os.path.exists(TEMP_FOLDER):
-        os.makedirs(TEMP_FOLDER)
-    else:
-        if not os.path.isdir(TEMP_FOLDER):
-            os.unlink(TEMP_FOLDER)
-            os.makedirs(TEMP_FOLDER)
-
-    # Create output folder
-    if not os.path.exists(_out_folder):
-        os.makedirs(_out_folder)
-    else:
-        if not os.path.isdir(_out_folder):
-            os.unlink(_out_folder)
-            os.makedirs(_out_folder)
-
-    # Loading Jinja environment
-    env = Environment(
-        loader=FileSystemLoader(TEMPLATE_FOLDER),
-        autoescape=select_autoescape(["html", "htm", "xml"]),
-    )
-
-    # Loading HTML template
-    template = env.get_template(_template)
-
-    # Generate each QSL
-    for i, _qso in enumerate(qso_list):
-        assert isinstance(_qso, QSO)
-
-        # Rendering the template and storing the resulting text in variable output
-        qso_data_lowercase = {}
-        for key, value in _qso._d.items():
-            # Converting all keys into lowercase
-            qso_data_lowercase[key.casefold()] = value
-        output = template.render(qso=qso_data_lowercase)
-
-        logging.info(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
-
-        # Write compiled template to file
-        with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
-            f.write(output)
-
-        # Convert template page to PDF
-        out_name = os.path.join(_out_folder, (IMG_OUT_BASE_NAME % i))
-        ret = wkhtmltoimage(
-            dict_to_cmd_list(generate_options_image(_dpi,_width,_height)) + [TEMPLATE_TEMP_FILENAME, out_name]
-        )
-        logging.info(f"wkhtmltoimage returned {ret.returncode}")
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -284,7 +237,7 @@ if __name__ == "__main__":
         type=str,
         help="Output file name",
     )
-    parser.add_argument("--pdf", action="store_true", help="Output as multipage PDF")
+    parser.add_argument("--pdf", action="store_true", help="Output as multi-page PDF")
     parser.add_argument(
         "--image", default=False, action="store_true", help="Output as images"
     )
@@ -301,6 +254,13 @@ if __name__ == "__main__":
         type=str,
         default=OUT_FOLDER,
         help=f"Output folder (default {OUT_FOLDER})",
+    )
+    parser.add_argument(
+        "--image_format",
+        metavar="image_format",
+        type=str,
+        default=IMG_OUT_EXTENSION,
+        help=f"Output image format (default {IMG_OUT_EXTENSION})",
     )
     parser.add_argument(
         "--dpi",
@@ -346,10 +306,4 @@ if __name__ == "__main__":
     else:
         raise Exception("Unrecognized file extension")
 
-    if args.pdf:
-        # Output as PDF
-        generate_qsl_pdf(qso_list, _template=args.template, _out_folder=args.output_dir, _dpi=args.dpi)
-
-    if args.image:
-        # Output as images
-        generate_qsl_image(qso_list, _template=args.template, _out_folder=args.output_dir, _dpi=args.dpi)
+    generate_qsl_image_pdf(qso_list, _image=args.image, _pdf=args.pdf, _template=args.template, _out_folder=args.output_dir, _dpi=args.dpi)
