@@ -237,7 +237,8 @@ def generate_qsl_image_pdf(
     rmtree_if_exists(TEMP_FOLDER)
 
 
-if __name__ == "__main__":
+# Main module function
+def main():
     # Define parser and its arguments
     parser = argparse.ArgumentParser(
         description="Generate a .pdf file from a QSO list in .adi or .dump format"
@@ -380,3 +381,6 @@ if __name__ == "__main__":
         _height = args.height,
         _dpi = args.dpi,
     )
+
+if __name__ == "__main__":
+    main()
