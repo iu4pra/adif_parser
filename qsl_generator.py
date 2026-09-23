@@ -238,15 +238,18 @@ def generate_qsl_image_pdf(
 
 
 if __name__ == "__main__":
+    # Define parser and its arguments
     parser = argparse.ArgumentParser(
         description="Generate a .pdf file from a QSO list in .adi or .dump format"
     )
+
     parser.add_argument(
         "filename",
         metavar="input_file",
         type=str,
         help="Log file to process (ADIF format)",
     )
+
     parser.add_argument(
         "outname",
         metavar="output_file",
@@ -255,10 +258,13 @@ if __name__ == "__main__":
         type=str,
         help="Output file name",
     )
+
     parser.add_argument("--pdf", action="store_true", help="Output as multi-page PDF")
+
     parser.add_argument(
         "--image", default=False, action="store_true", help="Output as images"
     )
+
     parser.add_argument(
         "--template",
         metavar="template_file",
@@ -266,6 +272,7 @@ if __name__ == "__main__":
         default=TEMPLATE_DEFAULT_FILE,
         help=f"Template to use from {TEMPLATE_FOLDER} folder (default {TEMPLATE_DEFAULT_FILE})",
     )
+
     parser.add_argument(
         "--output-dir",
         metavar="output_folder",
@@ -273,6 +280,7 @@ if __name__ == "__main__":
         default=OUT_FOLDER,
         help=f"Output folder (default {OUT_FOLDER})",
     )
+
     parser.add_argument(
         "--image_format",
         metavar="image_format",
@@ -280,6 +288,7 @@ if __name__ == "__main__":
         default=IMG_OUT_EXTENSION,
         help=f"Output image format (default {IMG_OUT_EXTENSION})",
     )
+
     parser.add_argument(
         "--width",
         metavar="width",
@@ -287,13 +296,15 @@ if __name__ == "__main__":
         default=QSL_WIDTH,
         help=f"QSL width in centimeters (default {QSL_WIDTH})",
     )
+
     parser.add_argument(
         "--height",
         metavar="height",
         type=float,
         default=QSL_HEIGHT,
         help=f"QSL height in centimeters (default {QSL_HEIGHT})",
-    )    
+    )
+
     parser.add_argument(
         "--dpi",
         metavar="dpi",
@@ -302,6 +313,7 @@ if __name__ == "__main__":
         help=f"Tentative DPI value (default {DPI})",
     )
 
+    # Parse arguments
     args = parser.parse_args()
 
     # Filename to be processed
@@ -321,7 +333,7 @@ if __name__ == "__main__":
 
     if not args.pdf and args.pdf is not None and args.image == False:
         raise Exception("At least one output option must be specified")
-    
+
     # File extension
     ext = filename.split(".")[-1]
 
@@ -329,6 +341,7 @@ if __name__ == "__main__":
         logging.info(f"Proceeding to parse ADIF file {args.filename}")
         qso_list = adif.qso_list_from_file(filename)
 
+    # TODO to be removed, test code for .dump files
     elif ext.casefold() in [
         "dump",
     ]:
@@ -355,14 +368,15 @@ if __name__ == "__main__":
     elif args.dpi > DPI_MAX:
         raise ValueError(f"--dpi must be <= {DPI_MAX}")
 
+    # All OK, generate QSLs
     generate_qsl_image_pdf(
         qso_list,
-        _image=args.image,
-        _pdf=args.pdf,
-        _template=args.template,
-        _out_folder=args.output_dir,
-        _format=args.image_format,
+        _image = args.image,
+        _pdf = args.pdf,
+        _template = args.template,
+        _out_folder = args.output_dir,
+        _format = args.image_format,
         _width = args.width,
         _height = args.height,
-        _dpi=args.dpi,
+        _dpi = args.dpi,
     )
