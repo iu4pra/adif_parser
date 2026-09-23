@@ -372,15 +372,16 @@ def main():
     # All OK, generate QSLs
     generate_qsl_image_pdf(
         qso_list,
-        _image = args.image,
-        _pdf = args.pdf,
-        _template = args.template,
-        _out_folder = args.output_dir,
-        _format = args.image_format,
-        _width = args.width,
-        _height = args.height,
-        _dpi = args.dpi,
+        _image=args.image,
+        _pdf=args.pdf,
+        _template=args.template,
+        _out_folder=args.output_dir,
+        _format=args.image_format,
+        _width=args.width,
+        _height=args.height,
+        _dpi=args.dpi,
     )
+
 
 if __name__ == "__main__":
     main()

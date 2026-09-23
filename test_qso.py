@@ -6,6 +6,7 @@
 import unittest
 from qso import QSO
 
+
 class TestQSO(unittest.TestCase):
 
     def test_valid_qso(self):
@@ -46,6 +47,7 @@ class TestQSO(unittest.TestCase):
         # Internal dictionary should have 'CALL'
         self.assertIn("CALL", q._d)
         self.assertEqual(q._d["CALL"], "K1ABC")
+
 
 if __name__ == "__main__":
     unittest.main()

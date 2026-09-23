@@ -10,6 +10,7 @@ import qsl_generator as qslgen
 import unittest
 from unittest.mock import patch
 
+
 class ParsingTest(unittest.TestCase):
     """Test cases for the ADIF parser"""
 
