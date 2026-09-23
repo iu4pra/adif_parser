@@ -14,6 +14,7 @@ import tkinter.scrolledtext as tkscroll
 
 
 # --- Helper Classes ---
+
 class TextHandler(logging.Handler):
     # This class allows you to log to a Tkinter Text or ScrolledText widget
     # Adapted from Moshe Kaplan: https://gist.github.com/moshekaplan/c425f861de7bbf28ef06
@@ -141,6 +142,7 @@ class App:
 
         # Bind clear log command
         self.clear_log_button["command"] = log_handler.clear
+
 
     # --- Event Handlers ---
 

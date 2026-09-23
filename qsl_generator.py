@@ -7,7 +7,7 @@
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from qso import QSO
-from wkhtml import wkhtmltoimage, wkhtmltopdf
+from wkhtml import wkhtmltoimage, wkhtmltopdf, WKHTMLTOX_BASE_DPI
 import adif
 import argparse
 import logging
@@ -28,6 +28,9 @@ import shutil
 # QSL standard size in centimeters
 QSL_WIDTH = 14
 QSL_HEIGHT = 9
+
+# Default DPI
+DPI = 1000
 
 # Default template filename
 TEMPLATE_DEFAULT_FILE = "template.html"
@@ -58,12 +61,16 @@ def cm_to_px(cm, dpi):
 
 
 # Command options for wkhtmltopdf
-cmd_options_pdf = {"--page-width": f"{QSL_WIDTH}cm", "--page-height": f"{QSL_HEIGHT}cm"}
+cmd_options_pdf = {
+    "--dpi": str(DPI),
+    "--page-width": f"{QSL_WIDTH}cm",
+    "--page-height": f"{QSL_HEIGHT}cm"}
 
 # Command options for wkhtmltoimage
 cmd_options_image = {
-    "--width": str(cm_to_px(QSL_WIDTH, 75)),
-    "--height": str(cm_to_px(QSL_HEIGHT, 75)),
+    "--zoom": str(DPI/WKHTMLTOX_BASE_DPI),
+    "--width": str(cm_to_px(QSL_WIDTH, DPI)),
+    "--height": str(cm_to_px(QSL_HEIGHT, DPI)),
 }
 
 
@@ -126,6 +133,7 @@ def generate_qsl_pdf(
     # Loading HTML template
     template = env.get_template(_template)
 
+    # Generate each QSL
     for i, _qso in enumerate(qso_list):
         assert isinstance(_qso, QSO)
 
@@ -212,6 +220,7 @@ def generate_qsl_image(
     # Loading HTML template
     template = env.get_template(_template)
 
+    # Generate each QSL
     for i, _qso in enumerate(qso_list):
         assert isinstance(_qso, QSO)
 
