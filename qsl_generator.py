@@ -59,21 +59,33 @@ def cm_to_px(cm, dpi):
     """Converts centimeters to pixels given a DPI value"""
     return int(cm * dpi / 2.54)
 
-
-# Command options for wkhtmltopdf
+# Default command options for wkhtmltopdf
 cmd_options_pdf = {
     "--dpi": str(DPI),
     "--page-width": f"{QSL_WIDTH}cm",
     "--page-height": f"{QSL_HEIGHT}cm",
 }
 
-# Command options for wkhtmltoimage
+# Default command options for wkhtmltoimage
 cmd_options_image = {
     "--zoom": str(DPI/WKHTMLTOX_BASE_DPI),
     "--width": str(cm_to_px(QSL_WIDTH, DPI)),
     "--height": str(cm_to_px(QSL_HEIGHT, DPI)),
 }
 
+def generate_options_pdf(_dpi, _width, _height):
+    return {
+        "--dpi": str(_dpi),
+        "--page-width": f"{_width}cm",
+        "--page-height": f"{_height}cm",
+    }
+
+def generate_options_image(_dpi, _width, _height):
+    return {
+        "--zoom": str(_dpi/WKHTMLTOX_BASE_DPI),
+        "--width": str(cm_to_px(_width, _dpi)),
+        "--height": str(cm_to_px(_height, _dpi)),
+    }
 
 def unlink_if_exists(path):
     """Utility function to delete a file without throwing an exception if it doesn't exist"""
@@ -97,6 +109,8 @@ def generate_qsl_pdf(
     qso_list: list[QSO],
     _template: str = TEMPLATE_DEFAULT_FILE,
     _out_folder: str = OUT_FOLDER,
+    _width: float = QSL_WIDTH,
+    _height: float = QSL_HEIGHT,
     _dpi: int = DPI,
 ):
     """Generates a PDF file qith the QSLs contained in the given QSO list"""
@@ -162,7 +176,7 @@ def generate_qsl_pdf(
 
         # Convert template page to PDF
         ret = wkhtmltopdf(
-            dict_to_cmd_list(cmd_options_pdf)
+            dict_to_cmd_list(generate_options_pdf(_dpi,_width,_height))
             + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
         )
         logging.info(f"wkhtmltopdf returned {ret.returncode}")
@@ -184,6 +198,8 @@ def generate_qsl_image(
     qso_list: list[QSO],
     _template: str = TEMPLATE_DEFAULT_FILE,
     _out_folder: str = OUT_FOLDER,
+    _width: float = QSL_WIDTH,
+    _height: float = QSL_HEIGHT,
     _dpi: int = DPI,
 ):
     """Generates one QSL image per QSO in the given list"""
@@ -220,12 +236,6 @@ def generate_qsl_image(
         autoescape=select_autoescape(["html", "htm", "xml"]),
     )
 
-    # Redefine wkhtmltoimage args based on selected DPI
-    # TODO create proper function
-    cmd_options_image["--zoom"] = str(_dpi/WKHTMLTOX_BASE_DPI)
-    cmd_options_image["--width"] = str(cm_to_px(QSL_WIDTH, _dpi))
-    cmd_options_image["--height"] = str(cm_to_px(QSL_HEIGHT, _dpi))
-
     # Loading HTML template
     template = env.get_template(_template)
 
@@ -249,7 +259,7 @@ def generate_qsl_image(
         # Convert template page to PDF
         out_name = os.path.join(_out_folder, (IMG_OUT_BASE_NAME % i))
         ret = wkhtmltoimage(
-            dict_to_cmd_list(cmd_options_image) + [TEMPLATE_TEMP_FILENAME, out_name]
+            dict_to_cmd_list(generate_options_image(_dpi,_width,_height)) + [TEMPLATE_TEMP_FILENAME, out_name]
         )
         logging.info(f"wkhtmltoimage returned {ret.returncode}")
 
