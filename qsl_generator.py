@@ -113,6 +113,7 @@ def generate_qsl_image_pdf(
     _pdf: bool = False,
     _template: str = TEMPLATE_DEFAULT_FILE,
     _out_folder: str = OUT_FOLDER,
+    _format: str = IMG_OUT_EXTENSION,
     _width: float = QSL_WIDTH,
     _height: float = QSL_HEIGHT,
     _dpi: int = DPI,
@@ -306,4 +307,11 @@ if __name__ == "__main__":
     else:
         raise Exception("Unrecognized file extension")
 
-    generate_qsl_image_pdf(qso_list, _image=args.image, _pdf=args.pdf, _template=args.template, _out_folder=args.output_dir, _dpi=args.dpi)
+    generate_qsl_image_pdf(
+        qso_list,
+        _image=args.image,
+        _pdf=args.pdf,
+        _template=args.template,
+        _out_folder=args.output_dir,
+        _format=args.image_format,
+        _dpi=args.dpi)
