@@ -58,8 +58,8 @@ OUT_FOLDER = "./out/"
 IMG_OUT_EXTENSION = "jpg"
 # Output image base name
 IMG_OUT_BASE_NAME = "./qsl_%04d."
-# Final PDF_filename
-PDF_OUTPUT = "./out.pdf"
+# Final PDF filename
+PDF_OUTPUT = "./qsl.pdf"
 
 
 def cm_to_px(cm, dpi):
@@ -130,6 +130,7 @@ def generate_qsl_image_pdf(
     _image: bool = False,
     _pdf: bool = False,
     _template: str = TEMPLATE_DEFAULT_FILE,
+    _out_filename: str = PDF_OUTPUT,
     _out_folder: str = OUT_FOLDER,
     _format: str = IMG_OUT_EXTENSION,
     _width: float = QSL_WIDTH,
@@ -163,7 +164,7 @@ def generate_qsl_image_pdf(
 
     if _pdf:
         # Delete previous output file(s)
-        unlink_if_exists(PDF_OUTPUT)
+        unlink_if_exists(_out_filename)
 
     # Create output folder
     if not os.path.exists(_out_folder):
@@ -209,9 +210,17 @@ def generate_qsl_image_pdf(
         with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
             f.write(output)
 
+        # Remove any extension in the passed out filename, will be added later
+        out_base_name = _out_filename.rsplit(".", 1)[0]
+        logging.debug(
+            f"Passed output filename : {_out_filename}\nBase name without extension: {out_base_name}"
+        )
+
         # Convert template page to image
         if _image:
-            out_name = os.path.join(_out_folder, (IMG_OUT_BASE_NAME % i + _format))
+            out_name = os.path.join(
+                _out_folder, (out_base_name + "_%04d." % (i + 1) + _format)
+            )
             ret = wkhtmltoimage(
                 dict_to_cmd_list(generate_options_image(_format, _width, _height, _dpi))
                 + [TEMPLATE_TEMP_FILENAME, out_name]
@@ -224,9 +233,10 @@ def generate_qsl_image_pdf(
                 dict_to_cmd_list(generate_options_pdf(_width, _height, _dpi))
                 + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
             )
+
     if _pdf:
         # Concatenate all files to create a single PDF to print
-        out_name = os.path.join(_out_folder, PDF_OUTPUT)
+        out_name = os.path.join(_out_folder, out_base_name + ".pdf")
         writer = pypdf.PdfWriter()
         for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))]:
             writer.append(pdf)
@@ -252,12 +262,12 @@ def main():
     )
 
     parser.add_argument(
-        "outname",
+        "outfile",
         metavar="output_file",
         nargs="?",
-        default="out.pdf",
+        default=PDF_OUTPUT,
         type=str,
-        help="Output file name",
+        help="Output file name (base for images)",
     )
 
     parser.add_argument("--pdf", action="store_true", help="Output as multi-page PDF")
@@ -375,6 +385,7 @@ def main():
         _image=args.image,
         _pdf=args.pdf,
         _template=args.template,
+        _out_filename=args.outfile,
         _out_folder=args.output_dir,
         _format=args.image_format,
         _width=args.width,
