@@ -211,11 +211,12 @@ def generate_qsl_image_pdf(
             f.write(output)
 
         # Remove any extension in the passed out filename, will be added later
-        base_name = _out_filename.rsplit(".", 1)[0]
+        out_base_name = _out_filename.rsplit(".", 1)[0]
+        logging.debug(f"Passed output filename : {_out_filename}\nBase name without extension: {out_base_name}")
 
         # Convert template page to image
         if _image:
-            out_name = os.path.join(_out_folder, (base_name + "_%04d." % (i+1) + _format))
+            out_name = os.path.join(_out_folder, (out_base_name + "_%04d." % (i+1) + _format))
             ret = wkhtmltoimage(
                 dict_to_cmd_list(generate_options_image(_format, _width, _height, _dpi))
                 + [TEMPLATE_TEMP_FILENAME, out_name]
@@ -231,7 +232,7 @@ def generate_qsl_image_pdf(
 
     if _pdf:
         # Concatenate all files to create a single PDF to print
-        out_name = os.path.join(_out_folder, base_name + ".pdf")
+        out_name = os.path.join(_out_folder, out_base_name + ".pdf")
         writer = pypdf.PdfWriter()
         for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))]:
             writer.append(pdf)
