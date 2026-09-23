@@ -26,8 +26,8 @@ import shutil
 # ==========================================
 
 # QSL standard size in centimeters
-QSL_WIDTH = 14
-QSL_HEIGHT = 9
+QSL_WIDTH = 14.0
+QSL_HEIGHT = 9.0
 
 # Default DPI
 DPI = 150
@@ -335,6 +335,12 @@ if __name__ == "__main__":
         raise Exception("Unrecognized file extension")
 
     # Optional parameters validation
+    if args.width <= 0:
+        raise ValueError("--width must be positive")
+
+    if args.height <= 0:
+        raise ValueError("--height must be positive")
+
     if args.dpi <= 0:
         raise ValueError("--dpi must be positive")
 
