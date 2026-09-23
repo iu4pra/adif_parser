@@ -52,7 +52,7 @@ OUT_FOLDER = "./out/"
 # Output image extension
 IMG_OUT_EXTENSION = 'jpg'
 # Output image base name
-IMG_OUT_BASE_NAME = "./qsl_%04d." + IMG_OUT_EXTENSION
+IMG_OUT_BASE_NAME = "./qsl_%04d."
 # Final PDF_filename
 PDF_OUTPUT = "./out.pdf"
 
@@ -82,11 +82,12 @@ def generate_options_pdf(_width, _height, _dpi):
         "--page-height": f"{_height}cm",
     }
 
-def generate_options_image(_width, _height, _dpi):
+def generate_options_image(_format, _width, _height, _dpi):
     return {
         "--zoom": str(_dpi/WKHTMLTOX_BASE_DPI),
         "--width": str(cm_to_px(_width, _dpi)),
         "--height": str(cm_to_px(_height, _dpi)),
+        "--format": _format,
     }
 
 def unlink_if_exists(path):
@@ -195,9 +196,9 @@ def generate_qsl_image_pdf(
 
         # Convert template page to image
         if _image:
-            out_name = os.path.join(_out_folder, (IMG_OUT_BASE_NAME % i))
+            out_name = os.path.join(_out_folder, (IMG_OUT_BASE_NAME % i + _format))
             ret = wkhtmltoimage(
-                dict_to_cmd_list(generate_options_image(_width,_height,_dpi)) + [TEMPLATE_TEMP_FILENAME, out_name]
+                dict_to_cmd_list(generate_options_image(_format,_width,_height,_dpi)) + [TEMPLATE_TEMP_FILENAME, out_name]
             )
             logging.info(f"wkhtmltoimage returned {ret.returncode}")
 
