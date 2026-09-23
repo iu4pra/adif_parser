@@ -97,6 +97,12 @@ def unlink_if_exists(path):
     except FileNotFoundError:
         pass
 
+def rmtree_if_exists(path):
+    """Utility function to delete a folder and its subfolders and contents without throwing an exception if it doesn't exist"""
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
 
 def dict_to_cmd_list(_cmd_options: dict):
     """Converts a dict of options to a list to pass to subprocess.run"""
@@ -134,8 +140,7 @@ def generate_qsl_image_pdf(
         raise FileNotFoundError(f"Template file {template_path} not found")
 
     # Delete previous output file(s) if present
-    if os.path.exists(TEMP_FOLDER):
-        shutil.rmtree(TEMP_FOLDER)
+    rmtree_if_exists(TEMP_FOLDER)
 
     # Re-create temporary folder
     if not os.path.exists(TEMP_FOLDER):
@@ -218,8 +223,7 @@ def generate_qsl_image_pdf(
         writer.close()
 
     # Delete temporary folder and its content
-    if os.path.exists(TEMP_FOLDER):
-        shutil.rmtree(TEMP_FOLDER)
+    rmtree_if_exists(TEMP_FOLDER)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
