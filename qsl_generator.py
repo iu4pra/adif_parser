@@ -49,8 +49,10 @@ PDF_TEMP_BASE_NAME = os.path.join(TEMP_FOLDER, "./qsl_%04d.pdf")
 # Output folder
 OUT_FOLDER = "./out/"
 
+# Output image extension
+IMG_OUT_EXTENSION = 'jpg'
 # Output image base name
-IMG_OUT_BASE_NAME = "./qsl_%04d.jpg"
+IMG_OUT_BASE_NAME = "./qsl_%04d." + IMG_OUT_EXTENSION
 # Final PDF_filename
 PDF_OUTPUT = "./out.pdf"
 
