@@ -28,9 +28,14 @@ import shutil
 # QSL standard size in centimeters
 QSL_WIDTH = 14.0
 QSL_HEIGHT = 9.0
+# Maximum size
+QSL_WIDTH_MAX = 700.0
+QSL_HEIGHT_MAX = 180.0
 
 # Default DPI
 DPI = 150
+# Maximum DPI
+DPI_MAX = 1500
 
 # Default template filename
 TEMPLATE_DEFAULT_FILE = "template.html"
@@ -337,12 +342,18 @@ if __name__ == "__main__":
     # Optional parameters validation
     if args.width <= 0:
         raise ValueError("--width must be positive")
+    elif args.width > QSL_WIDTH_MAX:
+        raise ValueError(f"--width must be <= {QSL_WIDTH_MAX}")
 
     if args.height <= 0:
         raise ValueError("--height must be positive")
+    elif args.height > QSL_HEIGHT_MAX:
+        raise ValueError(f"--height must be <= {QSL_HEIGHT_MAX}")
 
     if args.dpi <= 0:
         raise ValueError("--dpi must be positive")
+    elif args.dpi > DPI_MAX:
+        raise ValueError(f"--dpi must be <= {DPI_MAX}")
 
     generate_qsl_image_pdf(
         qso_list,
