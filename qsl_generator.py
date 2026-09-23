@@ -265,8 +265,8 @@ def main():
         "outfile",
         metavar="output_file",
         nargs="?",
-        default=PDF_OUTPUT,
         type=str,
+        default=PDF_OUTPUT,
         help="Output file name (base for images)",
     )
 
