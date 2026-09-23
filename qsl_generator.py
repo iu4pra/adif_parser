@@ -50,7 +50,7 @@ PDF_TEMP_BASE_NAME = os.path.join(TEMP_FOLDER, "./qsl_%04d.pdf")
 OUT_FOLDER = "./out/"
 
 # Output image extension
-IMG_OUT_EXTENSION = 'jpg'
+IMG_OUT_EXTENSION = "jpg"
 # Output image base name
 IMG_OUT_BASE_NAME = "./qsl_%04d."
 # Final PDF_filename
@@ -61,6 +61,7 @@ def cm_to_px(cm, dpi):
     """Converts centimeters to pixels given a DPI value"""
     return int(cm * dpi / 2.54)
 
+
 # Default command options for wkhtmltopdf
 cmd_options_pdf = {
     "--dpi": str(DPI),
@@ -70,10 +71,11 @@ cmd_options_pdf = {
 
 # Default command options for wkhtmltoimage
 cmd_options_image = {
-    "--zoom": str(DPI/WKHTMLTOX_BASE_DPI),
+    "--zoom": str(DPI / WKHTMLTOX_BASE_DPI),
     "--width": str(cm_to_px(QSL_WIDTH, DPI)),
     "--height": str(cm_to_px(QSL_HEIGHT, DPI)),
 }
+
 
 def generate_options_pdf(_width, _height, _dpi):
     return {
@@ -82,13 +84,15 @@ def generate_options_pdf(_width, _height, _dpi):
         "--page-height": f"{_height}cm",
     }
 
+
 def generate_options_image(_format, _width, _height, _dpi):
     return {
-        "--zoom": str(_dpi/WKHTMLTOX_BASE_DPI),
+        "--zoom": str(_dpi / WKHTMLTOX_BASE_DPI),
         "--width": str(cm_to_px(_width, _dpi)),
         "--height": str(cm_to_px(_height, _dpi)),
         "--format": _format,
     }
+
 
 def unlink_if_exists(path):
     """Utility function to delete a file without throwing an exception if it doesn't exist"""
@@ -97,12 +101,14 @@ def unlink_if_exists(path):
     except FileNotFoundError:
         pass
 
+
 def rmtree_if_exists(path):
     """Utility function to delete a folder and its subfolders and contents without throwing an exception if it doesn't exist"""
     try:
         shutil.rmtree(path)
     except FileNotFoundError:
         pass
+
 
 def dict_to_cmd_list(_cmd_options: dict):
     """Converts a dict of options to a list to pass to subprocess.run"""
@@ -154,7 +160,6 @@ def generate_qsl_image_pdf(
         # Delete previous output file(s)
         unlink_if_exists(PDF_OUTPUT)
 
-
     # Create output folder
     if not os.path.exists(_out_folder):
         os.makedirs(_out_folder)
@@ -187,7 +192,7 @@ def generate_qsl_image_pdf(
         # ---------------------------------------------------------------------
 
         qso_data_lowercase = {}
-        
+
         for key, value in _qso._d.items():
             # Converting all keys into lowercase
             qso_data_lowercase[key.casefold()] = value
@@ -203,14 +208,15 @@ def generate_qsl_image_pdf(
         if _image:
             out_name = os.path.join(_out_folder, (IMG_OUT_BASE_NAME % i + _format))
             ret = wkhtmltoimage(
-                dict_to_cmd_list(generate_options_image(_format,_width,_height,_dpi)) + [TEMPLATE_TEMP_FILENAME, out_name]
+                dict_to_cmd_list(generate_options_image(_format, _width, _height, _dpi))
+                + [TEMPLATE_TEMP_FILENAME, out_name]
             )
             logging.info(f"wkhtmltoimage returned {ret.returncode}")
 
         # Convert template page to PDF
         if _pdf:
             ret = wkhtmltopdf(
-                dict_to_cmd_list(generate_options_pdf(_width,_height,_dpi))
+                dict_to_cmd_list(generate_options_pdf(_width, _height, _dpi))
                 + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
             )
     if _pdf:
@@ -224,6 +230,7 @@ def generate_qsl_image_pdf(
 
     # Delete temporary folder and its content
     rmtree_if_exists(TEMP_FOLDER)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -319,4 +326,5 @@ if __name__ == "__main__":
         _template=args.template,
         _out_folder=args.output_dir,
         _format=args.image_format,
-        _dpi=args.dpi)
+        _dpi=args.dpi,
+    )
