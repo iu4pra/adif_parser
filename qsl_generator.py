@@ -75,14 +75,14 @@ cmd_options_image = {
     "--height": str(cm_to_px(QSL_HEIGHT, DPI)),
 }
 
-def generate_options_pdf(_dpi, _width, _height):
+def generate_options_pdf(_width, _height, _dpi):
     return {
         "--dpi": str(_dpi),
         "--page-width": f"{_width}cm",
         "--page-height": f"{_height}cm",
     }
 
-def generate_options_image(_dpi, _width, _height):
+def generate_options_image(_width, _height, _dpi):
     return {
         "--zoom": str(_dpi/WKHTMLTOX_BASE_DPI),
         "--width": str(cm_to_px(_width, _dpi)),
@@ -197,14 +197,14 @@ def generate_qsl_image_pdf(
         if _image:
             out_name = os.path.join(_out_folder, (IMG_OUT_BASE_NAME % i))
             ret = wkhtmltoimage(
-                dict_to_cmd_list(generate_options_image(_dpi,_width,_height)) + [TEMPLATE_TEMP_FILENAME, out_name]
+                dict_to_cmd_list(generate_options_image(_width,_height,_dpi)) + [TEMPLATE_TEMP_FILENAME, out_name]
             )
             logging.info(f"wkhtmltoimage returned {ret.returncode}")
 
         # Convert template page to PDF
         if _pdf:
             ret = wkhtmltopdf(
-                dict_to_cmd_list(generate_options_pdf(_dpi,_width,_height))
+                dict_to_cmd_list(generate_options_pdf(_width,_height,_dpi))
                 + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
             )
     if _pdf:
