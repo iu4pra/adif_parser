@@ -276,6 +276,20 @@ if __name__ == "__main__":
         help=f"Output image format (default {IMG_OUT_EXTENSION})",
     )
     parser.add_argument(
+        "--width",
+        metavar="width",
+        type=float,
+        default=QSL_WIDTH,
+        help=f"QSL width in centimeters (default {QSL_WIDTH})",
+    )
+    parser.add_argument(
+        "--height",
+        metavar="height",
+        type=float,
+        default=QSL_HEIGHT,
+        help=f"QSL height in centimeters (default {QSL_HEIGHT})",
+    )    
+    parser.add_argument(
         "--dpi",
         metavar="dpi",
         type=int,
@@ -302,6 +316,7 @@ if __name__ == "__main__":
 
     if not args.pdf and args.pdf is not None and args.image == False:
         raise Exception("At least one output option must be specified")
+    
     # File extension
     ext = filename.split(".")[-1]
 
@@ -319,6 +334,10 @@ if __name__ == "__main__":
     else:
         raise Exception("Unrecognized file extension")
 
+    # Optional parameters validation
+    if args.dpi <= 0:
+        raise ValueError("--dpi must be positive")
+
     generate_qsl_image_pdf(
         qso_list,
         _image=args.image,
@@ -326,5 +345,7 @@ if __name__ == "__main__":
         _template=args.template,
         _out_folder=args.output_dir,
         _format=args.image_format,
+        _width = args.width,
+        _height = args.height,
         _dpi=args.dpi,
     )
