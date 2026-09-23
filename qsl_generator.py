@@ -30,7 +30,7 @@ QSL_WIDTH = 14
 QSL_HEIGHT = 9
 
 # Default DPI
-DPI = 1000
+DPI = 150
 
 # Default template filename
 TEMPLATE_DEFAULT_FILE = "template.html"
@@ -64,7 +64,8 @@ def cm_to_px(cm, dpi):
 cmd_options_pdf = {
     "--dpi": str(DPI),
     "--page-width": f"{QSL_WIDTH}cm",
-    "--page-height": f"{QSL_HEIGHT}cm"}
+    "--page-height": f"{QSL_HEIGHT}cm",
+}
 
 # Command options for wkhtmltoimage
 cmd_options_image = {
@@ -96,6 +97,7 @@ def generate_qsl_pdf(
     qso_list: list[QSO],
     _template: str = TEMPLATE_DEFAULT_FILE,
     _out_folder: str = OUT_FOLDER,
+    _dpi: int = DPI,
 ):
     """Generates a PDF file qith the QSLs contained in the given QSO list"""
     assert isinstance(qso_list, list)
@@ -182,6 +184,7 @@ def generate_qsl_image(
     qso_list: list[QSO],
     _template: str = TEMPLATE_DEFAULT_FILE,
     _out_folder: str = OUT_FOLDER,
+    _dpi: int = DPI,
 ):
     """Generates one QSL image per QSO in the given list"""
     assert isinstance(qso_list, list)
@@ -216,6 +219,12 @@ def generate_qsl_image(
         loader=FileSystemLoader(TEMPLATE_FOLDER),
         autoescape=select_autoescape(["html", "htm", "xml"]),
     )
+
+    # Redefine wkhtmltoimage args based on selected DPI
+    # TODO create proper function
+    cmd_options_image["--zoom"] = str(_dpi/WKHTMLTOX_BASE_DPI)
+    cmd_options_image["--width"] = str(cm_to_px(QSL_WIDTH, _dpi))
+    cmd_options_image["--height"] = str(cm_to_px(QSL_HEIGHT, _dpi))
 
     # Loading HTML template
     template = env.get_template(_template)
@@ -281,6 +290,13 @@ if __name__ == "__main__":
         default=OUT_FOLDER,
         help=f"Output folder (default {OUT_FOLDER})",
     )
+    parser.add_argument(
+        "--dpi",
+        metavar="dpi",
+        type=int,
+        default=DPI,
+        help=f"Tentative DPI value (default {DPI})",
+    )
 
     args = parser.parse_args()
 
@@ -320,10 +336,8 @@ if __name__ == "__main__":
 
     if args.pdf:
         # Output as PDF
-        generate_qsl_pdf(qso_list, _template=args.template, _out_folder=args.output_dir)
+        generate_qsl_pdf(qso_list, _template=args.template, _out_folder=args.output_dir, _dpi=args.dpi)
 
     if args.image:
         # Output as images
-        generate_qsl_image(
-            qso_list, _template=args.template, _out_folder=args.output_dir
-        )
+        generate_qsl_image(qso_list, _template=args.template, _out_folder=args.output_dir, _dpi=args.dpi)
