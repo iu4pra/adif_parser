@@ -267,7 +267,16 @@ def main():
         nargs="?",
         type=str,
         default=PDF_OUTPUT,
-        help="Output file name (base for images)",
+        help="Output file name (base name for images)",
+    )
+
+    parser.add_argument(
+        "varargs",
+        metavar="varargs",
+        nargs="*",
+        type=str,
+        default="",
+        help="Extra arguments",
     )
 
     parser.add_argument("--pdf", action="store_true", help="Output as multi-page PDF")
@@ -379,6 +388,9 @@ def main():
     elif args.dpi > DPI_MAX:
         raise ValueError(f"--dpi must be <= {DPI_MAX}")
 
+    if args.varargs:
+        logging.debug(f"varargs: {' '.join(args.varargs)}")
+
     # All OK, generate QSLs
     generate_qsl_image_pdf(
         qso_list,
@@ -392,7 +404,6 @@ def main():
         _height=args.height,
         _dpi=args.dpi,
     )
-
 
 if __name__ == "__main__":
     main()
