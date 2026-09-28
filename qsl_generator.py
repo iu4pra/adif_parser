@@ -430,7 +430,9 @@ def main():
     ext = filename.split(".")[-1]
 
     if ext.casefold() in ["adi", "adif"]:
-        logging.info(f"Proceeding to parse ADIF file {args.filename}, only valid QSO: {args.only_valid}")
+        logging.info(
+            f"Proceeding to parse ADIF file {args.filename}, only valid QSO: {args.only_valid}"
+        )
         qso_list = adif.qso_list_from_file(filename, args.only_valid)
 
     # TODO to be removed, test code for .dump files
@@ -480,7 +482,7 @@ def main():
         _dpi=args.dpi,
         _wkhtml_image_args=args.wkhtml_image_args,
         _wkhtml_pdf_args=args.wkhtml_pdf_args,
-        _dry_run = args.dry_run
+        _dry_run=args.dry_run,
     )
 
 
