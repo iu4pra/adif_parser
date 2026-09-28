@@ -136,6 +136,8 @@ def generate_qsl_image_pdf(
     _width: float = QSL_WIDTH,
     _height: float = QSL_HEIGHT,
     _dpi: int = DPI,
+    _wkhtml_image_args = None,
+    _wkhtml_pdf_args = None,
 ):
     """Generates either, one QSL image per QSO in the given list,
     a PDF file qith the QSLs contained in the given QSO list, or both"""
@@ -221,18 +223,25 @@ def generate_qsl_image_pdf(
             out_name = os.path.join(
                 _out_folder, (out_base_name + "_%04d." % (i + 1) + _format)
             )
+            image_cmd_list = dict_to_cmd_list(generate_options_image(_format, _width, _height, _dpi))
+            if _wkhtml_image_args:
+                image_cmd_list.extend(_wkhtml_image_args)
             ret = wkhtmltoimage(
-                dict_to_cmd_list(generate_options_image(_format, _width, _height, _dpi))
+                image_cmd_list
                 + [TEMPLATE_TEMP_FILENAME, out_name]
             )
             logging.info(f"wkhtmltoimage returned {ret.returncode}")
 
         # Convert template page to PDF
         if _pdf:
+            pdf_cmd_list = dict_to_cmd_list(generate_options_pdf(_width, _height, _dpi))
+            if _wkhtml_pdf_args:
+                pdf_cmd_list.extend(_wkhtml_pdf_args)            
             ret = wkhtmltopdf(
-                dict_to_cmd_list(generate_options_pdf(_width, _height, _dpi))
+                pdf_cmd_list
                 + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
             )
+            logging.info(f"wkhtmltopdf returned {ret.returncode}")
 
     if _pdf:
         # Concatenate all files to create a single PDF to print
@@ -403,6 +412,8 @@ def main():
         _width=args.width,
         _height=args.height,
         _dpi=args.dpi,
+        _wkhtml_image_args=args.varargs,
+        _wkhtml_pdf_args=args.varargs,
     )
 
 
