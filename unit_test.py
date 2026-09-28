@@ -128,33 +128,44 @@ class QSLGeneratorBasicTest(unittest.TestCase):
 class QSLGeneratorArgsTest(unittest.TestCase):
     @patch("qsl_generator.adif.qso_list_from_file")
     @patch("qsl_generator.generate_qsl_image_pdf")
-    @patch("sys.argv", [
-        "qsl_generator.py",
-        "sample_log.adi",
-        "--pdf",
-        "--wkhtml-pdf-args",
-        "--disable-smart-shrinking --lowquality",
-    ])
+    @patch(
+        "sys.argv",
+        [
+            "qsl_generator.py",
+            "sample_log.adi",
+            "--pdf",
+            "--wkhtml-pdf-args",
+            "--disable-smart-shrinking --lowquality",
+        ],
+    )
     def test_main_passes_pdf_custom_args(self, mock_generate, mock_parse):
         mock_parse.return_value = []
         qslgen.main()
         _, kwargs = mock_generate.call_args
-        self.assertEqual(kwargs["_wkhtml_pdf_args"], "--disable-smart-shrinking --lowquality")
+        self.assertEqual(
+            kwargs["_wkhtml_pdf_args"], "--disable-smart-shrinking --lowquality"
+        )
 
     @patch("qsl_generator.adif.qso_list_from_file")
     @patch("qsl_generator.generate_qsl_image_pdf")
-    @patch("sys.argv", [
-        "qsl_generator.py",
-        "sample_log.adi",
-        "--image",
-        "--wkhtml-image-args",
-        "--disable-smart-shrinking --enable-javascript",
-    ])
+    @patch(
+        "sys.argv",
+        [
+            "qsl_generator.py",
+            "sample_log.adi",
+            "--image",
+            "--wkhtml-image-args",
+            "--disable-smart-shrinking --enable-javascript",
+        ],
+    )
     def test_main_passes_image_custom_args(self, mock_generate, mock_parse):
         mock_parse.return_value = []
         qslgen.main()
         _, kwargs = mock_generate.call_args
-        self.assertEqual(kwargs["_wkhtml_image_args"], "--disable-smart-shrinking --enable-javascript")
+        self.assertEqual(
+            kwargs["_wkhtml_image_args"],
+            "--disable-smart-shrinking --enable-javascript",
+        )
 
 
 class QSLGeneratorValidationTest(unittest.TestCase):
@@ -206,7 +217,7 @@ class QSLGeneratorCommandTest(unittest.TestCase):
         cmd = mock_wkhtmltoimage.call_args[0][0]
         self.assertIn("--disable-smart-shrinking", cmd)
         self.assertIn("--enable-javascript", cmd)
-        self.assertIn(os.path.join(qslgen.TEMP_FOLDER,"template_out.html"), cmd)
+        self.assertIn(os.path.join(qslgen.TEMP_FOLDER, "template_out.html"), cmd)
 
     @patch("qsl_generator.wkhtmltopdf")
     def test_pdf_command_includes_custom_args(self, mock_wkhtmltopdf):
@@ -245,7 +256,7 @@ class ImageFormatTest(unittest.TestCase):
         mock_wkhtmltoimage.return_value = type("Result", (), {"returncode": 0})()
 
         qslgen.generate_qsl_image_pdf(
-            qso_list = adif.qso_list_from_file("sample_log.adi"),
+            qso_list=adif.qso_list_from_file("sample_log.adi"),
             _image=True,
             _pdf=False,
             _format="png",
@@ -264,7 +275,7 @@ class QSLGeneratorWarningTest(unittest.TestCase):
         mock_wkhtmltoimage.return_value = type("Result", (), {"returncode": 1})()
 
         qslgen.generate_qsl_image_pdf(
-            qso_list = adif.qso_list_from_file("sample_log.adi"),
+            qso_list=adif.qso_list_from_file("sample_log.adi"),
             _image=True,
             _pdf=False,
             _out_filename="out",
