@@ -258,6 +258,24 @@ def generate_qsl_image_pdf(
     # Delete temporary folder and its content
     rmtree_if_exists(TEMP_FOLDER)
 
+def setup_logging(level=logging.INFO):
+    """
+    Logging configuration for all app modules
+    """
+    # Detailed format with timestamp
+    log_format = "%(asctime)s %(name)s %(levelname)s: %(message)s"
+    
+    # Create formatter
+    formatter = logging.Formatter(log_format)
+    
+    # Root logger configuration (every module will inherit)
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+    
+    # Add console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    root_logger.addHandler(console_handler)
 
 # Main module function
 def main():
@@ -363,6 +381,14 @@ def main():
     # Parse arguments
     args = parser.parse_args()
 
+    # Logger bust me setup BEFORE any call!
+    if args.quiet:
+        setup_logging(logging.CRITICAL)
+    elif args.verbose:
+        setup_logging(logging.DEBUG)
+    else:
+        setup_logging(logging.INFO)
+
     # Filename to be processed
     filename = os.path.relpath(args.filename)
 
@@ -420,14 +446,6 @@ def main():
 
     if args.wkhtml_pdf_args:
         logging.info(f"wkhtml_pdf_args: {args.wkhtml_pdf_args.split()}")
-
-    # TODO apply to all layers!
-    if args.quiet:
-        logging.getLogger().setLevel(logging.CRITICAL)
-    elif args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-    else:
-        logging.getLogger().setLevel(logging.INFO)
 
     # All OK, generate QSLs
     generate_qsl_image_pdf(
