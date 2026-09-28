@@ -394,11 +394,17 @@ def main():
     )
 
     parser.add_argument(
-        "--dry-run", default=False, action="store_true", help="Do not create/alter/remove files"
+        "--dry-run",
+        default=False,
+        action="store_true",
+        help="Do not create/alter/remove files",
     )
 
     parser.add_argument(
-        "--only-valid", default=False, action="store_true", help="Process only valid QSOs"
+        "--only-valid",
+        default=False,
+        action="store_true",
+        help="Process only valid QSOs",
     )
 
     # Parse arguments
