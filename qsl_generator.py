@@ -405,7 +405,7 @@ def main():
         raise ValueError(f"--dpi must be <= {DPI_MAX}")
 
     if args.wkhtml_image_args:
-        logging.info(f"wkhtml_image_args: {args.wkhtml_image_args.split()}'")
+        logging.info(f"wkhtml_image_args: {args.wkhtml_image_args.split()}")
 
     if args.wkhtml_pdf_args:
         logging.info(f"wkhtml_pdf_args: {args.wkhtml_pdf_args.split()}")
