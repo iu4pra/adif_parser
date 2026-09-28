@@ -200,7 +200,7 @@ def remove_header(_adif_fields: list):
     return _adif_fields, eoh_index
 
 
-def adif_to_qso_list(_adif_fields: list):
+def adif_to_qso_list(_adif_fields: list, _only_valid=True):
     """Parse QSO data from an ADIF list
 
     Header is automatically stripped if not already done"""
@@ -236,7 +236,12 @@ def adif_to_qso_list(_adif_fields: list):
             field_list_temp.clear()
 
             logging.debug(f"Creating a QSO object based on {_dict}")
-            _qso_list.append(QSO(_dict))
+            _new_qso = QSO(_dict)
+            logging.debug(f"Valid QSO: {_new_qso.is_valid()}")
+            if not _only_valid or _new_qso.is_valid():
+                _qso_list.append(_new_qso)
+            else:
+                logging.warning(f"Invalid QSO object will be ignored: {_dict}")
         else:
             if len(_adif_fields) == 0:
                 # End of list found before EOR, raise error
