@@ -200,7 +200,7 @@ def remove_header(_adif_fields: list):
     return _adif_fields, eoh_index
 
 
-def adif_to_qso_list(_adif_fields: list, _only_valid=True):
+def adif_to_qso_list(_adif_fields: list, _only_valid=False):
     """Parse QSO data from an ADIF list
 
     Header is automatically stripped if not already done.
@@ -251,7 +251,7 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=True):
     return _qso_list
 
 
-def qso_list_from_file(filename: str, _only_valid=True):
+def qso_list_from_file(filename: str, _only_valid=False):
     """Convenience function to convert an ADIF file into a QSO list"""
     field_list = parse_adif_file(filename)
     qso_list: list[QSO] = adif_to_qso_list(field_list, _only_valid)
