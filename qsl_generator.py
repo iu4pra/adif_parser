@@ -239,7 +239,9 @@ def generate_qsl_image_pdf(
                 if ret.returncode != 0:
                     logging.warning(f"wkhtmltoimage returned {ret.returncode}")
             else:
-                logging.info(f"Would call: wkhtmltoimage {' '.join(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])}")
+                logging.info(
+                    f"Would call: wkhtmltoimage {' '.join(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])}"
+                )
 
         # Convert template page to PDF
         if _pdf:
@@ -253,7 +255,9 @@ def generate_qsl_image_pdf(
                 if ret.returncode != 0:
                     logging.warning(f"wkhtmltopdf returned {ret.returncode}")
             else:
-                logging.info(f"Would call: wkhtmltopdf {' '.join(pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])}")
+                logging.info(
+                    f"Would call: wkhtmltopdf {' '.join(pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])}"
+                )
 
     if _pdf:
         # Concatenate all files to create a single PDF to print
@@ -264,7 +268,9 @@ def generate_qsl_image_pdf(
                 if os.path.isfile(pdf):
                     writer.append(pdf)
                 else:
-                    logging.error("Error: file {pdf} not found! Check wkhtmltopdf output!")
+                    logging.error(
+                        "Error: file {pdf} not found! Check wkhtmltopdf output!"
+                    )
             writer.write(out_name)
             writer.close()
         else:
