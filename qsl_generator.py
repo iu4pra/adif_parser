@@ -352,6 +352,14 @@ def main():
         help="Extra arguments for wkhtmltopdf",
     )
 
+    parser.add_argument(
+        "--quiet", default=False, action="store_true", help="Suppress output"
+    )
+
+    parser.add_argument(
+        "--verbose", default=False, action="store_true", help="More debug info"
+    )
+
     # Parse arguments
     args = parser.parse_args()
 
@@ -412,6 +420,12 @@ def main():
 
     if args.wkhtml_pdf_args:
         logging.info(f"wkhtml_pdf_args: {args.wkhtml_pdf_args.split()}")
+
+    # TODO apply to all layers!
+    if args.quiet and not args.verbose:
+        logging.getLogger().setLevel(logging.ERROR)
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     # All OK, generate QSLs
     generate_qsl_image_pdf(
