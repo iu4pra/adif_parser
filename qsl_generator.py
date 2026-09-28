@@ -258,24 +258,26 @@ def generate_qsl_image_pdf(
     # Delete temporary folder and its content
     rmtree_if_exists(TEMP_FOLDER)
 
+
 def setup_logging(level=logging.INFO):
     """
     Logging configuration for all app modules
     """
     # Detailed format with timestamp
     log_format = "%(asctime)s %(name)s %(levelname)s: %(message)s"
-    
+
     # Create formatter
     formatter = logging.Formatter(log_format)
-    
+
     # Root logger configuration (every module will inherit)
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
-    
+
     # Add console handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
+
 
 # Main module function
 def main():
