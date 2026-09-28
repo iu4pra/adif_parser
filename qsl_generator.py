@@ -393,6 +393,10 @@ def main():
         "--dry-run", default=False, action="store_true", help="More debug info"
     )
 
+    parser.add_argument(
+        "--only-valid", default=False, action="store_true", help="More debug info"
+    )
+
     # Parse arguments
     args = parser.parse_args()
 
@@ -426,8 +430,8 @@ def main():
     ext = filename.split(".")[-1]
 
     if ext.casefold() in ["adi", "adif"]:
-        logging.info(f"Proceeding to parse ADIF file {args.filename}")
-        qso_list = adif.qso_list_from_file(filename)
+        logging.info(f"Proceeding to parse ADIF file {args.filename}, only valid QSO: {args.only_valid}")
+        qso_list = adif.qso_list_from_file(filename, args.only_valid)
 
     # TODO to be removed, test code for .dump files
     elif ext.casefold() in [
