@@ -253,19 +253,22 @@ def generate_qsl_image_pdf(
                 if ret.returncode != 0:
                     logging.warning(f"wkhtmltopdf returned {ret.returncode}")
             else:
-                logging.info(f"Would call: wkhtmltopdf {' '.join(pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])}")
+                logging.info(f"Would call: wkhtmltopdf {' '.join(pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])}")
 
-    if not _dry_run and _pdf:
+    if _pdf:
         # Concatenate all files to create a single PDF to print
         out_name = os.path.join(_out_folder, out_base_name + ".pdf")
-        writer = pypdf.PdfWriter()
-        for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))]:
-            if os.path.isfile(pdf):
-                writer.append(pdf)
-            else:
-                logging.error("Error: file {pdf} not found! Check wkhtmltopdf output!")
-        writer.write(out_name)
-        writer.close()
+        if not _dry_run:
+            writer = pypdf.PdfWriter()
+            for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))]:
+                if os.path.isfile(pdf):
+                    writer.append(pdf)
+                else:
+                    logging.error("Error: file {pdf} not found! Check wkhtmltopdf output!")
+            writer.write(out_name)
+            writer.close()
+        else:
+            logging.info(f"Would create output file {out_name}")
 
     if _dry_run is False:
         # Delete temporary folder and its content
