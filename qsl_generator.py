@@ -422,10 +422,12 @@ def main():
         logging.info(f"wkhtml_pdf_args: {args.wkhtml_pdf_args.split()}")
 
     # TODO apply to all layers!
-    if args.quiet and not args.verbose:
-        logging.getLogger().setLevel(logging.ERROR)
-    if args.verbose:
+    if args.quiet:
+        logging.getLogger().setLevel(logging.CRITICAL)
+    elif args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
+    else:
+        logging.getLogger().setLevel(logging.INFO)
 
     # All OK, generate QSLs
     generate_qsl_image_pdf(
