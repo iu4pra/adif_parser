@@ -203,7 +203,8 @@ def remove_header(_adif_fields: list):
 def adif_to_qso_list(_adif_fields: list, _only_valid=True):
     """Parse QSO data from an ADIF list
 
-    Header is automatically stripped if not already done"""
+    Header is automatically stripped if not already done.
+    Invalid QSOs are ignored by default"""
     # Input type check
     assert isinstance(_adif_fields, list)
     # Strip header
@@ -250,10 +251,10 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=True):
     return _qso_list
 
 
-def qso_list_from_file(filename: str):
+def qso_list_from_file(filename: str, _only_valid=True):
     """Convenience function to convert an ADIF file into a QSO list"""
     field_list = parse_adif_file(filename)
-    qso_list: list[QSO] = adif_to_qso_list(field_list)
+    qso_list: list[QSO] = adif_to_qso_list(field_list, _only_valid)
     return qso_list
 
 
