@@ -282,6 +282,10 @@ def setup_logging(level=logging.INFO):
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
 
+    # Remove ecisting handlers
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+
     # Add console handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
@@ -390,17 +394,20 @@ def main():
     )
 
     parser.add_argument(
-        "--dry-run", default=False, action="store_true", help="More debug info"
+        "--dry-run", default=False, action="store_true", help="Do not create/alter/remove files"
     )
 
     parser.add_argument(
-        "--only-valid", default=False, action="store_true", help="More debug info"
+        "--only-valid", default=False, action="store_true", help="Process only valid QSOs"
     )
 
     # Parse arguments
     args = parser.parse_args()
 
     # Logger bust me setup BEFORE any call!
+    if args.quiet and args.verbose:
+        raise ValueError("Cannot use --quiet and --verbose together")
+
     if args.quiet:
         setup_logging(logging.CRITICAL)
     elif args.verbose:
