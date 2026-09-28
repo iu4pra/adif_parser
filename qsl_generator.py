@@ -248,7 +248,10 @@ def generate_qsl_image_pdf(
         out_name = os.path.join(_out_folder, out_base_name + ".pdf")
         writer = pypdf.PdfWriter()
         for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))]:
-            writer.append(pdf)
+            if os.path.isfile(pdf):
+                writer.append(pdf)
+            else:
+                logging.error("Error: file {pdf} not found! Check wkhtmltopdf output!")
         writer.write(out_name)
         writer.close()
 
