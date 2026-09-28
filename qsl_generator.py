@@ -227,7 +227,7 @@ def generate_qsl_image_pdf(
                 generate_options_image(_format, _width, _height, _dpi)
             )
             if _wkhtml_image_args:
-                image_cmd_list.extend(_wkhtml_image_args)
+                image_cmd_list.extend(_wkhtml_image_args.split())
             ret = wkhtmltoimage(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])
             if ret.returncode != 0:
                 logging.warning(f"wkhtmltoimage returned {ret.returncode}")
@@ -236,7 +236,7 @@ def generate_qsl_image_pdf(
         if _pdf:
             pdf_cmd_list = dict_to_cmd_list(generate_options_pdf(_width, _height, _dpi))
             if _wkhtml_pdf_args:
-                pdf_cmd_list.extend(_wkhtml_pdf_args)
+                pdf_cmd_list.extend(_wkhtml_pdf_args.split())
             ret = wkhtmltopdf(
                 pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
             )
@@ -337,7 +337,7 @@ def main():
         "--wkhtml-image-args",
         metavar="wkhtml_image_args",
         type=str,
-        default=None,
+        default="",
         help="Extra arguments for wkhtmltoimage",
     )
 
@@ -345,7 +345,7 @@ def main():
         "--wkhtml-pdf-args",
         metavar="wkhtml_pdf_args",
         type=str,
-        default=None,
+        default="",
         help="Extra arguments for wkhtmltopdf",
     )
 
@@ -405,10 +405,10 @@ def main():
         raise ValueError(f"--dpi must be <= {DPI_MAX}")
 
     if args.wkhtml_image_args:
-        logging.debug(f"wkhtml_image_args: {' '.join(args.wkhtml_image_args)}")
+        logging.info(f"wkhtml_image_args: {args.wkhtml_image_args.split()}'")
 
     if args.wkhtml_pdf_args:
-        logging.debug(f"wkhtml_pdf_args: {' '.join(args.wkhtml_pdf_args)}")
+        logging.info(f"wkhtml_pdf_args: {args.wkhtml_pdf_args.split()}")
 
     # All OK, generate QSLs
     generate_qsl_image_pdf(
