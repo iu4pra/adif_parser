@@ -279,15 +279,6 @@ def main():
         help="Output file name (base name for images)",
     )
 
-    parser.add_argument(
-        "varargs",
-        metavar="varargs",
-        nargs="*",
-        type=str,
-        default="",
-        help="Extra arguments",
-    )
-
     parser.add_argument("--pdf", action="store_true", help="Output as multi-page PDF")
 
     parser.add_argument(
@@ -340,6 +331,22 @@ def main():
         type=int,
         default=DPI,
         help=f"Tentative DPI value (default {DPI})",
+    )
+
+    parser.add_argument(
+        "--wkhtml-image-args",
+        metavar="wkhtml_image_args",
+        type=str,
+        default=None,
+        help="Extra arguments for wkhtmltoimage",
+    )
+
+    parser.add_argument(
+        "--wkhtml-pdf-args",
+        metavar="wkhtml_pdf_args",
+        type=str,
+        default=None,
+        help="Extra arguments for wkhtmltopdf",
     )
 
     # Parse arguments
@@ -397,8 +404,11 @@ def main():
     elif args.dpi > DPI_MAX:
         raise ValueError(f"--dpi must be <= {DPI_MAX}")
 
-    if args.varargs:
-        logging.debug(f"varargs: {' '.join(args.varargs)}")
+    if args.wkhtml_image_args:
+        logging.debug(f"wkhtml_image_args: {' '.join(args.wkhtml_image_args)}")
+
+    if args.wkhtml_pdf_args:
+        logging.debug(f"wkhtml_pdf_args: {' '.join(args.wkhtml_pdf_args)}")
 
     # All OK, generate QSLs
     generate_qsl_image_pdf(
@@ -412,8 +422,8 @@ def main():
         _width=args.width,
         _height=args.height,
         _dpi=args.dpi,
-        _wkhtml_image_args=args.varargs,
-        _wkhtml_pdf_args=args.varargs,
+        _wkhtml_image_args=args.wkhtml_image_args,
+        _wkhtml_pdf_args=args.wkhtml_pdf_args,
     )
 
 
