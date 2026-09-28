@@ -138,9 +138,13 @@ def generate_qsl_image_pdf(
     _dpi: int = DPI,
     _wkhtml_image_args=None,
     _wkhtml_pdf_args=None,
+    _dry_run: bool = False,
 ):
     """Generates either, one QSL image per QSO in the given list,
     a PDF file qith the QSLs contained in the given QSO list, or both"""
+
+    if _dry_run:
+        logging.warning("Running app in dry-run mode")
 
     if not _image and not _pdf:
         logging.error("No output specified!")
@@ -153,28 +157,29 @@ def generate_qsl_image_pdf(
     if not os.path.isfile(template_path):
         raise FileNotFoundError(f"Template file {template_path} not found")
 
-    # Delete previous output file(s) if present
-    rmtree_if_exists(TEMP_FOLDER)
+    if _dry_run is False:
+        # Delete previous output file(s) if present
+        rmtree_if_exists(TEMP_FOLDER)
 
-    # Re-create temporary folder
-    if not os.path.exists(TEMP_FOLDER):
-        os.makedirs(TEMP_FOLDER)
-    else:
-        if not os.path.isdir(TEMP_FOLDER):
-            os.unlink(TEMP_FOLDER)
+        # Re-create temporary folder
+        if not os.path.exists(TEMP_FOLDER):
             os.makedirs(TEMP_FOLDER)
+        else:
+            if not os.path.isdir(TEMP_FOLDER):
+                os.unlink(TEMP_FOLDER)
+                os.makedirs(TEMP_FOLDER)
 
-    if _pdf:
-        # Delete previous output file(s)
-        unlink_if_exists(_out_filename)
+        if _pdf:
+            # Delete previous output file(s)
+            unlink_if_exists(_out_filename)
 
-    # Create output folder
-    if not os.path.exists(_out_folder):
-        os.makedirs(_out_folder)
-    else:
-        if not os.path.isdir(_out_folder):
-            os.unlink(_out_folder)
+        # Create output folder
+        if not os.path.exists(_out_folder):
             os.makedirs(_out_folder)
+        else:
+            if not os.path.isdir(_out_folder):
+                os.unlink(_out_folder)
+                os.makedirs(_out_folder)
 
     # Loading Jinja environment
     env = Environment(
@@ -208,9 +213,10 @@ def generate_qsl_image_pdf(
 
         logging.info(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
 
-        # Write compiled template to file
-        with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
-            f.write(output)
+        if _dry_run is False:
+            # Write compiled template to file
+            with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
+                f.write(output)
 
         # Remove any extension in the passed out filename, will be added later
         out_base_name = _out_filename.rsplit(".", 1)[0]
@@ -228,32 +234,75 @@ def generate_qsl_image_pdf(
             )
             if _wkhtml_image_args:
                 image_cmd_list.extend(_wkhtml_image_args.split())
-            ret = wkhtmltoimage(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])
-            if ret.returncode != 0:
-                logging.warning(f"wkhtmltoimage returned {ret.returncode}")
+            if _dry_run is False:
+                ret = wkhtmltoimage(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])
+                if ret.returncode != 0:
+                    logging.warning(f"wkhtmltoimage returned {ret.returncode}")
+            else:
+                logging.info(
+                    f"Would call: wkhtmltoimage {' '.join(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])}"
+                )
 
         # Convert template page to PDF
         if _pdf:
             pdf_cmd_list = dict_to_cmd_list(generate_options_pdf(_width, _height, _dpi))
             if _wkhtml_pdf_args:
                 pdf_cmd_list.extend(_wkhtml_pdf_args.split())
-            ret = wkhtmltopdf(
-                pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
-            )
-            if ret.returncode != 0:
-                logging.warning(f"wkhtmltopdf returned {ret.returncode}")
+            if _dry_run is False:
+                ret = wkhtmltopdf(
+                    pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
+                )
+                if ret.returncode != 0:
+                    logging.warning(f"wkhtmltopdf returned {ret.returncode}")
+            else:
+                logging.info(
+                    f"Would call: wkhtmltopdf {' '.join(pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])}"
+                )
 
     if _pdf:
         # Concatenate all files to create a single PDF to print
         out_name = os.path.join(_out_folder, out_base_name + ".pdf")
-        writer = pypdf.PdfWriter()
-        for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))]:
-            writer.append(pdf)
-        writer.write(out_name)
-        writer.close()
+        if not _dry_run:
+            writer = pypdf.PdfWriter()
+            for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))]:
+                if os.path.isfile(pdf):
+                    writer.append(pdf)
+                else:
+                    logging.error(
+                        "Error: file {pdf} not found! Check wkhtmltopdf output!"
+                    )
+            writer.write(out_name)
+            writer.close()
+        else:
+            logging.info(f"Would create output file {out_name}")
 
-    # Delete temporary folder and its content
-    rmtree_if_exists(TEMP_FOLDER)
+    if _dry_run is False:
+        # Delete temporary folder and its content
+        rmtree_if_exists(TEMP_FOLDER)
+
+
+def setup_logging(level=logging.INFO):
+    """
+    Logging configuration for all app modules
+    """
+    # Detailed format with timestamp
+    log_format = "%(asctime)s %(name)s %(levelname)s: %(message)s"
+
+    # Create formatter
+    formatter = logging.Formatter(log_format)
+
+    # Root logger configuration (every module will inherit)
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+
+    # Remove ecisting handlers
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+
+    # Add console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    root_logger.addHandler(console_handler)
 
 
 # Main module function
@@ -349,8 +398,41 @@ def main():
         help="Extra arguments for wkhtmltopdf",
     )
 
+    parser.add_argument(
+        "--quiet", default=False, action="store_true", help="Suppress output"
+    )
+
+    parser.add_argument(
+        "--verbose", default=False, action="store_true", help="More debug info"
+    )
+
+    parser.add_argument(
+        "--dry-run",
+        default=False,
+        action="store_true",
+        help="Do not create/alter/remove files",
+    )
+
+    parser.add_argument(
+        "--only-valid",
+        default=False,
+        action="store_true",
+        help="Process only valid QSOs",
+    )
+
     # Parse arguments
     args = parser.parse_args()
+
+    # Logger bust me setup BEFORE any call!
+    if args.quiet and args.verbose:
+        raise ValueError("Cannot use --quiet and --verbose together")
+
+    if args.quiet:
+        setup_logging(logging.CRITICAL)
+    elif args.verbose:
+        setup_logging(logging.DEBUG)
+    else:
+        setup_logging(logging.INFO)
 
     # Filename to be processed
     filename = os.path.relpath(args.filename)
@@ -368,14 +450,16 @@ def main():
         args.pdf = False
 
     if not args.pdf and args.pdf is not None and args.image == False:
-        raise Exception("At least one output option must be specified")
+        raise ValueError("At least one output option must be specified")
 
     # File extension
     ext = filename.split(".")[-1]
 
     if ext.casefold() in ["adi", "adif"]:
-        logging.info(f"Proceeding to parse ADIF file {args.filename}")
-        qso_list = adif.qso_list_from_file(filename)
+        logging.info(
+            f"Proceeding to parse ADIF file {args.filename}, only valid QSO: {args.only_valid}"
+        )
+        qso_list = adif.qso_list_from_file(filename, args.only_valid)
 
     # TODO to be removed, test code for .dump files
     elif ext.casefold() in [
@@ -405,7 +489,7 @@ def main():
         raise ValueError(f"--dpi must be <= {DPI_MAX}")
 
     if args.wkhtml_image_args:
-        logging.info(f"wkhtml_image_args: {args.wkhtml_image_args.split()}'")
+        logging.info(f"wkhtml_image_args: {args.wkhtml_image_args.split()}")
 
     if args.wkhtml_pdf_args:
         logging.info(f"wkhtml_pdf_args: {args.wkhtml_pdf_args.split()}")
@@ -424,6 +508,7 @@ def main():
         _dpi=args.dpi,
         _wkhtml_image_args=args.wkhtml_image_args,
         _wkhtml_pdf_args=args.wkhtml_pdf_args,
+        _dry_run=args.dry_run,
     )
 
 

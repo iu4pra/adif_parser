@@ -200,10 +200,11 @@ def remove_header(_adif_fields: list):
     return _adif_fields, eoh_index
 
 
-def adif_to_qso_list(_adif_fields: list):
+def adif_to_qso_list(_adif_fields: list, _only_valid=False):
     """Parse QSO data from an ADIF list
 
-    Header is automatically stripped if not already done"""
+    Header is automatically stripped if not already done.
+    Invalid QSOs are ignored by default"""
     # Input type check
     assert isinstance(_adif_fields, list)
     # Strip header
@@ -236,7 +237,12 @@ def adif_to_qso_list(_adif_fields: list):
             field_list_temp.clear()
 
             logging.debug(f"Creating a QSO object based on {_dict}")
-            _qso_list.append(QSO(_dict))
+            _new_qso = QSO(_dict)
+            logging.debug(f"Valid QSO: {_new_qso.is_valid()}")
+            if not _only_valid or _new_qso.is_valid():
+                _qso_list.append(_new_qso)
+            else:
+                logging.warning(f"Invalid QSO object will be ignored: {_dict}")
         else:
             if len(_adif_fields) == 0:
                 # End of list found before EOR, raise error
@@ -245,10 +251,10 @@ def adif_to_qso_list(_adif_fields: list):
     return _qso_list
 
 
-def qso_list_from_file(filename: str):
+def qso_list_from_file(filename: str, _only_valid=False):
     """Convenience function to convert an ADIF file into a QSO list"""
     field_list = parse_adif_file(filename)
-    qso_list: list[QSO] = adif_to_qso_list(field_list)
+    qso_list: list[QSO] = adif_to_qso_list(field_list, _only_valid)
     return qso_list
 
 
