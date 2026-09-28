@@ -302,7 +302,7 @@ def main():
     )
 
     parser.add_argument(
-        "--image_format",
+        "--image-format",
         metavar="image_format",
         type=str,
         default=IMG_OUT_EXTENSION,
