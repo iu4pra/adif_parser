@@ -136,8 +136,8 @@ def generate_qsl_image_pdf(
     _width: float = QSL_WIDTH,
     _height: float = QSL_HEIGHT,
     _dpi: int = DPI,
-    _wkhtml_image_args = None,
-    _wkhtml_pdf_args = None,
+    _wkhtml_image_args=None,
+    _wkhtml_pdf_args=None,
 ):
     """Generates either, one QSL image per QSO in the given list,
     a PDF file qith the QSLs contained in the given QSO list, or both"""
@@ -223,13 +223,12 @@ def generate_qsl_image_pdf(
             out_name = os.path.join(
                 _out_folder, (out_base_name + "_%04d." % (i + 1) + _format)
             )
-            image_cmd_list = dict_to_cmd_list(generate_options_image(_format, _width, _height, _dpi))
+            image_cmd_list = dict_to_cmd_list(
+                generate_options_image(_format, _width, _height, _dpi)
+            )
             if _wkhtml_image_args:
                 image_cmd_list.extend(_wkhtml_image_args)
-            ret = wkhtmltoimage(
-                image_cmd_list
-                + [TEMPLATE_TEMP_FILENAME, out_name]
-            )
+            ret = wkhtmltoimage(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])
             if ret.returncode != 0:
                 logging.warning(f"wkhtmltoimage returned {ret.returncode}")
 
@@ -237,10 +236,9 @@ def generate_qsl_image_pdf(
         if _pdf:
             pdf_cmd_list = dict_to_cmd_list(generate_options_pdf(_width, _height, _dpi))
             if _wkhtml_pdf_args:
-                pdf_cmd_list.extend(_wkhtml_pdf_args)            
+                pdf_cmd_list.extend(_wkhtml_pdf_args)
             ret = wkhtmltopdf(
-                pdf_cmd_list
-                + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
+                pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
             )
             if ret.returncode != 0:
                 logging.warning(f"wkhtmltopdf returned {ret.returncode}")
