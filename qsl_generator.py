@@ -138,9 +138,13 @@ def generate_qsl_image_pdf(
     _dpi: int = DPI,
     _wkhtml_image_args=None,
     _wkhtml_pdf_args=None,
+    _dry_run: bool = False,
 ):
     """Generates either, one QSL image per QSO in the given list,
     a PDF file qith the QSLs contained in the given QSO list, or both"""
+
+    if _dry_run:
+        logging.warning("Running app in dry-run mode")
 
     if not _image and not _pdf:
         logging.error("No output specified!")
@@ -153,28 +157,29 @@ def generate_qsl_image_pdf(
     if not os.path.isfile(template_path):
         raise FileNotFoundError(f"Template file {template_path} not found")
 
-    # Delete previous output file(s) if present
-    rmtree_if_exists(TEMP_FOLDER)
+    if _dry_run is False:
+        # Delete previous output file(s) if present
+        rmtree_if_exists(TEMP_FOLDER)
 
-    # Re-create temporary folder
-    if not os.path.exists(TEMP_FOLDER):
-        os.makedirs(TEMP_FOLDER)
-    else:
-        if not os.path.isdir(TEMP_FOLDER):
-            os.unlink(TEMP_FOLDER)
+        # Re-create temporary folder
+        if not os.path.exists(TEMP_FOLDER):
             os.makedirs(TEMP_FOLDER)
+        else:
+            if not os.path.isdir(TEMP_FOLDER):
+                os.unlink(TEMP_FOLDER)
+                os.makedirs(TEMP_FOLDER)
 
-    if _pdf:
-        # Delete previous output file(s)
-        unlink_if_exists(_out_filename)
+        if _pdf:
+            # Delete previous output file(s)
+            unlink_if_exists(_out_filename)
 
-    # Create output folder
-    if not os.path.exists(_out_folder):
-        os.makedirs(_out_folder)
-    else:
-        if not os.path.isdir(_out_folder):
-            os.unlink(_out_folder)
+        # Create output folder
+        if not os.path.exists(_out_folder):
             os.makedirs(_out_folder)
+        else:
+            if not os.path.isdir(_out_folder):
+                os.unlink(_out_folder)
+                os.makedirs(_out_folder)
 
     # Loading Jinja environment
     env = Environment(
@@ -208,9 +213,10 @@ def generate_qsl_image_pdf(
 
         logging.info(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
 
-        # Write compiled template to file
-        with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
-            f.write(output)
+        if _dry_run is False:
+            # Write compiled template to file
+            with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
+                f.write(output)
 
         # Remove any extension in the passed out filename, will be added later
         out_base_name = _out_filename.rsplit(".", 1)[0]
@@ -228,22 +234,24 @@ def generate_qsl_image_pdf(
             )
             if _wkhtml_image_args:
                 image_cmd_list.extend(_wkhtml_image_args.split())
-            ret = wkhtmltoimage(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])
-            if ret.returncode != 0:
-                logging.warning(f"wkhtmltoimage returned {ret.returncode}")
+            if _dry_run is False:
+                ret = wkhtmltoimage(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])
+                if ret.returncode != 0:
+                    logging.warning(f"wkhtmltoimage returned {ret.returncode}")
 
         # Convert template page to PDF
         if _pdf:
             pdf_cmd_list = dict_to_cmd_list(generate_options_pdf(_width, _height, _dpi))
             if _wkhtml_pdf_args:
                 pdf_cmd_list.extend(_wkhtml_pdf_args.split())
-            ret = wkhtmltopdf(
-                pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
-            )
-            if ret.returncode != 0:
-                logging.warning(f"wkhtmltopdf returned {ret.returncode}")
+            if _dry_run is False:
+                ret = wkhtmltopdf(
+                    pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
+                )
+                if ret.returncode != 0:
+                    logging.warning(f"wkhtmltopdf returned {ret.returncode}")
 
-    if _pdf:
+    if not _dry_run and _pdf:
         # Concatenate all files to create a single PDF to print
         out_name = os.path.join(_out_folder, out_base_name + ".pdf")
         writer = pypdf.PdfWriter()
@@ -255,8 +263,9 @@ def generate_qsl_image_pdf(
         writer.write(out_name)
         writer.close()
 
-    # Delete temporary folder and its content
-    rmtree_if_exists(TEMP_FOLDER)
+    if _dry_run is False:
+        # Delete temporary folder and its content
+        rmtree_if_exists(TEMP_FOLDER)
 
 
 def setup_logging(level=logging.INFO):
@@ -380,6 +389,10 @@ def main():
         "--verbose", default=False, action="store_true", help="More debug info"
     )
 
+    parser.add_argument(
+        "--dry-run", default=False, action="store_true", help="More debug info"
+    )
+
     # Parse arguments
     args = parser.parse_args()
 
@@ -463,6 +476,7 @@ def main():
         _dpi=args.dpi,
         _wkhtml_image_args=args.wkhtml_image_args,
         _wkhtml_pdf_args=args.wkhtml_pdf_args,
+        _dry_run = args.dry_run
     )
 
 
