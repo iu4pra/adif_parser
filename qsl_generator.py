@@ -136,6 +136,8 @@ def generate_qsl_image_pdf(
     _width: float = QSL_WIDTH,
     _height: float = QSL_HEIGHT,
     _dpi: int = DPI,
+    _wkhtml_image_args=None,
+    _wkhtml_pdf_args=None,
 ):
     """Generates either, one QSL image per QSO in the given list,
     a PDF file qith the QSLs contained in the given QSO list, or both"""
@@ -221,18 +223,25 @@ def generate_qsl_image_pdf(
             out_name = os.path.join(
                 _out_folder, (out_base_name + "_%04d." % (i + 1) + _format)
             )
-            ret = wkhtmltoimage(
-                dict_to_cmd_list(generate_options_image(_format, _width, _height, _dpi))
-                + [TEMPLATE_TEMP_FILENAME, out_name]
+            image_cmd_list = dict_to_cmd_list(
+                generate_options_image(_format, _width, _height, _dpi)
             )
-            logging.info(f"wkhtmltoimage returned {ret.returncode}")
+            if _wkhtml_image_args:
+                image_cmd_list.extend(_wkhtml_image_args.split())
+            ret = wkhtmltoimage(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])
+            if ret.returncode != 0:
+                logging.warning(f"wkhtmltoimage returned {ret.returncode}")
 
         # Convert template page to PDF
         if _pdf:
+            pdf_cmd_list = dict_to_cmd_list(generate_options_pdf(_width, _height, _dpi))
+            if _wkhtml_pdf_args:
+                pdf_cmd_list.extend(_wkhtml_pdf_args.split())
             ret = wkhtmltopdf(
-                dict_to_cmd_list(generate_options_pdf(_width, _height, _dpi))
-                + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
+                pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
             )
+            if ret.returncode != 0:
+                logging.warning(f"wkhtmltopdf returned {ret.returncode}")
 
     if _pdf:
         # Concatenate all files to create a single PDF to print
@@ -265,9 +274,9 @@ def main():
         "outfile",
         metavar="output_file",
         nargs="?",
-        default=PDF_OUTPUT,
         type=str,
-        help="Output file name (base for images)",
+        default=PDF_OUTPUT,
+        help="Output file name (base name for images)",
     )
 
     parser.add_argument("--pdf", action="store_true", help="Output as multi-page PDF")
@@ -293,7 +302,7 @@ def main():
     )
 
     parser.add_argument(
-        "--image_format",
+        "--image-format",
         metavar="image_format",
         type=str,
         default=IMG_OUT_EXTENSION,
@@ -322,6 +331,22 @@ def main():
         type=int,
         default=DPI,
         help=f"Tentative DPI value (default {DPI})",
+    )
+
+    parser.add_argument(
+        "--wkhtml-image-args",
+        metavar="wkhtml_image_args",
+        type=str,
+        default="",
+        help="Extra arguments for wkhtmltoimage",
+    )
+
+    parser.add_argument(
+        "--wkhtml-pdf-args",
+        metavar="wkhtml_pdf_args",
+        type=str,
+        default="",
+        help="Extra arguments for wkhtmltopdf",
     )
 
     # Parse arguments
@@ -379,6 +404,12 @@ def main():
     elif args.dpi > DPI_MAX:
         raise ValueError(f"--dpi must be <= {DPI_MAX}")
 
+    if args.wkhtml_image_args:
+        logging.info(f"wkhtml_image_args: {args.wkhtml_image_args.split()}'")
+
+    if args.wkhtml_pdf_args:
+        logging.info(f"wkhtml_pdf_args: {args.wkhtml_pdf_args.split()}")
+
     # All OK, generate QSLs
     generate_qsl_image_pdf(
         qso_list,
@@ -391,6 +422,8 @@ def main():
         _width=args.width,
         _height=args.height,
         _dpi=args.dpi,
+        _wkhtml_image_args=args.wkhtml_image_args,
+        _wkhtml_pdf_args=args.wkhtml_pdf_args,
     )
 
 
