@@ -230,7 +230,8 @@ def generate_qsl_image_pdf(
                 image_cmd_list
                 + [TEMPLATE_TEMP_FILENAME, out_name]
             )
-            logging.info(f"wkhtmltoimage returned {ret.returncode}")
+            if ret.returncode != 0:
+                logging.warning(f"wkhtmltoimage returned {ret.returncode}")
 
         # Convert template page to PDF
         if _pdf:
@@ -241,7 +242,8 @@ def generate_qsl_image_pdf(
                 pdf_cmd_list
                 + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
             )
-            logging.info(f"wkhtmltopdf returned {ret.returncode}")
+            if ret.returncode != 0:
+                logging.warning(f"wkhtmltopdf returned {ret.returncode}")
 
     if _pdf:
         # Concatenate all files to create a single PDF to print
