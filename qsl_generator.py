@@ -441,7 +441,7 @@ def main():
         args.pdf = False
 
     if not args.pdf and args.pdf is not None and args.image == False:
-        raise Exception("At least one output option must be specified")
+        raise ValueError("At least one output option must be specified")
 
     # File extension
     ext = filename.split(".")[-1]
