@@ -467,7 +467,7 @@ def main():
     ]:
         logging.warning("TEST ONLY dump file, not for production!")
         # Unpickle data
-        with open(args.filename, "rb") as f:
+        with open(args.filename, "rb", encoding="utf-8") as f:
             qso_list = pickle.load(f)
     else:
         raise Exception("Unrecognized file extension")
