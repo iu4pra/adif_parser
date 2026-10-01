@@ -17,12 +17,20 @@ class WkhtmlTest(unittest.TestCase):
     """Test cases for the wkhtml wrapper"""
 
     def test_check_exe_exists_image(self):
-        with patch.object(wkhtml, "WKHTMLTOX_BASE_PATH", os.path.join(wkhtml.WKHTMLTOX_BASE_PATH, 'path/that/doesnt/exist')):
+        with patch.object(
+            wkhtml,
+            "WKHTMLTOX_BASE_PATH",
+            os.path.join(wkhtml.WKHTMLTOX_BASE_PATH, "path/that/doesnt/exist"),
+        ):
             with self.assertRaises(AssertionError):
                 wkhtml.wkhtmltoimage([])
 
     def test_check_exe_exists_pdf(self):
-        with patch.object(wkhtml, "WKHTMLTOX_BASE_PATH", os.path.join(wkhtml.WKHTMLTOX_BASE_PATH, 'path/that/doesnt/exist')):
+        with patch.object(
+            wkhtml,
+            "WKHTMLTOX_BASE_PATH",
+            os.path.join(wkhtml.WKHTMLTOX_BASE_PATH, "path/that/doesnt/exist"),
+        ):
             with self.assertRaises(AssertionError):
                 wkhtml.wkhtmltopdf([])
 
@@ -205,9 +213,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
             qslgen.main()
 
     @patch("qsl_generator.adif.qso_list_from_file")
-    @patch(
-        "sys.argv", ["qsl_generator.py", "samples/minimal_1qso.adi", "--dpi", "0"]
-    )
+    @patch("sys.argv", ["qsl_generator.py", "samples/minimal_1qso.adi", "--dpi", "0"])
     def test_invalid_dpi_raises(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
@@ -268,9 +274,7 @@ class QSLGeneratorCommandTest(unittest.TestCase):
 class QSLGeneratorOutputNameTest(unittest.TestCase):
     @patch("qsl_generator.adif.qso_list_from_file")
     @patch("qsl_generator.generate_qsl_image_pdf")
-    @patch(
-        "sys.argv", ["qsl_generator.py", "samples/minimal_1qso.adi", "custom_name"]
-    )
+    @patch("sys.argv", ["qsl_generator.py", "samples/minimal_1qso.adi", "custom_name"])
     def test_main_uses_output_filename_argument(self, mock_generate, mock_parse):
         mock_parse.return_value = []
         qslgen.main()
