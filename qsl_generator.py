@@ -269,7 +269,7 @@ def generate_qsl_image_pdf(
                     writer.append(pdf)
                 else:
                     logging.error(
-                        "Error: file {pdf} not found! Check wkhtmltopdf output!"
+                        f"Error: file {pdf} not found! Check wkhtmltopdf output!"
                     )
             writer.write(out_name)
             writer.close()
