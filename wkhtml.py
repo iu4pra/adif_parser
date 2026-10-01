@@ -18,12 +18,16 @@ def wkhtmltoimage(args: list = []):
     """Invokes wkhtmltoimage with the given arguments"""
     _os = platform.uname()[0]
     if _os == "Windows":
+        # Check if executable exists
+        assert os.path.isfile(os.path.join(WKHTMLTOX_BASE_PATH, "wkhtmltoimage.exe"))
         return subprocess.run(
             [os.path.join(WKHTMLTOX_BASE_PATH, "wkhtmltoimage.exe")] + args,
             capture_output=True,
             text=True,
         )
     elif _os == "Linux":
+        # Check if executable exists
+        assert os.path.isfile(os.path.join(WKHTMLTOX_BASE_PATH, "wkhtmltoimage"))
         return subprocess.run(
             [os.path.join(WKHTMLTOX_BASE_PATH, "wkhtmltoimage")] + args,
             capture_output=True,
@@ -37,12 +41,16 @@ def wkhtmltopdf(args: list = []):
     """Invokes wkhtmltopdf with the given arguments"""
     _os = platform.uname()[0]
     if _os == "Windows":
+        # Check if executable exists
+        assert os.path.isfile(os.path.join(WKHTMLTOX_BASE_PATH, "wkhtmltopdf.exe"))
         return subprocess.run(
             [os.path.join(WKHTMLTOX_BASE_PATH, "wkhtmltopdf.exe")] + args,
             capture_output=True,
             text=True,
         )
     elif _os == "Linux":
+        # Check if executable exists
+        assert os.path.isfile(os.path.join(WKHTMLTOX_BASE_PATH, "wkhtmltopdf"))
         return subprocess.run(
             [os.path.join(WKHTMLTOX_BASE_PATH, "wkhtmltopdf")] + args,
             capture_output=True,
