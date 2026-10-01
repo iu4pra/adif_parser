@@ -190,7 +190,7 @@ def remove_header(_adif_fields: list):
     if eoh_index > 0:
         logging.debug(f"EOH found at index {eoh_index}")
     else:
-        logging.info("EOH field not found during header stripping")
+        logging.debug("EOH field not found during header stripping")
 
     # Remove header data
     del _adif_fields[0 : eoh_index + 1]
@@ -210,7 +210,7 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=False):
     # Strip header
     _adif_fields, eoh_index = remove_header(_adif_fields)
 
-    logging.info(f"Automatic header stripping: eoh_index = {eoh_index}")
+    logging.debug(f"Automatic header stripping: eoh_index = {eoh_index}")
 
     _qso_list: list[QSO] = []
 
