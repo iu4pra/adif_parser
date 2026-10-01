@@ -170,28 +170,39 @@ class QSLGeneratorArgsTest(unittest.TestCase):
 
 class QSLGeneratorValidationTest(unittest.TestCase):
     @patch("qsl_generator.adif.qso_list_from_file")
-    @patch("sys.argv", ["qsl_generator.py", "samples/iu4pra_sample_log.adi", "--width", "0"])
+    @patch(
+        "sys.argv",
+        ["qsl_generator.py", "samples/iu4pra_sample_log.adi", "--width", "0"],
+    )
     def test_invalid_width_raises(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
             qslgen.main()
 
     @patch("qsl_generator.adif.qso_list_from_file")
-    @patch("sys.argv", ["qsl_generator.py", "samples/iu4pra_sample_log.adi", "--height", "-1"])
+    @patch(
+        "sys.argv",
+        ["qsl_generator.py", "samples/iu4pra_sample_log.adi", "--height", "-1"],
+    )
     def test_invalid_height_raises(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
             qslgen.main()
 
     @patch("qsl_generator.adif.qso_list_from_file")
-    @patch("sys.argv", ["qsl_generator.py", "samples/iu4pra_sample_log.adi", "--dpi", "0"])
+    @patch(
+        "sys.argv", ["qsl_generator.py", "samples/iu4pra_sample_log.adi", "--dpi", "0"]
+    )
     def test_invalid_dpi_raises(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
             qslgen.main()
 
     @patch("qsl_generator.adif.qso_list_from_file")
-    @patch("sys.argv", ["qsl_generator.py", "samples/iu4pra_sample_log.adi", "--width", "99999"])
+    @patch(
+        "sys.argv",
+        ["qsl_generator.py", "samples/iu4pra_sample_log.adi", "--width", "99999"],
+    )
     def test_width_over_max_raises(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
@@ -242,7 +253,9 @@ class QSLGeneratorCommandTest(unittest.TestCase):
 class QSLGeneratorOutputNameTest(unittest.TestCase):
     @patch("qsl_generator.adif.qso_list_from_file")
     @patch("qsl_generator.generate_qsl_image_pdf")
-    @patch("sys.argv", ["qsl_generator.py", "samples/iu4pra_sample_log.adi", "custom_name"])
+    @patch(
+        "sys.argv", ["qsl_generator.py", "samples/iu4pra_sample_log.adi", "custom_name"]
+    )
     def test_main_uses_output_filename_argument(self, mock_generate, mock_parse):
         mock_parse.return_value = []
         qslgen.main()
