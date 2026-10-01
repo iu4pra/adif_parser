@@ -3,12 +3,12 @@
 # This software under the MIT License
 # Unit test for the application
 
-from qso import QSO
 import adif
 import logging
 import os
 import qsl_generator as qslgen
 import unittest
+from qso import QSO
 from unittest.mock import patch
 
 
