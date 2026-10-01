@@ -176,7 +176,7 @@ def parse_adif_file(filename: str):
     """Parse an ADIF file and returns the ordered list of its fields"""
     # Input type check
     assert isinstance(filename, str)
-    with open(filename, "rt") as f:
+    with open(filename, "rt", encoding="utf-8") as f:
         field_list = parse_adif_string(f.read())
     return field_list
 
@@ -285,5 +285,5 @@ if __name__ == "__main__":
         logging.debug(f"is_valid(): {q.is_valid()}")
 
     # Dumping the QSO list for the QSL generator module
-    with open(os.path.splitext(LOGFILE)[0] + ".dump", "wb") as f:
+    with open(os.path.splitext(LOGFILE)[0] + ".dump", "wb", encoding="utf-8") as f:
         pickle.dump(qso_list, f)

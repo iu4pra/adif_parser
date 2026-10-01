@@ -269,7 +269,7 @@ def generate_qsl_image_pdf(
                     writer.append(pdf)
                 else:
                     logging.error(
-                        "Error: file {pdf} not found! Check wkhtmltopdf output!"
+                        f"Error: file {pdf} not found! Check wkhtmltopdf output!"
                     )
             writer.write(out_name)
             writer.close()
@@ -467,7 +467,7 @@ def main():
     ]:
         logging.warning("TEST ONLY dump file, not for production!")
         # Unpickle data
-        with open(args.filename, "rb") as f:
+        with open(args.filename, "rb", encoding="utf-8") as f:
             qso_list = pickle.load(f)
     else:
         raise Exception("Unrecognized file extension")
