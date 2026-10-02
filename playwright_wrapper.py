@@ -7,6 +7,9 @@ import os.path
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
+# DPI used by page.screenshot()
+PLAYWRIGHT_SCREENSHOT_DPI = 72
+
 # TEMPORARY TO AVOID CIRCULAR IMPORT
 DPI = 150
 
@@ -33,8 +36,8 @@ def generate_qsl_image(_input_html: str, _output_name: str, _width: int, _height
             clip={
                 "x": 0,
                 "y": 0,
-                "width": _width * 72 / DPI,
-                "height": _height * 72 / DPI,
+                "width": _width * PLAYWRIGHT_SCREENSHOT_DPI / DPI,
+                "height": _height * PLAYWRIGHT_SCREENSHOT_DPI / DPI,
             },
         )
         browser.close()
