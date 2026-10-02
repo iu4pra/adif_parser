@@ -254,7 +254,7 @@ def generate_qsl_image_pdf(
                 ret = wkhtmltopdf(
                     pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
                 )
-                playwright_wrapper.generate_qsl_pdf(TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i).rsplit(".", 1)[0] + "_playwright." + _format, _width, _height)
+                playwright_wrapper.generate_qsl_pdf(TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i), _width, _height)
                 if ret.returncode != 0:
                     logging.warning(f"wkhtmltopdf returned {ret.returncode}")
             else:

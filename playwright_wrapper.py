@@ -23,13 +23,13 @@ def generate_qsl_image(_input_html: str, _output_name: str, _width: int, _height
 
         browser = p.chromium.launch()
 
-        page = browser.new_page(viewport={'width': _width, 'height': _height})
+        page = browser.new_page()
         page.goto(file_url)
+        # screenshot() only works ad 72 DPI!!!
         page.screenshot(
             path=_output_name,
-            clip={'x': 0, 'y': 0, 'width': _width, 'height': _height}
+            clip={'x': 0, 'y': 0, 'width': _width*72/DPI, 'height': _height*72/DPI}
             )
-
         browser.close()
 
 def generate_qsl_pdf(_input_html: str, _output_name: str, _width: int, _height: int):
@@ -40,7 +40,7 @@ def generate_qsl_pdf(_input_html: str, _output_name: str, _width: int, _height: 
 
         browser = p.chromium.launch()
 
-        page = browser.new_page(viewport={'width': cm_to_px(_width,DPI), 'height': cm_to_px(_height,DPI)})
+        page = browser.new_page(viewport={'width': cm_to_px(_width,72), 'height': cm_to_px(_height,72)})
         page.goto(file_url)
         page.pdf(
             path=_output_name,
