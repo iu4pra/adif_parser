@@ -10,10 +10,12 @@ from playwright.sync_api import sync_playwright
 # TEMPORARY TO AVOID CIRCULAR IMPORT
 DPI = 150
 
+
 # TEMPORARY TO AVOID CIRCULAR IMPORT
 def cm_to_px(cm, dpi):
     """Converts centimeters to pixels given a DPI value"""
     return int(cm * dpi / 2.54)
+
 
 def generate_qsl_image(_input_html: str, _output_name: str, _width: int, _height: int):
     """Simple wrapper to generate a single image, very inefficient because the browser is launched once per QSO"""
@@ -28,9 +30,15 @@ def generate_qsl_image(_input_html: str, _output_name: str, _width: int, _height
         # screenshot() only works ad 72 DPI!!!
         page.screenshot(
             path=_output_name,
-            clip={'x': 0, 'y': 0, 'width': _width*72/DPI, 'height': _height*72/DPI}
-            )
+            clip={
+                "x": 0,
+                "y": 0,
+                "width": _width * 72 / DPI,
+                "height": _height * 72 / DPI,
+            },
+        )
         browser.close()
+
 
 def generate_qsl_pdf(_input_html: str, _output_name: str, _width: int, _height: int):
     """Simple wrapper to generate a single PDF, very inefficient because the browser is launched once per QSO"""
@@ -40,18 +48,13 @@ def generate_qsl_pdf(_input_html: str, _output_name: str, _width: int, _height: 
 
         browser = p.chromium.launch()
 
-        page = browser.new_page(viewport={'width': cm_to_px(_width,72), 'height': cm_to_px(_height,72)})
+        page = browser.new_page()
         page.goto(file_url)
         page.pdf(
             path=_output_name,
-            width=f"{_width}cm",
-            height=f"{_height}cm",
+            width=f"{_width}cm",  # Works with px (it's even more accurate)
+            height=f"{_height}cm",  # Works with px (it's even more accurate)
             print_background=True,
-            margin={
-            "top": "0cm",
-            "right": "0cm",
-            "bottom": "0cm",
-            "left": "0cm"
-            }
-            )
+            margin={"top": "0cm", "right": "0cm", "bottom": "0cm", "left": "0cm"},
+        )
         browser.close()
