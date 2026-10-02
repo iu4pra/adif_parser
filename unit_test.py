@@ -155,7 +155,7 @@ class QSLGeneratorArgsTest(unittest.TestCase):
         "sys.argv",
         [
             "qsl_generator.py",
-            "samples/minimal_1qso.adi",
+            "samples/test_log.adi",
             "--pdf",
             "--wkhtml-pdf-args",
             "--disable-smart-shrinking --lowquality",
@@ -175,7 +175,7 @@ class QSLGeneratorArgsTest(unittest.TestCase):
         "sys.argv",
         [
             "qsl_generator.py",
-            "samples/minimal_1qso.adi",
+            "samples/test_log.adi",
             "--image",
             "--wkhtml-image-args",
             "--disable-smart-shrinking --enable-javascript",
@@ -195,7 +195,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
     @patch("qsl_generator.adif.qso_list_from_file")
     @patch(
         "sys.argv",
-        ["qsl_generator.py", "samples/minimal_1qso.adi", "--width", "0"],
+        ["qsl_generator.py", "samples/test_log.adi", "--width", "0"],
     )
     def test_invalid_width_raises(self, mock_parse):
         mock_parse.return_value = []
@@ -205,7 +205,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
     @patch("qsl_generator.adif.qso_list_from_file")
     @patch(
         "sys.argv",
-        ["qsl_generator.py", "samples/minimal_1qso.adi", "--height", "-1"],
+        ["qsl_generator.py", "samples/test_log.adi", "--height", "-1"],
     )
     def test_invalid_height_raises(self, mock_parse):
         mock_parse.return_value = []
@@ -213,7 +213,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
             qslgen.main()
 
     @patch("qsl_generator.adif.qso_list_from_file")
-    @patch("sys.argv", ["qsl_generator.py", "samples/minimal_1qso.adi", "--dpi", "0"])
+    @patch("sys.argv", ["qsl_generator.py", "samples/test_log.adi", "--dpi", "0"])
     def test_invalid_dpi_raises(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
@@ -222,7 +222,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
     @patch("qsl_generator.adif.qso_list_from_file")
     @patch(
         "sys.argv",
-        ["qsl_generator.py", "samples/minimal_1qso.adi", "--width", "99999"],
+        ["qsl_generator.py", "samples/test_log.adi", "--width", "99999"],
     )
     def test_width_over_max_raises(self, mock_parse):
         mock_parse.return_value = []
@@ -235,7 +235,7 @@ class QSLGeneratorCommandTest(unittest.TestCase):
     def test_image_command_includes_custom_args(self, mock_wkhtmltoimage):
         mock_wkhtmltoimage.return_value = type("Result", (), {"returncode": 0})()
 
-        qso_list = adif.qso_list_from_file("samples/minimal_1qso.adi")
+        qso_list = adif.qso_list_from_file("samples/test_log.adi")
         qslgen.generate_qsl_image_pdf(
             qso_list,
             _image=True,
@@ -255,7 +255,7 @@ class QSLGeneratorCommandTest(unittest.TestCase):
     def test_pdf_command_includes_custom_args(self, mock_wkhtmltopdf):
         mock_wkhtmltopdf.return_value = type("Result", (), {"returncode": 0})()
 
-        qso_list = adif.qso_list_from_file("samples/minimal_1qso.adi")
+        qso_list = adif.qso_list_from_file("samples/test_log.adi")
 
         qslgen.generate_qsl_image_pdf(
             qso_list,
@@ -274,7 +274,7 @@ class QSLGeneratorCommandTest(unittest.TestCase):
 class QSLGeneratorOutputNameTest(unittest.TestCase):
     @patch("qsl_generator.adif.qso_list_from_file")
     @patch("qsl_generator.generate_qsl_image_pdf")
-    @patch("sys.argv", ["qsl_generator.py", "samples/minimal_1qso.adi", "custom_name"])
+    @patch("sys.argv", ["qsl_generator.py", "samples/test_log.adi", "custom_name"])
     def test_main_uses_output_filename_argument(self, mock_generate, mock_parse):
         mock_parse.return_value = []
         qslgen.main()
@@ -288,7 +288,7 @@ class ImageFormatTest(unittest.TestCase):
         mock_wkhtmltoimage.return_value = type("Result", (), {"returncode": 0})()
 
         qslgen.generate_qsl_image_pdf(
-            qso_list=adif.qso_list_from_file("samples/minimal_1qso.adi"),
+            qso_list=adif.qso_list_from_file("samples/test_log.adi"),
             _image=True,
             _pdf=False,
             _format="png",
@@ -307,7 +307,7 @@ class QSLGeneratorWarningTest(unittest.TestCase):
         mock_wkhtmltoimage.return_value = type("Result", (), {"returncode": 1})()
 
         qslgen.generate_qsl_image_pdf(
-            qso_list=adif.qso_list_from_file("samples/minimal_1qso.adi"),
+            qso_list=adif.qso_list_from_file("samples/test_log.adi"),
             _image=True,
             _pdf=False,
             _out_filename="out",
