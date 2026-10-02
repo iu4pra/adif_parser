@@ -4,22 +4,48 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <title>QSL template</title>
     <style type="text/css">
-      body { font-size: 14 px; font-family: Arial; }
-      span.field { font-weight: bold; }
+      body {
+        font-size: 14px;
+        font-family: Arial, sans-serif;
+        padding: 5mm;
+        box-sizing: border-box; }
+
+      .field { font-weight: bold; }
+
+      html, body {
+        width: 13.7cm;
+        height: 8.7cm;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      
+      .qso-data {
+        width: 100%;
+        border: 1px solid black;
+        border-collapse: collapse;
+      }
+      .qso-data td,
+      .qso-data th {
+        border: 1px solid black;
+        border-collapse: collapse;
+        padding: 2px;
+      }
     </style>
   </head>
   <body>
     <p>IU4PRA<br>
       Generic fuffa about my super duper station</p>
     <p>Confirming QSO with: <span class="field">{{ qso.call }}</span></p>
-    <table style="width: 450px;" border="0">
+    <table class="qso-data">
+      <th colspan=2 style="text-align: center;">QSO DATA</th>
       <tbody>
         <tr>
           <td>Date: <span class="field">{{ qso.qso_date }}</span></td>
           <td>Time UTC: <span class="field">{{ qso.time_on }}</span> </td>
         </tr>
         <tr>
-          {% if qso.band %}<td {% if not qso.mode %}colspan=2{% endif %}>Band: <span class="field">{{ qso.band }}</span></td>{% endif %}
+          {% if qso.band %}<td {% if not qso.freq %}colspan=2{% endif %}>Band: <span class="field">{{ qso.band }}</span></td>{% endif %}
           {% if qso.freq %}<td {% if not qso.band %}colspan=2{% endif %}>Freq: <span class="field">{{ qso.freq }} MHz</span></td>{% endif %}
         </tr>
         <tr>
@@ -28,7 +54,7 @@
         </tr>
       </tbody>
     </table>
-    <span class="field"></span>
+    <span>Other generic fuffa</span>
     <p>PSE QSL via buro / TNX QSL</p>
     
   </body>

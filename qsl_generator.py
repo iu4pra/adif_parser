@@ -13,6 +13,7 @@ import argparse
 import logging
 import os
 import pickle
+import playwright_wrapper
 import pypdf
 import shutil
 
@@ -236,6 +237,12 @@ def generate_qsl_image_pdf(
                 image_cmd_list.extend(_wkhtml_image_args.split())
             if _dry_run is False:
                 ret = wkhtmltoimage(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])
+                playwright_wrapper.generate_qsl_image(
+                    TEMPLATE_TEMP_FILENAME,
+                    out_name.rsplit(".", 1)[0] + "_playwright." + _format,
+                    _width,
+                    _height,
+                )
                 if ret.returncode != 0:
                     logging.warning(f"wkhtmltoimage returned {ret.returncode}")
             else:
@@ -251,6 +258,9 @@ def generate_qsl_image_pdf(
             if _dry_run is False:
                 ret = wkhtmltopdf(
                     pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
+                )
+                playwright_wrapper.generate_qsl_pdf(
+                    TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i), _width, _height
                 )
                 if ret.returncode != 0:
                     logging.warning(f"wkhtmltopdf returned {ret.returncode}")
