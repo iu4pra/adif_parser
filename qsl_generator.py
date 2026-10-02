@@ -240,8 +240,8 @@ def generate_qsl_image_pdf(
                 playwright_wrapper.generate_qsl_image(
                     TEMPLATE_TEMP_FILENAME,
                     out_name.rsplit(".", 1)[0] + "_playwright." + _format,
-                    cm_to_px(_width, DPI),
-                    cm_to_px(_height, DPI),
+                    _width,
+                    _height,
                 )
                 if ret.returncode != 0:
                     logging.warning(f"wkhtmltoimage returned {ret.returncode}")
