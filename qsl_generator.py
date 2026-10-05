@@ -8,7 +8,6 @@
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from qso import QSO
-from wkhtml import wkhtmltoimage, wkhtmltopdf, WKHTMLTOX_BASE_DPI
 import adif
 import argparse
 import logging
@@ -17,15 +16,6 @@ import pickle
 import playwright_wrapper
 import pypdf
 import shutil
-
-# ==========================================
-# EXTERNAL DEPENDENCY WARNING
-# ==========================================
-# This script relies on the 'wkhtmltox' suite (wkhtmltopdf / wkhtmltoimage)
-# to render HTML into PDF or Image formats.
-# These are system-level binaries that must be installed separately.
-# Download them here: https://wkhtmltopdf.org/downloads.html
-# ==========================================
 
 # QSL standard size in centimeters
 QSL_WIDTH = 14.0
@@ -67,38 +57,6 @@ PDF_OUTPUT = "./qsl.pdf"
 def cm_to_px(cm, dpi):
     """Converts centimeters to pixels given a DPI value"""
     return int(cm * dpi / 2.54)
-
-
-# Default command options for wkhtmltopdf
-cmd_options_pdf = {
-    "--dpi": str(DPI),
-    "--page-width": f"{QSL_WIDTH}cm",
-    "--page-height": f"{QSL_HEIGHT}cm",
-}
-
-# Default command options for wkhtmltoimage
-cmd_options_image = {
-    "--zoom": str(DPI / WKHTMLTOX_BASE_DPI),
-    "--width": str(cm_to_px(QSL_WIDTH, DPI)),
-    "--height": str(cm_to_px(QSL_HEIGHT, DPI)),
-}
-
-
-def generate_options_pdf(_width, _height, _dpi):
-    return {
-        "--dpi": str(_dpi),
-        "--page-width": f"{_width}cm",
-        "--page-height": f"{_height}cm",
-    }
-
-
-def generate_options_image(_format, _width, _height, _dpi):
-    return {
-        "--zoom": str(_dpi / WKHTMLTOX_BASE_DPI),
-        "--width": str(cm_to_px(_width, _dpi)),
-        "--height": str(cm_to_px(_height, _dpi)),
-        "--format": _format,
-    }
 
 
 def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
@@ -256,51 +214,30 @@ def generate_qsl_image_pdf(
                 out_name = os.path.join(
                     _out_folder, (out_base_name + "_%04d." % (i + 1) + _format)
                 )
-                image_cmd_list = dict_to_cmd_list(
-                    generate_options_image(_format, _width, _height, _dpi)
-                )
-                if _wkhtml_image_args:
-                    image_cmd_list.extend(_wkhtml_image_args.split())
                 if _dry_run is False:
-                    ret = wkhtmltoimage(
-                        image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name]
-                    )
                     renderer.render(
                         TEMPLATE_TEMP_FILENAME,
-                        out_name.rsplit(".", 1)[0] + "_playwright." + _format,
+                        out_name,
                         _width,
                         _height,
                     )
-                    if ret.returncode != 0:
-                        logging.warning(f"wkhtmltoimage returned {ret.returncode}")
                 else:
                     logging.info(
-                        f"Would call: wkhtmltoimage {' '.join(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])}"
+                        f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, out_name,str(_width),str(_height)])}"
                     )
 
             # Convert template page to PDF
             if _pdf:
-                pdf_cmd_list = dict_to_cmd_list(
-                    generate_options_pdf(_width, _height, _dpi)
-                )
-                if _wkhtml_pdf_args:
-                    pdf_cmd_list.extend(_wkhtml_pdf_args.split())
                 if _dry_run is False:
-                    ret = wkhtmltopdf(
-                        pdf_cmd_list
-                        + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
-                    )
                     renderer.render(
                         TEMPLATE_TEMP_FILENAME,
                         (PDF_TEMP_BASE_NAME % i),
                         _width,
                         _height,
                     )
-                    if ret.returncode != 0:
-                        logging.warning(f"wkhtmltopdf returned {ret.returncode}")
                 else:
                     logging.info(
-                        f"Would call: wkhtmltopdf {' '.join(pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])}"
+                        f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i), str(_width),str(_height)])}"
                     )
 
     if _pdf:
@@ -549,7 +486,7 @@ def main():
         _format=args.image_format,
         _width=args.width,
         _height=args.height,
-        _dpi=args.dpi,
+        _dpi=args.dpi,  # TODO remove???
         _wkhtml_image_args=args.wkhtml_image_args,
         _wkhtml_pdf_args=args.wkhtml_pdf_args,
         _dry_run=args.dry_run,
