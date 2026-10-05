@@ -5,6 +5,7 @@
 # Generates a printable QSL starting from an HTML template with Jinja2
 # wkhtmltox reference https://wkhtmltopdf.org/downloads.html
 
+from datetime import datetime
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from qso import QSO
 from wkhtml import wkhtmltoimage, wkhtmltopdf, WKHTMLTOX_BASE_DPI
@@ -100,6 +101,27 @@ def generate_options_image(_format, _width, _height, _dpi):
     }
 
 
+def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
+    try:
+        dt = datetime.strptime(value, "%Y%m%d")
+        return dt.strftime(fmt)
+    except (ValueError, TypeError) as e:
+        logging.error(f"qsl_filter_format_date(value={value}): {e}")
+        return value
+
+
+def qsl_filter_format_time(value, include_seconds=False, separator=":"):
+    if not value or len(value) < 4:
+        return value
+
+    parts = [value[:2], value[2:4]]
+
+    if include_seconds and len(value) >= 6:
+        parts.append(value[4:6])
+
+    return separator.join(parts)
+
+
 def unlink_if_exists(path):
     """Utility function to delete a file without throwing an exception if it doesn't exist"""
     try:
@@ -187,6 +209,9 @@ def generate_qsl_image_pdf(
         loader=FileSystemLoader(TEMPLATE_FOLDER),
         autoescape=select_autoescape(["html", "htm", "xml"]),
     )
+    # Loading filters
+    env.filters["format_date"] = qsl_filter_format_date
+    env.filters["format_time"] = qsl_filter_format_time
 
     # Loading HTML template
     template = env.get_template(_template)
@@ -207,67 +232,76 @@ def generate_qsl_image_pdf(
 
         qso_data_lowercase = {}
 
-        for key, value in _qso._d.items():
-            # Converting all keys into lowercase
-            qso_data_lowercase[key.casefold()] = value
-        output = template.render(qso=qso_data_lowercase)
+        with playwright_wrapper.QSLRenderer() as renderer:
+            for key, value in _qso._d.items():
+                # Converting all keys into lowercase
+                qso_data_lowercase[key.casefold()] = value
+            output = template.render(qso=qso_data_lowercase)
 
-        logging.info(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
+            logging.info(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
 
-        if _dry_run is False:
-            # Write compiled template to file
-            with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
-                f.write(output)
-
-        # Remove any extension in the passed out filename, will be added later
-        out_base_name = _out_filename.rsplit(".", 1)[0]
-        logging.debug(
-            f"Passed output filename : {_out_filename}\nBase name without extension: {out_base_name}"
-        )
-
-        # Convert template page to image
-        if _image:
-            out_name = os.path.join(
-                _out_folder, (out_base_name + "_%04d." % (i + 1) + _format)
-            )
-            image_cmd_list = dict_to_cmd_list(
-                generate_options_image(_format, _width, _height, _dpi)
-            )
-            if _wkhtml_image_args:
-                image_cmd_list.extend(_wkhtml_image_args.split())
             if _dry_run is False:
-                ret = wkhtmltoimage(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])
-                playwright_wrapper.generate_qsl_image(
-                    TEMPLATE_TEMP_FILENAME,
-                    out_name.rsplit(".", 1)[0] + "_playwright." + _format,
-                    _width,
-                    _height,
-                )
-                if ret.returncode != 0:
-                    logging.warning(f"wkhtmltoimage returned {ret.returncode}")
-            else:
-                logging.info(
-                    f"Would call: wkhtmltoimage {' '.join(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])}"
-                )
+                # Write compiled template to file
+                with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
+                    f.write(output)
 
-        # Convert template page to PDF
-        if _pdf:
-            pdf_cmd_list = dict_to_cmd_list(generate_options_pdf(_width, _height, _dpi))
-            if _wkhtml_pdf_args:
-                pdf_cmd_list.extend(_wkhtml_pdf_args.split())
-            if _dry_run is False:
-                ret = wkhtmltopdf(
-                    pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
+            # Remove any extension in the passed out filename, will be added later
+            out_base_name = _out_filename.rsplit(".", 1)[0]
+            logging.debug(
+                f"Passed output filename : {_out_filename}\nBase name without extension: {out_base_name}"
+            )
+
+            # Convert template page to image
+            if _image:
+                out_name = os.path.join(
+                    _out_folder, (out_base_name + "_%04d." % (i + 1) + _format)
                 )
-                playwright_wrapper.generate_qsl_pdf(
-                    TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i), _width, _height
+                image_cmd_list = dict_to_cmd_list(
+                    generate_options_image(_format, _width, _height, _dpi)
                 )
-                if ret.returncode != 0:
-                    logging.warning(f"wkhtmltopdf returned {ret.returncode}")
-            else:
-                logging.info(
-                    f"Would call: wkhtmltopdf {' '.join(pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])}"
+                if _wkhtml_image_args:
+                    image_cmd_list.extend(_wkhtml_image_args.split())
+                if _dry_run is False:
+                    ret = wkhtmltoimage(
+                        image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name]
+                    )
+                    renderer.render(
+                        TEMPLATE_TEMP_FILENAME,
+                        out_name.rsplit(".", 1)[0] + "_playwright." + _format,
+                        _width,
+                        _height,
+                    )
+                    if ret.returncode != 0:
+                        logging.warning(f"wkhtmltoimage returned {ret.returncode}")
+                else:
+                    logging.info(
+                        f"Would call: wkhtmltoimage {' '.join(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])}"
+                    )
+
+            # Convert template page to PDF
+            if _pdf:
+                pdf_cmd_list = dict_to_cmd_list(
+                    generate_options_pdf(_width, _height, _dpi)
                 )
+                if _wkhtml_pdf_args:
+                    pdf_cmd_list.extend(_wkhtml_pdf_args.split())
+                if _dry_run is False:
+                    ret = wkhtmltopdf(
+                        pdf_cmd_list
+                        + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
+                    )
+                    renderer.render(
+                        TEMPLATE_TEMP_FILENAME,
+                        (PDF_TEMP_BASE_NAME % i),
+                        _width,
+                        _height,
+                    )
+                    if ret.returncode != 0:
+                        logging.warning(f"wkhtmltopdf returned {ret.returncode}")
+                else:
+                    logging.info(
+                        f"Would call: wkhtmltopdf {' '.join(pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])}"
+                    )
 
     if _pdf:
         # Concatenate all files to create a single PDF to print
