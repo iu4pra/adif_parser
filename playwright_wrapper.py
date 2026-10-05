@@ -8,11 +8,8 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 # DPI used by page.screenshot()
-PLAYWRIGHT_SCREENSHOT_DPI = 72
-
-# TEMPORARY TO AVOID CIRCULAR IMPORT
-DPI = 150
-
+# Found empyrically to match page.pdf() output
+PLAYWRIGHT_SCREENSHOT_DPI = 96
 
 # TEMPORARY TO AVOID CIRCULAR IMPORT
 def cm_to_px(cm, dpi):
@@ -30,7 +27,7 @@ def generate_qsl_image(_input_html: str, _output_name: str, _width: int, _height
 
         page = browser.new_page()
         page.goto(file_url)
-        # screenshot() only works ad 72 DPI!!!
+        # screenshot() only works at fixed DPI!
         page.screenshot(
             path=_output_name,
             clip={
