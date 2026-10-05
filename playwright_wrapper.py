@@ -63,3 +63,65 @@ def generate_qsl_pdf(_input_html: str, _output_name: str, _width: int, _height: 
         browser.close()
 
 
+class QSLRenderer:
+    """Class for QSL generation within a single Playwright browser instance"""
+
+    def __init__(self):
+        # For safer __exit__ handling
+        self._playwright = None
+        self._browser = None
+
+    # To use the object in a with context
+    def __enter__(self):
+        self._playwright = sync_playwright().start()
+        self._browser = self._playwright.chromium.launch()
+        return self
+
+    # To use the object in a with context, guaranteed to run even if exceptions are raised
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            logging.error(f"Error: {exc_type}: {exc_val}")
+        try:
+            if self._browser:
+                self._browser.close()
+        finally:
+            if self._playwright:
+                self._playwright.stop()
+
+    def render(
+        self, _input_html: str, _output_name: str, _width: float, _height: float
+    ):
+        """Generate QSL card as image or PDF"""
+        file_url = Path(_input_html).resolve().as_uri()
+        page = self._browser.new_page()
+
+        try:
+            page.goto(file_url, wait_until="networkidle")
+
+            # Check if PDF output is requested
+            if Path(_output_name).suffix.lower() == ".pdf":
+                page.pdf(
+                    path=_output_name,
+                    width=f"{_width}cm",  # Works with px (it's even more accurate)
+                    height=f"{_height}cm",  # Works with px (it's even more accurate)
+                    print_background=True,
+                    margin={
+                        "top": "0cm",
+                        "right": "0cm",
+                        "bottom": "0cm",
+                        "left": "0cm",
+                    },
+                )
+            else:
+                # Otherwise fallback to image at the moment
+                page.screenshot(
+                    path=_output_name,
+                    clip={
+                        "x": 0,
+                        "y": 0,
+                        "width": int(_width * PLAYWRIGHT_SCREENSHOT_DPI / 2.54),
+                        "height": int(_height * PLAYWRIGHT_SCREENSHOT_DPI / 2.54),
+                    },
+                )
+        finally:
+            page.close()
