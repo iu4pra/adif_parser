@@ -116,7 +116,6 @@ def generate_qsl_image_pdf(
     _format: str = IMG_OUT_EXTENSION,
     _width: float = QSL_WIDTH,
     _height: float = QSL_HEIGHT,
-    _dpi: int = DPI,
     _wkhtml_image_args=None,
     _wkhtml_pdf_args=None,
     _dry_run: bool = False,
@@ -486,7 +485,6 @@ def main():
         _format=args.image_format,
         _width=args.width,
         _height=args.height,
-        _dpi=args.dpi,  # TODO remove???
         _wkhtml_image_args=args.wkhtml_image_args,
         _wkhtml_pdf_args=args.wkhtml_pdf_args,
         _dry_run=args.dry_run,
