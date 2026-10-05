@@ -13,10 +13,9 @@ from playwright.sync_api import sync_playwright
 PLAYWRIGHT_SCREENSHOT_DPI = 96
 
 
-# TEMPORARY TO AVOID CIRCULAR IMPORT
-def cm_to_px(cm, dpi):
-    """Converts centimeters to pixels given a DPI value"""
-    return int(cm * dpi / 2.54)
+def cm_to_playwright_px(cm):
+    """Converts centimeters to pixels using Playwright default DPI"""
+    return int(cm * PLAYWRIGHT_SCREENSHOT_DPI / 2.54)
 
 
 def generate_qsl_image(_input_html: str, _output_name: str, _width: int, _height: int):
@@ -123,8 +122,8 @@ class QSLRenderer:
                     clip={
                         "x": 0,
                         "y": 0,
-                        "width": int(_width * PLAYWRIGHT_SCREENSHOT_DPI / 2.54),
-                        "height": int(_height * PLAYWRIGHT_SCREENSHOT_DPI / 2.54),
+                        "width": cm_to_playwright_px(_width),
+                        "height": cm_to_playwright_px(_height),
                     },
                 )
         finally:
