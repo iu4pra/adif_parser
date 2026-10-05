@@ -33,7 +33,7 @@ jobs:
           pip install -r requirements.txt
           playwright install
 
-      - name: Unit Test - general
+      - name: Unit Test - General
         run: python -m unittest unit_test.py
 
       - name: Unit Test - ADIF parser
@@ -41,3 +41,6 @@ jobs:
 
       - name: Unit Test - QSO class
         run: python -m unittest test_qso.py
+
+      - name: Unit Test - QSL generator
+        run: python -m unittest test_qsl_generator.py
