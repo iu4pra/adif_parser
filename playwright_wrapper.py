@@ -11,6 +11,7 @@ from playwright.sync_api import sync_playwright
 # Found empyrically to match page.pdf() output
 PLAYWRIGHT_SCREENSHOT_DPI = 96
 
+
 # TEMPORARY TO AVOID CIRCULAR IMPORT
 def cm_to_px(cm, dpi):
     """Converts centimeters to pixels given a DPI value"""
@@ -37,6 +38,7 @@ def generate_qsl_image(_input_html: str, _output_name: str, _width: int, _height
                 "height": _height * PLAYWRIGHT_SCREENSHOT_DPI / 2.54,
             },
         )
+        page.close()
         browser.close()
 
 
@@ -46,7 +48,7 @@ def generate_qsl_pdf(_input_html: str, _output_name: str, _width: int, _height: 
         # Map URI to local file
         file_url = Path(_input_html).resolve().as_uri()
 
-        browser = p.chromium.launch()
+        browser = p.chromium.launch(headless=True)
 
         page = browser.new_page()
         page.goto(file_url)
@@ -57,4 +59,7 @@ def generate_qsl_pdf(_input_html: str, _output_name: str, _width: int, _height: 
             print_background=True,
             margin={"top": "0cm", "right": "0cm", "bottom": "0cm", "left": "0cm"},
         )
+        page.close()
         browser.close()
+
+
