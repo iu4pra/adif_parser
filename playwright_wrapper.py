@@ -3,6 +3,7 @@
 # This software under the MIT License
 # Simple Playwright wrapper
 
+import logging
 import os.path
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -92,13 +93,16 @@ class QSLRenderer:
         self, _input_html: str, _output_name: str, _width: float, _height: float
     ):
         """Generate QSL card as image or PDF"""
+        logging.info("QSLRenderer.render() start")
         file_url = Path(_input_html).resolve().as_uri()
         page = self._browser.new_page()
 
         try:
-            page.goto(file_url, wait_until="networkidle")
+            logging.info("QSLRenderer.render() goto")
+            page.goto(file_url, wait_until="load")
 
             # Check if PDF output is requested
+            logging.info("QSLRenderer.render() generate")
             if Path(_output_name).suffix.lower() == ".pdf":
                 page.pdf(
                     path=_output_name,
@@ -125,3 +129,4 @@ class QSLRenderer:
                 )
         finally:
             page.close()
+        logging.info("QSLRenderer.render() end")
