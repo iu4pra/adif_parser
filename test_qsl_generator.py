@@ -10,6 +10,7 @@ import qsl_generator as qslgen
 import unittest
 from unittest.mock import patch
 
+
 class QSLGeneratorBasicTest(unittest.TestCase):
 
     @patch("sys.argv", ["qsl_generator.py", ""])
@@ -190,6 +191,7 @@ class QSLGeneratorWarningTest(unittest.TestCase):
         )
 
         mock_warning.assert_called()
+
 
 if __name__ == "__main__":
     unittest.main()
