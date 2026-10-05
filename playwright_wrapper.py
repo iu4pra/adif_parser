@@ -54,8 +54,8 @@ def generate_qsl_pdf(_input_html: str, _output_name: str, _width: int, _height: 
         page.goto(file_url)
         page.pdf(
             path=_output_name,
-            width=f"{_width}cm",  # Works with px (it's even more accurate)
-            height=f"{_height}cm",  # Works with px (it's even more accurate)
+            width=f"{_width}cm",  # Also works with px (it's even more accurate)
+            height=f"{_height}cm",  # Also works with px (it's even more accurate)
             print_background=True,
             margin={"top": "0cm", "right": "0cm", "bottom": "0cm", "left": "0cm"},
         )
@@ -92,16 +92,16 @@ class QSLRenderer:
         self, _input_html: str, _output_name: str, _width: float, _height: float
     ):
         """Generate QSL card as image or PDF"""
-        logging.info("QSLRenderer.render() start")
+        logging.debug("QSLRenderer.render() start")
         file_url = Path(_input_html).resolve().as_uri()
         page = self._browser.new_page()
 
         try:
-            logging.info("QSLRenderer.render() goto")
+            logging.debug("QSLRenderer.render() goto")
             page.goto(file_url, wait_until="load")
 
             # Check if PDF output is requested
-            logging.info("QSLRenderer.render() generate")
+            logging.debug("QSLRenderer.render() generate")
             if Path(_output_name).suffix.lower() == ".pdf":
                 page.pdf(
                     path=_output_name,
@@ -128,4 +128,4 @@ class QSLRenderer:
                 )
         finally:
             page.close()
-        logging.info("QSLRenderer.render() end")
+        logging.debug("QSLRenderer.render() end")
