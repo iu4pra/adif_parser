@@ -42,8 +42,8 @@
       <th colspan=2 style="text-align: center;">QSO DATA</th>
       <tbody>
         <tr>
-          <td>Date: <span class="field">{{ qso.qso_date }}</span></td>
-          <td>Time UTC: <span class="field">{{ qso.time_on }}</span> </td>
+          <td>Date: <span class="field">{{ qso.qso_date | format_date(fmt="%Y/%m/%d") }}</span></td>
+          <td>Time UTC: <span class="field">{{ qso.time_on | format_time(False) }}</span> </td> <!-- format_time(include_seconds=False) also works -->
         </tr>
         <tr>
           {% if qso.band %}<td {% if not qso.freq %}colspan=2{% endif %}>Band: <span class="field">{{ qso.band }}</span></td>{% endif %}

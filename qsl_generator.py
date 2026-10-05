@@ -5,6 +5,7 @@
 # Generates a printable QSL starting from an HTML template with Jinja2
 # wkhtmltox reference https://wkhtmltopdf.org/downloads.html
 
+from datetime import datetime
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from qso import QSO
 from wkhtml import wkhtmltoimage, wkhtmltopdf, WKHTMLTOX_BASE_DPI
@@ -100,6 +101,27 @@ def generate_options_image(_format, _width, _height, _dpi):
     }
 
 
+def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
+    try:
+        dt = datetime.strptime(value, "%Y%m%d")
+        return dt.strftime(fmt)
+    except (ValueError, TypeError) as e:
+        logging.error(f"qsl_filter_format_date(value={value}): {e}")
+        return value
+
+
+def qsl_filter_format_time(value, include_seconds=False, separator=":"):
+    if not value or len(value) < 4:
+        return value
+
+    parts = [value[:2], value[2:4]]
+
+    if include_seconds and len(value) >= 6:
+        parts.append(value[4:6])
+
+    return separator.join(parts)
+
+
 def unlink_if_exists(path):
     """Utility function to delete a file without throwing an exception if it doesn't exist"""
     try:
@@ -187,6 +209,9 @@ def generate_qsl_image_pdf(
         loader=FileSystemLoader(TEMPLATE_FOLDER),
         autoescape=select_autoescape(["html", "htm", "xml"]),
     )
+    # Loading filters
+    env.filters["format_date"] = qsl_filter_format_date
+    env.filters["format_time"] = qsl_filter_format_time
 
     # Loading HTML template
     template = env.get_template(_template)
