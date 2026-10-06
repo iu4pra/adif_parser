@@ -35,7 +35,7 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           if [[ `git status --porcelain` ]]; then
             git add .
-            git commit -m "ci: format Python code with Black [auto]"
+            git commit -m "ci: format Python code with Black"
             git push
           else
             echo "No formatting changes to commit."
