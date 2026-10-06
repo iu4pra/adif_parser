@@ -26,6 +26,17 @@ class QSOTest(unittest.TestCase):
         q = QSO(data)
         self.assertTrue(q.is_valid())
 
+    def test_to_string(self):
+        data = {
+            "CALL": "W1AW",
+            "QSO_DATE": "20230101",
+            "TIME_ON": "120000",
+            "BAND": "20m",
+            "MODE": "CW",
+        }
+        q = QSO(data)
+        self.assertEqual(q.__str__(),"CALL = W1AW\nQSO_DATE = 20230101\nTIME_ON = 120000\nBAND = 20m\nMODE = CW\n")
+
     def test_qso_essential_fields(self):
         """A QSO must contain all essential fields"""
         _adif_string = adif.parse_adif_string(

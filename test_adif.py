@@ -5,7 +5,7 @@
 
 import unittest
 import adif
-
+from qso import QSO
 
 class TestAdifParser(unittest.TestCase):
 
@@ -180,6 +180,10 @@ class TestAdifParser(unittest.TestCase):
         field_list = adif.parse_adif_file("samples/minimal_1qso.adi")
         self.assertEqual(len(field_list), 16)
 
+    def test_qso_list_from_file(self):
+        qso_list = adif.qso_list_from_file("samples/minimal_1qso.adi")
+        assert isinstance(qso_list[0], QSO)
+        self.assertEqual(len(qso_list), 1)
 
 if __name__ == "__main__":
     unittest.main()
