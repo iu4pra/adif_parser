@@ -23,8 +23,38 @@ class QSLGeneratorBasicTest(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             qslgen.main()
 
+    @patch("sys.argv", ["qsl_generator.py", "samples/minimal_1qso.adi","--template","invalid_template.html"])
+    def test_nonexistent_template_file(self):
+        self.assertTrue(os.path.exists("samples/minimal_1qso.adi"))
+        with self.assertRaises(FileNotFoundError):
+             qslgen.main()
 
 class QSLGeneratorValidationTest(unittest.TestCase):
+
+    @patch("qsl_generator.generate_qsl_image_pdf")
+    @patch("sys.argv", ["qsl_generator.py", "samples/minimal_1qso.adi"])
+    def test_default_pdf_image_args(self, mock_generate):
+        qslgen.main()
+        _, kwargs = mock_generate.call_args
+        self.assertTrue(kwargs["_pdf"])
+        self.assertFalse(kwargs["_image"])
+
+    @patch("qsl_generator.generate_qsl_image_pdf")
+    @patch("sys.argv", ["qsl_generator.py", "samples/minimal_1qso.adi", "--image"])
+    def test_custom_pdf_image_args_1(self, mock_generate):
+        qslgen.main()
+        _, kwargs = mock_generate.call_args
+        self.assertTrue(kwargs["_image"])
+        self.assertFalse(kwargs["_pdf"])
+
+    @patch("qsl_generator.generate_qsl_image_pdf")
+    @patch("sys.argv", ["qsl_generator.py", "samples/minimal_1qso.adi", "--pdf"])
+    def test_custom_pdf_image_args_2(self, mock_generate):
+        qslgen.main()
+        _, kwargs = mock_generate.call_args
+        self.assertTrue(kwargs["_pdf"])
+        self.assertFalse(kwargs["_image"])
+
     @patch("qsl_generator.adif.qso_list_from_file")
     @patch(
         "sys.argv",
