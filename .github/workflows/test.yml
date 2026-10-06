@@ -42,14 +42,6 @@ jobs:
         run: |
           playwright install --with-deps
 
-      - name: Unit Test - ADIF parser
-        run: python -m unittest test_adif.py
-
-      - name: Unit Test - QSO class
-        run: python -m unittest test_qso.py
-
-      - name: Unit Test - QSL generator
-        run: python -m unittest test_qsl_generator.py
-
-      - name: Unit Test - Playwright wrapper
-        run: python -m unittest test_playwright_wrapper.py
+      - name: Run tests
+        run: |
+          python -m unittest discover -s . -p "test_*.py"
