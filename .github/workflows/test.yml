@@ -46,3 +46,6 @@ jobs:
 
       - name: Unit Test - QSL generator
         run: python -m unittest test_qsl_generator.py
+
+      - name: Unit Test - Playwright wrapper
+        run: python -m unittest test_playwright_wrapper.py
