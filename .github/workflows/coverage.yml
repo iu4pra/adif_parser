@@ -36,6 +36,12 @@ jobs:
               --cov-report term-missing \
               --cov-report html:htmlcov \
               --cov-report xml:coverage.xml
+        - name: Upload HTML coverage report
+          uses: actions/upload-artifact@v4
+          with:
+            name: coverage-html
+            path: htmlcov/
+            retention-days: 30
         - name: Get Cover
           uses: orgoro/coverage@v3.3.1
           with:
@@ -43,9 +49,3 @@ jobs:
               title: "Python Code Coverage"
               thresholdAll: 0.7
               token: ${{ secrets.GITHUB_TOKEN }}
-        - name: Upload HTML coverage report
-          uses: actions/upload-artifact@v4
-          with:
-            name: coverage-html
-            path: htmlcov/
-            retention-days: 30
