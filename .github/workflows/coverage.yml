@@ -24,6 +24,9 @@ jobs:
             python -m pip install --upgrade pip
             pip install -r requirements.txt
             pip install pytest pytest-cov
+        - name: Install Playwright
+          run: |
+            playwright install
         - name: Generate coverage report
           run: |
             pytest --cov --cov-report xml:./coverage.xml
