@@ -1,23 +1,29 @@
 name: Format Python code with Black
 
 on:
-  push:
+  pull_request:
     branches:
       - master
       - dev
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
 
 permissions:
   contents: write
 
 jobs:
   format:
-    if: github.event.pull_request.draft == false
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.head_ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -28,7 +34,7 @@ jobs:
         run: pip install black
 
       - name: Run black formatter
-        run: black .
+        run: black . # black --check --diff . to fail if format is not ok + show what to change
 
       - name: Commit and push changes if needed
         run: |
