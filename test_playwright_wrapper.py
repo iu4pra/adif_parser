@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 import playwright_wrapper
-
+from playwright_wrapper import PLAYWRIGHT_SCREENSHOT_DPI
 
 class UtilityFunctionsTest(unittest.TestCase):
     """Test cases for utility functions in playwright_wrapper"""
@@ -20,7 +20,7 @@ class UtilityFunctionsTest(unittest.TestCase):
         """Test basic cm to pixels conversion"""
         # 2.54 cm = 96 px (at default DPI)
         result = playwright_wrapper.cm_to_playwright_px(2.54)
-        self.assertEqual(result, 96)
+        self.assertEqual(result, PLAYWRIGHT_SCREENSHOT_DPI)
 
     def test_cm_to_playwright_px_zero(self):
         """Test conversion with zero input"""
@@ -31,16 +31,16 @@ class UtilityFunctionsTest(unittest.TestCase):
         """Test conversion with various float values"""
         # 1 cm
         result = playwright_wrapper.cm_to_playwright_px(1.0)
-        self.assertEqual(result, int(1.0 * 96 / 2.54))
+        self.assertEqual(result, int(1.0 * PLAYWRIGHT_SCREENSHOT_DPI / 2.54))
 
         # 10 cm
         result = playwright_wrapper.cm_to_playwright_px(10.0)
-        self.assertEqual(result, int(10.0 * 96 / 2.54))
+        self.assertEqual(result, int(10.0 * PLAYWRIGHT_SCREENSHOT_DPI / 2.54))
 
     def test_cm_to_playwright_px_negative(self):
         """Test conversion with negative values (should work mathematically)"""
         result = playwright_wrapper.cm_to_playwright_px(-2.54)
-        self.assertEqual(result, -96)
+        self.assertEqual(result, -PLAYWRIGHT_SCREENSHOT_DPI)
 
 
 class QSLRendererContextManagerTest(unittest.TestCase):
@@ -154,7 +154,7 @@ class QSLRendererRenderTest(unittest.TestCase):
         mock_page.screenshot.assert_called_once()
         call_kwargs = mock_page.screenshot.call_args[1]
         self.assertIn("clip", call_kwargs)
-        self.assertEqual(call_kwargs["clip"]["width"], int(10.0 * 96 / 2.54))
+        self.assertEqual(call_kwargs["clip"]["width"], int(10.0 * PLAYWRIGHT_SCREENSHOT_DPI / 2.54))
 
     @patch("playwright_wrapper.sync_playwright")
     def test_render_jpg_output(self, mock_playwright):

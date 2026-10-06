@@ -3,7 +3,6 @@
 # This software under the MIT License
 # QSL generator
 # Generates a printable QSL starting from an HTML template with Jinja2
-# wkhtmltox reference https://wkhtmltopdf.org/downloads.html
 
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -116,8 +115,6 @@ def generate_qsl_image_pdf(
     _format: str = IMG_OUT_EXTENSION,
     _width: float = QSL_WIDTH,
     _height: float = QSL_HEIGHT,
-    _wkhtml_image_args=None,
-    _wkhtml_pdf_args=None,
     _dry_run: bool = False,
 ):
     """Generates either, one QSL image per QSO in the given list,
@@ -249,7 +246,7 @@ def generate_qsl_image_pdf(
                     writer.append(pdf)
                 else:
                     logging.error(
-                        f"Error: file {pdf} not found! Check wkhtmltopdf output!"
+                        f"Error: file {pdf} not found! Check Playwright output!"
                     )
             writer.write(out_name)
             writer.close()
@@ -363,22 +360,6 @@ def main():
     )
 
     parser.add_argument(
-        "--wkhtml-image-args",
-        metavar="wkhtml_image_args",
-        type=str,
-        default="",
-        help="Extra arguments for wkhtmltoimage",
-    )
-
-    parser.add_argument(
-        "--wkhtml-pdf-args",
-        metavar="wkhtml_pdf_args",
-        type=str,
-        default="",
-        help="Extra arguments for wkhtmltopdf",
-    )
-
-    parser.add_argument(
         "--quiet", default=False, action="store_true", help="Suppress output"
     )
 
@@ -468,12 +449,6 @@ def main():
     elif args.dpi > DPI_MAX:
         raise ValueError(f"--dpi must be <= {DPI_MAX}")
 
-    if args.wkhtml_image_args:
-        logging.info(f"wkhtml_image_args: {args.wkhtml_image_args.split()}")
-
-    if args.wkhtml_pdf_args:
-        logging.info(f"wkhtml_pdf_args: {args.wkhtml_pdf_args.split()}")
-
     # All OK, generate QSLs
     generate_qsl_image_pdf(
         qso_list,
@@ -485,8 +460,6 @@ def main():
         _format=args.image_format,
         _width=args.width,
         _height=args.height,
-        _wkhtml_image_args=args.wkhtml_image_args,
-        _wkhtml_pdf_args=args.wkhtml_pdf_args,
         _dry_run=args.dry_run,
     )
 

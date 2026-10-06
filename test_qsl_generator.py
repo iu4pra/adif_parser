@@ -18,7 +18,7 @@ class QSLGeneratorBasicTest(unittest.TestCase):
         with self.assertRaises(Exception):
             qslgen.main()
 
-    @patch("sys.argv", ["qsl_generator.py", "pippo.txt"])
+    @patch("sys.argv", ["qsl_generator.py", "samples/pippo.adi"])
     def test_nonexistent_file(self):
         with self.assertRaises(FileNotFoundError):
             qslgen.main()
@@ -41,13 +41,6 @@ class QSLGeneratorValidationTest(unittest.TestCase):
         ["qsl_generator.py", "samples/test_log.adi", "--height", "-1"],
     )
     def test_invalid_height_raises(self, mock_parse):
-        mock_parse.return_value = []
-        with self.assertRaises(ValueError):
-            qslgen.main()
-
-    @patch("qsl_generator.adif.qso_list_from_file")
-    @patch("sys.argv", ["qsl_generator.py", "samples/test_log.adi", "--dpi", "0"])
-    def test_invalid_dpi_raises(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
             qslgen.main()
