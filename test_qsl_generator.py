@@ -25,11 +25,20 @@ class QSLGeneratorBasicTest(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             qslgen.main()
 
-    @patch("sys.argv", ["qsl_generator.py", "samples/minimal_1qso.adi","--template","invalid_template.html"])
+    @patch(
+        "sys.argv",
+        [
+            "qsl_generator.py",
+            "samples/minimal_1qso.adi",
+            "--template",
+            "invalid_template.html",
+        ],
+    )
     def test_nonexistent_template_file(self):
         self.assertTrue(os.path.exists("samples/minimal_1qso.adi"))
         with self.assertRaises(FileNotFoundError):
-             qslgen.main()
+            qslgen.main()
+
 
 class QSLGeneratorValidationTest(unittest.TestCase):
 
@@ -97,7 +106,6 @@ class QSLGeneratorOutputNameTest(unittest.TestCase):
         qslgen.main()
         _, kwargs = mock_generate.call_args
         self.assertEqual(kwargs["_out_filename"], "custom_name")
-
 
 
 class TestQSLFilterFormatDate(unittest.TestCase):
@@ -174,7 +182,9 @@ class TestQSLFilterFormatTime(unittest.TestCase):
 
     def test_valid_time_with_seconds_custom_separator(self):
         """Test formatting a valid time with seconds and custom separator"""
-        result = qslgen.qsl_filter_format_time("143045", include_seconds=True, separator=" ")
+        result = qslgen.qsl_filter_format_time(
+            "143045", include_seconds=True, separator=" "
+        )
         self.assertEqual(result, "14 30 45")
 
     def test_time_with_leading_zero(self):
@@ -433,6 +443,7 @@ class TestRmtreeIfExists(unittest.TestCase):
             qslgen.rmtree_if_exists("")
         except (FileNotFoundError, OSError):
             pass  # Both exceptions are acceptabl
+
 
 if __name__ == "__main__":
     unittest.main()

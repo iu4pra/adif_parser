@@ -7,6 +7,7 @@ import gui
 import tkinter as tk
 import unittest
 
+
 class AppTest(unittest.TestCase):
 
     def test_init_widgets(self):
@@ -14,6 +15,7 @@ class AppTest(unittest.TestCase):
         self.assertIsNotNone(app.input_frame)
         self.assertIsNotNone(app.out_img)
         self.assertIsNotNone(app.out_pdf)
+
 
 if __name__ == "__main__":
     unittest.main()
