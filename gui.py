@@ -218,7 +218,7 @@ class App:
         Action:
             1. Reads the ADIF file and converts it to a list of QSO objects.
             2. Checks the state of PDF and Image checkboxes.
-            3. Calls the appropriate functions in qsl_generator (generate_qsl_pdf or generate_qsl_image).
+            3. Calls qsl_generator.generate_qsl_image_pdf
         """
         if hasattr(self, "logfile") and os.path.isfile(self.logfile):
             qso_list = adif.qso_list_from_file(self.logfile)

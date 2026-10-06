@@ -3,8 +3,8 @@
 # This software under the MIT License
 # Unit test for ADIF parser
 
-import unittest
 import adif
+import unittest
 
 
 class TestAdifParser(unittest.TestCase):
