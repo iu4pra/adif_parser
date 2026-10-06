@@ -40,6 +40,42 @@ class TestAdifParser(unittest.TestCase):
             [{"field": "CALL", "len": 6, "type": None, "value": "IK4XYZ"}],
         )
 
+    def test_check_field_case_1(self):
+        field = adif.parse_adif_string("<CALL:6>IK4XYZ")[0]
+        field.pop("field")
+        with self.assertRaises(adif.AdifError):
+            adif.check_field(field)
+
+    def test_check_field_case_2(self):
+        field = adif.parse_adif_string("<CALL:6>IK4XYZ")[0]
+        field.pop("len")
+        with self.assertRaises(adif.AdifError):
+            adif.check_field(field)
+
+    def test_check_field_case_3(self):
+        field = adif.parse_adif_string("<CALL:6>IK4XYZ")[0]
+        field["len"] = 0
+        with self.assertRaises(adif.AdifError):
+            adif.check_field(field)
+
+    def test_check_field_case_4(self):
+        field = adif.parse_adif_string("<CALL:6>IK4XYZ")[0]
+        field["len"] = -1
+        with self.assertRaises(adif.AdifError):
+            adif.check_field(field)
+
+    def test_check_field_case_5(self):
+        field = adif.parse_adif_string("<CALL:6>IK4XYZ")[0]
+        field["len"] = "0"
+        with self.assertRaises(adif.AdifError):
+            adif.check_field(field)
+
+    def test_check_field_case_6(self):
+        field = adif.parse_adif_string("<CALL:6>IK4XYZ")[0]
+        field["len"] = 7
+        with self.assertRaises(adif.AdifError):
+            adif.check_field(field)
+
     def test_single_field_with_blanks(self):
         """Parse a single, well formatted field with extra whitespaces"""
         self.assertEqual(
@@ -131,6 +167,18 @@ class TestAdifParser(unittest.TestCase):
         self.assertEqual(len(qso_list), 2)
         self.assertEqual(qso_list[0]._d["CALL"], "K1A")
         self.assertEqual(qso_list[1]._d["CALL"], "K2B")
+
+    def test_parse_non_file(self):
+        with self.assertRaises(AssertionError):
+            adif.parse_adif_file(None)
+
+    def test_parse_not_existing_file(self):
+        with self.assertRaises(AssertionError):
+            adif.parse_adif_file("not_exists")
+
+    def test_parse_existing_file(self):
+        field_list = adif.parse_adif_file("samples/minimal_1qso.adi")
+        self.assertEqual(len(field_list), 16)
 
 
 if __name__ == "__main__":

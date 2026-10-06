@@ -286,7 +286,7 @@ def setup_logging(level=logging.INFO):
 def main():
     # Define parser and its arguments
     parser = argparse.ArgumentParser(
-        description="Generate a .pdf file from a QSO list in .adi or .dump format"
+        description="Generate a .pdf file from a QSO list in .adi format"
     )
 
     parser.add_argument(
@@ -352,14 +352,6 @@ def main():
     )
 
     parser.add_argument(
-        "--dpi",
-        metavar="dpi",
-        type=int,
-        default=DPI,
-        help=f"Tentative DPI value (default {DPI})",
-    )
-
-    parser.add_argument(
         "--quiet", default=False, action="store_true", help="Suppress output"
     )
 
@@ -422,14 +414,6 @@ def main():
         )
         qso_list = adif.qso_list_from_file(filename, args.only_valid)
 
-    # TODO to be removed, test code for .dump files
-    elif ext.casefold() in [
-        "dump",
-    ]:
-        logging.warning("TEST ONLY dump file, not for production!")
-        # Unpickle data
-        with open(args.filename, "rb", encoding="utf-8") as f:
-            qso_list = pickle.load(f)
     else:
         raise Exception("Unrecognized file extension")
 
@@ -443,11 +427,6 @@ def main():
         raise ValueError("--height must be positive")
     elif args.height > QSL_HEIGHT_MAX:
         raise ValueError(f"--height must be <= {QSL_HEIGHT_MAX}")
-
-    if args.dpi <= 0:
-        raise ValueError("--dpi must be positive")
-    elif args.dpi > DPI_MAX:
-        raise ValueError(f"--dpi must be <= {DPI_MAX}")
 
     # All OK, generate QSLs
     generate_qsl_image_pdf(
