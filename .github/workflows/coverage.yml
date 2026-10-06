@@ -31,7 +31,7 @@ jobs:
         - name: Generate coverage report
           run: |
             pytest \
-              --cov=src \
+              --cov=. \
               --cov-branch \
               --cov-report term-missing \
               --cov-report html:htmlcov \
@@ -43,3 +43,9 @@ jobs:
               title: "Python Code Coverage"
               thresholdAll: 0.7
               token: ${{ secrets.GITHUB_TOKEN }}
+        - name: Upload HTML coverage report
+          uses: actions/upload-artifact@v4
+          with:
+            name: coverage-html
+            path: htmlcov/
+            retention-days: 30
