@@ -35,7 +35,7 @@ jobs:
           pip install -r requirements.txt
       - name: Install Playwright
         run: |
-          playwright install
+          playwright install --with-deps
 
       - name: Unit Test - General
         run: python -m unittest unit_test.py
