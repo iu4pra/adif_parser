@@ -40,5 +40,6 @@ jobs:
           uses: orgoro/coverage@v3.3.1
           with:
               coverageFile: ./coverage.xml
+              title: "Python Code Coverage"
               thresholdAll: 0.7
               token: ${{ secrets.GITHUB_TOKEN }}
