@@ -3,11 +3,16 @@
 # This software under the MIT License
 # Unit test for QSO class
 
+import adif
 import unittest
 from qso import QSO
 
 
-class TestQSO(unittest.TestCase):
+class QSOTest(unittest.TestCase):
+
+    def test_blank_qso_not_valid(self):
+        """A blank QSO must not be valid"""
+        self.assertFalse(QSO({}).is_valid())
 
     def test_valid_qso(self):
         # A perfectly valid QSO dictionary
@@ -20,6 +25,15 @@ class TestQSO(unittest.TestCase):
         }
         q = QSO(data)
         self.assertTrue(q.is_valid())
+
+    def test_qso_essential_fields(self):
+        """A QSO must contain all essential fields"""
+        _adif_string = adif.parse_adif_string(
+            "<QSO_DATE:8>20251005 <TIME_ON:6>123000 <CALL:6>IW9YZA <BAND:3>12m <MODE:3>FT8 <RST_SENT:2>-- <RST_RCVD:2>-- <EOR>"
+        )
+        _qso_list = adif.adif_to_qso_list(_adif_string)
+        self.assertEqual(len(_qso_list), 1)
+        self.assertTrue(_qso_list[0].is_valid())
 
     def test_missing_essential_field(self):
         # Missing TIME_ON

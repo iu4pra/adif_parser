@@ -42,9 +42,6 @@ jobs:
         run: |
           playwright install --with-deps
 
-      - name: Unit Test - General
-        run: python -m unittest unit_test.py
-
       - name: Unit Test - ADIF parser
         run: python -m unittest test_adif.py
 
