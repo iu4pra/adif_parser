@@ -95,16 +95,6 @@ def rmtree_if_exists(path):
         pass
 
 
-def dict_to_cmd_list(_cmd_options: dict):
-    """Converts a dict of options to a list to pass to subprocess.run"""
-    cmd_list = []
-    for k, v in _cmd_options.items():
-        cmd_list.append(k)
-        if v is not None:
-            cmd_list.append(v)
-    return cmd_list
-
-
 def generate_qsl_image_pdf(
     qso_list: list[QSO],
     _image: bool = False,
