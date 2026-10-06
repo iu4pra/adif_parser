@@ -86,7 +86,8 @@ class App:
         c_img.grid(row=1, column=1, sticky="w")
 
         # File chooser button
-        self.choose_file_button = tk.Button(self.input_frame, text="Open file...")
+        self.choose_file_button = tk.Button(
+            self.input_frame, text="Open file...")
         self.choose_file_button["command"] = self.logfile_chooser
         self.choose_file_button.grid(row=0, column=0)
         self.logfile = None
@@ -151,14 +152,16 @@ class App:
         If the user cancels, it defaults to TEMPLATE_DEFAULT_FILE.
         """
         self.template_file = (
-            tkfile.askopenfilename(filetypes=(("QSL template", "*.html *.htm"),))
+            tkfile.askopenfilename(filetypes=(
+                ("QSL template", "*.html *.htm"),))
             or self.template_file
         )
         if self.template_file:
             self.template_file = os.path.basename(self.template_file)
             self.logger.info(f"Template chosen: {self.template_file}")
         else:
-            self.template_file = os.path.basename(qsl_generator.TEMPLATE_DEFAULT_FILE)
+            self.template_file = os.path.basename(
+                qsl_generator.TEMPLATE_DEFAULT_FILE)
             self.logger.info(
                 "No template chosen, default %s selected" % self.template_file
             )
@@ -177,7 +180,8 @@ class App:
             or self.logfile
         )
         if self.logfile:
-            self.logger.info(f"Log file chosen: {os.path.basename(self.logfile)}")
+            self.logger.info(
+                f"Log file chosen: {os.path.basename(self.logfile)}")
             self.validate_file_button.config(state=tk.NORMAL)
         else:
             self.logger.info("No log file chosen")
@@ -218,24 +222,13 @@ class App:
         """
         if hasattr(self, "logfile") and os.path.isfile(self.logfile):
             qso_list = adif.qso_list_from_file(self.logfile)
-            # Check if PDF output checkbox is ticked
-            if self.out_pdf.get() == 1:
-                self.logger.info("Proceeding to output as PDF")
-                qsl_generator.generate_qsl_pdf(
-                    qso_list,
-                    _template=self.template_file or qsl_generator.TEMPLATE_DEFAULT_FILE,
-                )
-            else:
-                self.logger.info("No PDF output")
-            # Check if image output checkbox is ticked
-            if self.out_img.get() == 1:
-                self.logger.info("Proceeding to output as image")
-                qsl_generator.generate_qsl_image(
-                    qso_list,
-                    _template=self.template_file or qsl_generator.TEMPLATE_DEFAULT_FILE,
-                )
-            else:
-                self.logger.info("No image output")
+
+            qsl_generator.generate_qsl_image_pdf(
+                qso_list,
+                _template=self.template_file or qsl_generator.TEMPLATE_DEFAULT_FILE,
+                _image=(self.out_img.get() == 1),
+                _pdf=(self.out_pdf.get() == 1)
+            )
         else:
             self.logger.error("No logfile chosen!")
 
