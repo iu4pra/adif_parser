@@ -32,7 +32,6 @@ jobs:
           run: |
             pytest \
               --cov=. \
-              --cov-branch \
               --cov-report term-missing \
               --cov-report html:htmlcov \
               --cov-report xml:coverage.xml
