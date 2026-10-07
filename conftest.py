@@ -21,22 +21,21 @@ def mock_playwright_globally():
         mock_page = MagicMock()
 
         # Configure return values for context manager
+
         # Covers pattern:
         # with sync_playwright() as p:
-        mock_sync_playwright.return_value.__enter__ = MagicMock(return_value=mock_pw)
-        mock_sync_playwright.return_value.__exit__ = MagicMock(return_value=False)
+        mock_sync_playwright.return_value.__enter__.return_value = mock_pw
+        mock_sync_playwright.return_value.__exit__.return_value = None
 
         # Covers pattern:
         # sync_playwright().start()
-        mock_sync.return_value.start.return_value = mock_pw
+        mock_sync_playwright.return_value.start.return_value = mock_pw
 
-        # Configure chromium launch
         mock_pw.chromium.launch.return_value = mock_browser
         mock_browser.new_page.return_value = mock_page
 
         yield {
-            "sync": mock_sync,
-            "pw": mock_pw,
+            "playwright": mock_pw,
             "browser": mock_browser,
             "page": mock_page,
         }

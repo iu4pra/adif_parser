@@ -14,6 +14,7 @@ __pycache__/**
 .env
 # Other temporary files
 *.dump
+*.pyc
 # Output files
 template_out.html
 *.pdf
