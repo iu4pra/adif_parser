@@ -97,16 +97,9 @@ class QSLRendererRenderTest(unittest.TestCase):
         # Create a simple HTML file for testing
         self.test_html_file = os.path.join(self.temp_path, "test_qsl.html")
         with open(self.test_html_file, "w") as f:
-            f.write("""
-            <html>
-                <head><title>Test QSL Card</title></head>
-                <body>
-                    <div class="qsl-card">
-                        <p>Test QSL Card</p>
-                    </div>
-                </body>
-            </html>
-            """)
+            f.write(
+                "<html><head><title>Test QSL Card</title></head><body><div><p>Test QSL Card</p></div></body></html>"
+            )
 
     def tearDown(self):
         """Clean up temporary files"""
