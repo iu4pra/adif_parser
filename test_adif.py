@@ -3,9 +3,10 @@
 # This software under the MIT License
 # Unit test for ADIF parser
 
-import unittest
 import adif
+import unittest
 from qso import QSO
+
 
 class TestAdifParser(unittest.TestCase):
 
@@ -184,6 +185,7 @@ class TestAdifParser(unittest.TestCase):
         qso_list = adif.qso_list_from_file("samples/minimal_1qso.adi")
         assert isinstance(qso_list[0], QSO)
         self.assertEqual(len(qso_list), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

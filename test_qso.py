@@ -35,7 +35,10 @@ class QSOTest(unittest.TestCase):
             "MODE": "CW",
         }
         q = QSO(data)
-        self.assertEqual(q.__str__(),"CALL = W1AW\nQSO_DATE = 20230101\nTIME_ON = 120000\nBAND = 20m\nMODE = CW\n")
+        self.assertEqual(
+            q.__str__(),
+            "CALL = W1AW\nQSO_DATE = 20230101\nTIME_ON = 120000\nBAND = 20m\nMODE = CW\n",
+        )
 
     def test_qso_essential_fields(self):
         """A QSO must contain all essential fields"""
