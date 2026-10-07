@@ -69,7 +69,6 @@ class QSLRendererContextManagerTest(unittest.TestCase):
         self.assertIsNone(renderer._playwright)
         self.assertIsNone(renderer._browser)
 
-    @patch("playwright_wrapper.sync_playwright")
     def test_renderer_handles_exception_in_context(self, mock_playwright):
         """Test that renderer handles exceptions gracefully"""
         mock_pw = MagicMock()
@@ -105,7 +104,6 @@ class QSLRendererRenderTest(unittest.TestCase):
         """Clean up temporary files"""
         self.temp_dir.cleanup()
 
-    @patch("playwright_wrapper.sync_playwright")
     def test_render_pdf_output(self, mock_playwright):
         """Test rendering to PDF format"""
         mock_pw = MagicMock()
@@ -128,7 +126,6 @@ class QSLRendererRenderTest(unittest.TestCase):
         self.assertEqual(call_kwargs["height"], "15.0cm")
         self.assertTrue(call_kwargs["print_background"])
 
-    @patch("playwright_wrapper.sync_playwright")
     def test_render_image_output(self, mock_playwright):
         """Test rendering to image format"""
         mock_pw = MagicMock()
@@ -152,7 +149,6 @@ class QSLRendererRenderTest(unittest.TestCase):
             call_kwargs["clip"]["width"], int(10.0 * PLAYWRIGHT_SCREENSHOT_DPI / 2.54)
         )
 
-    @patch("playwright_wrapper.sync_playwright")
     def test_render_jpg_output(self, mock_playwright):
         """Test rendering to JPG format"""
         mock_pw = MagicMock()
@@ -171,7 +167,6 @@ class QSLRendererRenderTest(unittest.TestCase):
         # Should use screenshot for non-PDF formats
         mock_page.screenshot.assert_called_once()
 
-    @patch("playwright_wrapper.sync_playwright")
     def test_render_page_closure(self, mock_playwright):
         """Test that pages are properly closed"""
         mock_pw = MagicMock()
@@ -190,7 +185,6 @@ class QSLRendererRenderTest(unittest.TestCase):
         # Page should be closed after render
         mock_page.close.assert_called_once()
 
-    @patch("playwright_wrapper.sync_playwright")
     def test_render_with_different_dimensions(self, mock_playwright):
         """Test rendering with various width/height combinations"""
         mock_pw = MagicMock()
@@ -242,7 +236,6 @@ class GenerateQslImageTest(unittest.TestCase):
         """Clean up temporary files"""
         self.temp_dir.cleanup()
 
-    @patch("playwright_wrapper.sync_playwright")
     def test_generate_qsl_image_basic(self, mock_playwright):
         """Test basic image generation"""
         mock_pw = MagicMock()
@@ -261,7 +254,6 @@ class GenerateQslImageTest(unittest.TestCase):
         # Verify screenshot was called
         mock_page.screenshot.assert_called_once()
 
-    @patch("playwright_wrapper.sync_playwright")
     def test_generate_qsl_image_browser_cleanup(self, mock_playwright):
         """Test that browser is cleaned up after image generation"""
         mock_pw = MagicMock()
@@ -298,7 +290,6 @@ class GenerateQslPdfTest(unittest.TestCase):
         """Clean up temporary files"""
         self.temp_dir.cleanup()
 
-    @patch("playwright_wrapper.sync_playwright")
     def test_generate_qsl_pdf_basic(self, mock_playwright):
         """Test basic PDF generation"""
         mock_pw = MagicMock()
@@ -317,7 +308,6 @@ class GenerateQslPdfTest(unittest.TestCase):
         # Verify PDF was called
         mock_page.pdf.assert_called_once()
 
-    @patch("playwright_wrapper.sync_playwright")
     def test_generate_qsl_pdf_parameters(self, mock_playwright):
         """Test that PDF is generated with correct parameters"""
         mock_pw = MagicMock()
