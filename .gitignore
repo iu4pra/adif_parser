@@ -18,4 +18,5 @@ __pycache__/**
 template_out.html
 *.pdf
 tmp/*.jpg
+tmp_out/
 out/

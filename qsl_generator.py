@@ -3,27 +3,18 @@
 # This software under the MIT License
 # QSL generator
 # Generates a printable QSL starting from an HTML template with Jinja2
-# wkhtmltox reference https://wkhtmltopdf.org/downloads.html
 
+from datetime import datetime
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from qso import QSO
-from wkhtml import wkhtmltoimage, wkhtmltopdf, WKHTMLTOX_BASE_DPI
 import adif
 import argparse
 import logging
 import os
 import pickle
+import playwright_wrapper
 import pypdf
 import shutil
-
-# ==========================================
-# EXTERNAL DEPENDENCY WARNING
-# ==========================================
-# This script relies on the 'wkhtmltox' suite (wkhtmltopdf / wkhtmltoimage)
-# to render HTML into PDF or Image formats.
-# These are system-level binaries that must be installed separately.
-# Download them here: https://wkhtmltopdf.org/downloads.html
-# ==========================================
 
 # QSL standard size in centimeters
 QSL_WIDTH = 14.0
@@ -67,36 +58,25 @@ def cm_to_px(cm, dpi):
     return int(cm * dpi / 2.54)
 
 
-# Default command options for wkhtmltopdf
-cmd_options_pdf = {
-    "--dpi": str(DPI),
-    "--page-width": f"{QSL_WIDTH}cm",
-    "--page-height": f"{QSL_HEIGHT}cm",
-}
-
-# Default command options for wkhtmltoimage
-cmd_options_image = {
-    "--zoom": str(DPI / WKHTMLTOX_BASE_DPI),
-    "--width": str(cm_to_px(QSL_WIDTH, DPI)),
-    "--height": str(cm_to_px(QSL_HEIGHT, DPI)),
-}
+def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
+    try:
+        dt = datetime.strptime(value, "%Y%m%d")
+        return dt.strftime(fmt)
+    except (ValueError, TypeError) as e:
+        logging.error(f"qsl_filter_format_date(value={value}): {e}")
+        return value
 
 
-def generate_options_pdf(_width, _height, _dpi):
-    return {
-        "--dpi": str(_dpi),
-        "--page-width": f"{_width}cm",
-        "--page-height": f"{_height}cm",
-    }
+def qsl_filter_format_time(value, include_seconds=False, separator=":"):
+    if not value or len(value) < 4:
+        return value
 
+    parts = [value[:2], value[2:4]]
 
-def generate_options_image(_format, _width, _height, _dpi):
-    return {
-        "--zoom": str(_dpi / WKHTMLTOX_BASE_DPI),
-        "--width": str(cm_to_px(_width, _dpi)),
-        "--height": str(cm_to_px(_height, _dpi)),
-        "--format": _format,
-    }
+    if include_seconds and len(value) >= 6:
+        parts.append(value[4:6])
+
+    return separator.join(parts)
 
 
 def unlink_if_exists(path):
@@ -115,16 +95,6 @@ def rmtree_if_exists(path):
         pass
 
 
-def dict_to_cmd_list(_cmd_options: dict):
-    """Converts a dict of options to a list to pass to subprocess.run"""
-    cmd_list = []
-    for k, v in _cmd_options.items():
-        cmd_list.append(k)
-        if v is not None:
-            cmd_list.append(v)
-    return cmd_list
-
-
 def generate_qsl_image_pdf(
     qso_list: list[QSO],
     _image: bool = False,
@@ -135,9 +105,6 @@ def generate_qsl_image_pdf(
     _format: str = IMG_OUT_EXTENSION,
     _width: float = QSL_WIDTH,
     _height: float = QSL_HEIGHT,
-    _dpi: int = DPI,
-    _wkhtml_image_args=None,
-    _wkhtml_pdf_args=None,
     _dry_run: bool = False,
 ):
     """Generates either, one QSL image per QSO in the given list,
@@ -186,6 +153,9 @@ def generate_qsl_image_pdf(
         loader=FileSystemLoader(TEMPLATE_FOLDER),
         autoescape=select_autoescape(["html", "htm", "xml"]),
     )
+    # Loading filters
+    env.filters["format_date"] = qsl_filter_format_date
+    env.filters["format_time"] = qsl_filter_format_time
 
     # Loading HTML template
     template = env.get_template(_template)
@@ -206,58 +176,55 @@ def generate_qsl_image_pdf(
 
         qso_data_lowercase = {}
 
-        for key, value in _qso._d.items():
-            # Converting all keys into lowercase
-            qso_data_lowercase[key.casefold()] = value
-        output = template.render(qso=qso_data_lowercase)
+        with playwright_wrapper.QSLRenderer() as renderer:
+            for key, value in _qso._d.items():
+                # Converting all keys into lowercase
+                qso_data_lowercase[key.casefold()] = value
+            output = template.render(qso=qso_data_lowercase)
 
-        logging.info(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
+            logging.info(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
 
-        if _dry_run is False:
-            # Write compiled template to file
-            with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
-                f.write(output)
-
-        # Remove any extension in the passed out filename, will be added later
-        out_base_name = _out_filename.rsplit(".", 1)[0]
-        logging.debug(
-            f"Passed output filename : {_out_filename}\nBase name without extension: {out_base_name}"
-        )
-
-        # Convert template page to image
-        if _image:
-            out_name = os.path.join(
-                _out_folder, (out_base_name + "_%04d." % (i + 1) + _format)
-            )
-            image_cmd_list = dict_to_cmd_list(
-                generate_options_image(_format, _width, _height, _dpi)
-            )
-            if _wkhtml_image_args:
-                image_cmd_list.extend(_wkhtml_image_args.split())
             if _dry_run is False:
-                ret = wkhtmltoimage(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])
-                if ret.returncode != 0:
-                    logging.warning(f"wkhtmltoimage returned {ret.returncode}")
-            else:
-                logging.info(
-                    f"Would call: wkhtmltoimage {' '.join(image_cmd_list + [TEMPLATE_TEMP_FILENAME, out_name])}"
-                )
+                # Write compiled template to file
+                with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
+                    f.write(output)
 
-        # Convert template page to PDF
-        if _pdf:
-            pdf_cmd_list = dict_to_cmd_list(generate_options_pdf(_width, _height, _dpi))
-            if _wkhtml_pdf_args:
-                pdf_cmd_list.extend(_wkhtml_pdf_args.split())
-            if _dry_run is False:
-                ret = wkhtmltopdf(
-                    pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)]
+            # Remove any extension in the passed out filename, will be added later
+            out_base_name = _out_filename.rsplit(".", 1)[0]
+            logging.debug(
+                f"Passed output filename : {_out_filename}\nBase name without extension: {out_base_name}"
+            )
+
+            # Convert template page to image
+            if _image:
+                out_name = os.path.join(
+                    _out_folder, (out_base_name + "_%04d." % (i + 1) + _format)
                 )
-                if ret.returncode != 0:
-                    logging.warning(f"wkhtmltopdf returned {ret.returncode}")
-            else:
-                logging.info(
-                    f"Would call: wkhtmltopdf {' '.join(pdf_cmd_list + [TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i)])}"
-                )
+                if _dry_run is False:
+                    renderer.render(
+                        TEMPLATE_TEMP_FILENAME,
+                        out_name,
+                        _width,
+                        _height,
+                    )
+                else:
+                    logging.info(
+                        f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, out_name,str(_width),str(_height)])}"
+                    )
+
+            # Convert template page to PDF
+            if _pdf:
+                if _dry_run is False:
+                    renderer.render(
+                        TEMPLATE_TEMP_FILENAME,
+                        (PDF_TEMP_BASE_NAME % i),
+                        _width,
+                        _height,
+                    )
+                else:
+                    logging.info(
+                        f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i), str(_width),str(_height)])}"
+                    )
 
     if _pdf:
         # Concatenate all files to create a single PDF to print
@@ -269,7 +236,7 @@ def generate_qsl_image_pdf(
                     writer.append(pdf)
                 else:
                     logging.error(
-                        f"Error: file {pdf} not found! Check wkhtmltopdf output!"
+                        f"Error: file {pdf} not found! Check Playwright output!"
                     )
             writer.write(out_name)
             writer.close()
@@ -309,7 +276,7 @@ def setup_logging(level=logging.INFO):
 def main():
     # Define parser and its arguments
     parser = argparse.ArgumentParser(
-        description="Generate a .pdf file from a QSO list in .adi or .dump format"
+        description="Generate a .pdf file from a QSO list in .adi format"
     )
 
     parser.add_argument(
@@ -375,30 +342,6 @@ def main():
     )
 
     parser.add_argument(
-        "--dpi",
-        metavar="dpi",
-        type=int,
-        default=DPI,
-        help=f"Tentative DPI value (default {DPI})",
-    )
-
-    parser.add_argument(
-        "--wkhtml-image-args",
-        metavar="wkhtml_image_args",
-        type=str,
-        default="",
-        help="Extra arguments for wkhtmltoimage",
-    )
-
-    parser.add_argument(
-        "--wkhtml-pdf-args",
-        metavar="wkhtml_pdf_args",
-        type=str,
-        default="",
-        help="Extra arguments for wkhtmltopdf",
-    )
-
-    parser.add_argument(
         "--quiet", default=False, action="store_true", help="Suppress output"
     )
 
@@ -461,14 +404,6 @@ def main():
         )
         qso_list = adif.qso_list_from_file(filename, args.only_valid)
 
-    # TODO to be removed, test code for .dump files
-    elif ext.casefold() in [
-        "dump",
-    ]:
-        logging.warning("TEST ONLY dump file, not for production!")
-        # Unpickle data
-        with open(args.filename, "rb", encoding="utf-8") as f:
-            qso_list = pickle.load(f)
     else:
         raise Exception("Unrecognized file extension")
 
@@ -483,17 +418,6 @@ def main():
     elif args.height > QSL_HEIGHT_MAX:
         raise ValueError(f"--height must be <= {QSL_HEIGHT_MAX}")
 
-    if args.dpi <= 0:
-        raise ValueError("--dpi must be positive")
-    elif args.dpi > DPI_MAX:
-        raise ValueError(f"--dpi must be <= {DPI_MAX}")
-
-    if args.wkhtml_image_args:
-        logging.info(f"wkhtml_image_args: {args.wkhtml_image_args.split()}")
-
-    if args.wkhtml_pdf_args:
-        logging.info(f"wkhtml_pdf_args: {args.wkhtml_pdf_args.split()}")
-
     # All OK, generate QSLs
     generate_qsl_image_pdf(
         qso_list,
@@ -505,9 +429,6 @@ def main():
         _format=args.image_format,
         _width=args.width,
         _height=args.height,
-        _dpi=args.dpi,
-        _wkhtml_image_args=args.wkhtml_image_args,
-        _wkhtml_pdf_args=args.wkhtml_pdf_args,
         _dry_run=args.dry_run,
     )
 

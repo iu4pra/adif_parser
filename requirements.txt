@@ -1,2 +1,3 @@
 jinja2>=3.0  # Template engine for HTML QSL card generation
+playwright>=1.40.0 # Image and PDF generation
 pypdf>=3.0   # PDF manipulation and concatenation

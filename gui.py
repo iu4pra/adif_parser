@@ -214,28 +214,17 @@ class App:
         Action:
             1. Reads the ADIF file and converts it to a list of QSO objects.
             2. Checks the state of PDF and Image checkboxes.
-            3. Calls the appropriate functions in qsl_generator (generate_qsl_pdf or generate_qsl_image).
+            3. Calls qsl_generator.generate_qsl_image_pdf
         """
         if hasattr(self, "logfile") and os.path.isfile(self.logfile):
             qso_list = adif.qso_list_from_file(self.logfile)
-            # Check if PDF output checkbox is ticked
-            if self.out_pdf.get() == 1:
-                self.logger.info("Proceeding to output as PDF")
-                qsl_generator.generate_qsl_pdf(
-                    qso_list,
-                    _template=self.template_file or qsl_generator.TEMPLATE_DEFAULT_FILE,
-                )
-            else:
-                self.logger.info("No PDF output")
-            # Check if image output checkbox is ticked
-            if self.out_img.get() == 1:
-                self.logger.info("Proceeding to output as image")
-                qsl_generator.generate_qsl_image(
-                    qso_list,
-                    _template=self.template_file or qsl_generator.TEMPLATE_DEFAULT_FILE,
-                )
-            else:
-                self.logger.info("No image output")
+
+            qsl_generator.generate_qsl_image_pdf(
+                qso_list,
+                _template=self.template_file or qsl_generator.TEMPLATE_DEFAULT_FILE,
+                _image=(self.out_img.get() == 1),
+                _pdf=(self.out_pdf.get() == 1),
+            )
         else:
             self.logger.error("No logfile chosen!")
 

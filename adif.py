@@ -50,10 +50,8 @@ def check_field(t: dict):
         try:
             length = t.get("len")
             assert isinstance(length, int)
-        except ValueError as e:
+        except AssertionError as e:
             raise AdifError(f"Invalid length value for field {field} ({length})")
-        except Exception as e:
-            raise e
 
         # Field length is now valid
         if length <= 0:
@@ -176,6 +174,7 @@ def parse_adif_file(filename: str):
     """Parse an ADIF file and returns the ordered list of its fields"""
     # Input type check
     assert isinstance(filename, str)
+    assert os.path.isfile(filename)
     with open(filename, "rt", encoding="utf-8") as f:
         field_list = parse_adif_string(f.read())
     return field_list
@@ -190,7 +189,7 @@ def remove_header(_adif_fields: list):
     if eoh_index > 0:
         logging.debug(f"EOH found at index {eoh_index}")
     else:
-        logging.info("EOH field not found during header stripping")
+        logging.debug("EOH field not found during header stripping")
 
     # Remove header data
     del _adif_fields[0 : eoh_index + 1]
@@ -210,7 +209,7 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=False):
     # Strip header
     _adif_fields, eoh_index = remove_header(_adif_fields)
 
-    logging.info(f"Automatic header stripping: eoh_index = {eoh_index}")
+    logging.debug(f"Automatic header stripping: eoh_index = {eoh_index}")
 
     _qso_list: list[QSO] = []
 
@@ -256,34 +255,3 @@ def qso_list_from_file(filename: str, _only_valid=False):
     field_list = parse_adif_file(filename)
     qso_list: list[QSO] = adif_to_qso_list(field_list, _only_valid)
     return qso_list
-
-
-# Testing code
-if __name__ == "__main__":
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)s: %(message)s", level=logging.INFO
-    )
-
-    # Use this to add debug info
-    ADIF_DEBUG = True
-    if ADIF_DEBUG:
-        logging.root.setLevel(logging.DEBUG)
-
-    # Example files:
-    #   './iu4pra_sample_log.adi'
-    #   './sample_log.adi'
-    #   './sample_2qso.adi'
-    LOGFILE = "./sample_log.adi"
-    logging.info(f"Analysis of file {os.path.basename(LOGFILE)}")
-
-    # Create QSO objects
-    qso_list: list[QSO] = qso_list_from_file(LOGFILE)
-
-    logging.info(f"QSO list contains {len(qso_list)} entries")
-    for q in qso_list:
-        logging.debug(q)
-        logging.debug(f"is_valid(): {q.is_valid()}")
-
-    # Dumping the QSO list for the QSL generator module
-    with open(os.path.splitext(LOGFILE)[0] + ".dump", "wb", encoding="utf-8") as f:
-        pickle.dump(qso_list, f)
