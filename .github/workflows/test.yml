@@ -42,3 +42,26 @@ jobs:
       - name: Run tests
         run: |
           python -m pytest
+      - name: Generate coverage report
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
+        run: |
+          pytest \
+            --cov=. \
+            --cov-report term-missing \
+            --cov-report html:htmlcov \
+            --cov-report xml:coverage.xml
+      - name: Upload HTML coverage report
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: htmlcov/
+          retention-days: 10
+      - name: Get Cover
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9'
+        uses: orgoro/coverage@v3.3.1
+        with:
+            coverageFile: ./coverage.xml
+            title: "Python Code Coverage"
+            thresholdAll: 0.7
+            token: ${{ secrets.GITHUB_TOKEN }}
