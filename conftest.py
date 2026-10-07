@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 # This software under the MIT License
 # Pytest configuration - Global mocks for Playwright tests
 
