@@ -35,7 +35,7 @@
     </style>
   </head>
   <body>
-    <p>IU4PRA<br>
+    <p>{% if qso.station_callsign %}{{qso.station_callsign}}{%else %}IU4PRA{% endif %}<br>
       Generic fuffa about my super duper station</p>
     <p>Confirming QSO with: <span class="field">{{ qso.call }}</span></p>
     <table class="qso-data">
