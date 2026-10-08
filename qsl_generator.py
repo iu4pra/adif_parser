@@ -107,8 +107,7 @@ def generate_qsl_image_pdf(
     _height: float = QSL_HEIGHT,
     _dry_run: bool = False,
 ):
-    """Generates either, one QSL image per QSO in the given list,
-    a PDF file qith the QSLs contained in the given QSO list, or both"""
+    """Generates one QSL image per QSO, a PDF file with the QSLs contained in the given QSO list, or both."""
 
     if _dry_run:
         logging.warning("Running app in dry-run mode")
@@ -366,7 +365,7 @@ def main():
     # Parse arguments
     args = parser.parse_args()
 
-    # Logger bust me setup BEFORE any call!
+    # Logger must be set up BEFORE any call!
     if args.quiet and args.verbose:
         raise ValueError("Cannot use --quiet and --verbose together")
 
