@@ -16,7 +16,7 @@ __pycache__/**
 *.dump
 *.pyc
 # Output files
-template_out.html
+.coverage
 *.pdf
 tmp/*.jpg
 tmp_out/

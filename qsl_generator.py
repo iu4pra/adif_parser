@@ -404,7 +404,7 @@ def main():
         qso_list = adif.qso_list_from_file(filename, args.only_valid)
 
     else:
-        raise Exception("Unrecognized file extension")
+        raise ValueError("Unrecognized file extension")
 
     # Optional parameters validation
     if args.width <= 0:

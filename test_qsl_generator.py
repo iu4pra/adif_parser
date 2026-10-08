@@ -46,9 +46,29 @@ class QSLGeneratorBasicTest(unittest.TestCase):
         with self.assertRaises(Exception):
             qslgen.main()
 
+    @patch(
+        "sys.argv",
+        ["qsl_generator.py", "samples/minimal_1qso.adi", "--quiet", "--verbose"],
+    )
+    def test_quiet_verbose_together(self):
+        with self.assertRaises(ValueError):
+            qslgen.main()
+
     @patch("sys.argv", ["qsl_generator.py", "samples/pippo.adi"])
     def test_nonexistent_file(self):
         with self.assertRaises(FileNotFoundError):
+            qslgen.main()
+
+    @patch("os.path.isfile")
+    @patch("qsl_generator.adif.qso_list_from_file")
+    @patch(
+        "sys.argv",
+        ["qsl_generator.py", "samples/test_log.txt"],
+    )
+    def test_invalid_file_extension(self, mock_parse, mock_isfile):
+        mock_parse.return_value = []
+        mock_isfile.return_value = True
+        with self.assertRaises(ValueError):
             qslgen.main()
 
     @patch(
@@ -126,7 +146,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
         "sys.argv",
         ["qsl_generator.py", "samples/test_log.adi", "--height", "-1"],
     )
-    def test_invalid_height_raises(self, mock_parse):
+    def test_invalid_height_raises_1(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
             qslgen.main()
@@ -136,7 +156,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
         "sys.argv",
         ["qsl_generator.py", "samples/test_log.adi", "--height", "0"],
     )
-    def test_invalid_height_raises(self, mock_parse):
+    def test_invalid_height_raises_2(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
             qslgen.main()
@@ -146,7 +166,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
         "sys.argv",
         ["qsl_generator.py", "samples/test_log.adi", "--height", "9999"],
     )
-    def test_invalid_height_raises(self, mock_parse):
+    def test_height_over_max_raises(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
             qslgen.main()
