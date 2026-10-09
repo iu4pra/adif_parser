@@ -375,9 +375,7 @@ class TestUnlinkIfExists(unittest.TestCase):
             f.write("test content")
 
         self.assertTrue(os.path.exists(test_file))
-
         qslgen.unlink_if_exists(test_file)
-
         self.assertFalse(os.path.exists(test_file))
 
     def test_delete_file_with_long_path(self):
@@ -391,9 +389,7 @@ class TestUnlinkIfExists(unittest.TestCase):
             f.write("test content")
 
         self.assertTrue(os.path.exists(test_file))
-
         qslgen.unlink_if_exists(test_file)
-
         self.assertFalse(os.path.exists(test_file))
 
     def test_unlink_empty_string_path(self):
@@ -498,9 +494,7 @@ class TestRmtreeIfExists(unittest.TestCase):
             f.write("test")
 
         self.assertTrue(os.path.exists(test_dir_path))
-
         qslgen.rmtree_if_exists(test_dir_path)
-
         self.assertFalse(os.path.exists(test_dir_path))
 
     def test_delete_empty_directory(self):
@@ -509,9 +503,7 @@ class TestRmtreeIfExists(unittest.TestCase):
         os.makedirs(test_dir_path)
 
         self.assertTrue(os.path.exists(test_dir_path))
-
         qslgen.rmtree_if_exists(test_dir_path)
-
         self.assertFalse(os.path.exists(test_dir_path))
 
     def test_rmtree_empty_string_path(self):
