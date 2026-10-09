@@ -65,4 +65,6 @@ jobs:
             coverageFile: ./coverage.xml
             title: "Python Code Coverage"
             thresholdAll: 0.7
+            thresholdNew: 0.85
+            thresholdModified: 0.75
             token: ${{ secrets.GITHUB_TOKEN }}

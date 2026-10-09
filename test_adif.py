@@ -169,6 +169,21 @@ class TestAdifParser(unittest.TestCase):
         self.assertEqual(qso_list[0]._d["CALL"], "K1A")
         self.assertEqual(qso_list[1]._d["CALL"], "K2B")
 
+    def test_qso_bad_data_1(self):
+        with self.assertRaises(adif.AdifError):
+            fields = adif.parse_adif_string("<CALL:3>K1A <CALL:3>K2B<EOR>")
+            qso_list = adif.adif_to_qso_list(fields)
+
+    def test_qso_bad_data_2(self):
+        with self.assertRaises(adif.AdifError):
+            fields = adif.parse_adif_string("<CALL:3>K1A <EOR> <CALL:3>K2B")
+            qso_list = adif.adif_to_qso_list(fields)
+
+    def test_qso_bad_data_3(self):
+        with self.assertRaises(adif.AdifError):
+            fields = adif.parse_adif_string("<CALL:5>K1A <EOR><CALL:3>K2B<EOR>")
+            qso_list = adif.adif_to_qso_list(fields)
+
     def test_parse_non_file(self):
         with self.assertRaises(AssertionError):
             adif.parse_adif_file(None)

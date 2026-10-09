@@ -49,9 +49,32 @@ class QSOTest(unittest.TestCase):
         self.assertEqual(len(_qso_list), 1)
         self.assertTrue(_qso_list[0].is_valid())
 
-    def test_missing_essential_field(self):
+    def test_null_field_1(self):
+        # Missing TIME_ON
+        data = {"CALL": "W1AW", "QSO_DATE": "", "TIME_ON": "120000", "MODE": "CW"}
+        q = QSO(data)
+        self.assertFalse(q.is_valid())
+
+    def test_null_field_2(self):
+        # Missing TIME_ON
+        data = {"CALL": "W1AW", "QSO_DATE": "20230101", "TIME_ON": None, "MODE": "CW"}
+        q = QSO(data)
+        self.assertFalse(q.is_valid())
+
+    def test_missing_essential_field_single(self):
         # Missing TIME_ON
         data = {"CALL": "W1AW", "QSO_DATE": "20230101", "BAND": "20m", "MODE": "CW"}
+        q = QSO(data)
+        self.assertFalse(q.is_valid())
+
+    def test_missing_essential_field_list(self):
+        # Missing TIME_ON
+        data = {
+            "CALL": "W1AW",
+            "QSO_DATE": "20230101",
+            "TIME_ON": "120000",
+            "MODE": "CW",
+        }
         q = QSO(data)
         self.assertFalse(q.is_valid())
 

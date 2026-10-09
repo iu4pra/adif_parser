@@ -6,11 +6,13 @@
 import adif
 import logging
 import os
+import pytest
 import qsl_generator as qslgen
 import unittest
 import tempfile
 import shutil
-from unittest.mock import patch
+from qso import QSO
+from unittest.mock import patch, MagicMock
 
 
 class QSLGeneratorBasicTest(unittest.TestCase):
@@ -46,9 +48,29 @@ class QSLGeneratorBasicTest(unittest.TestCase):
         with self.assertRaises(Exception):
             qslgen.main()
 
+    @patch(
+        "sys.argv",
+        ["qsl_generator.py", "samples/minimal_1qso.adi", "--quiet", "--verbose"],
+    )
+    def test_quiet_verbose_together(self):
+        with self.assertRaises(ValueError):
+            qslgen.main()
+
     @patch("sys.argv", ["qsl_generator.py", "samples/pippo.adi"])
     def test_nonexistent_file(self):
         with self.assertRaises(FileNotFoundError):
+            qslgen.main()
+
+    @patch("os.path.isfile")
+    @patch("qsl_generator.adif.qso_list_from_file")
+    @patch(
+        "sys.argv",
+        ["qsl_generator.py", "samples/test_log.txt"],
+    )
+    def test_invalid_file_extension(self, mock_parse, mock_isfile):
+        mock_parse.return_value = []
+        mock_isfile.return_value = True
+        with self.assertRaises(ValueError):
             qslgen.main()
 
     @patch(
@@ -126,7 +148,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
         "sys.argv",
         ["qsl_generator.py", "samples/test_log.adi", "--height", "-1"],
     )
-    def test_invalid_height_raises(self, mock_parse):
+    def test_invalid_height_raises_1(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
             qslgen.main()
@@ -136,7 +158,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
         "sys.argv",
         ["qsl_generator.py", "samples/test_log.adi", "--height", "0"],
     )
-    def test_invalid_height_raises(self, mock_parse):
+    def test_invalid_height_raises_2(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
             qslgen.main()
@@ -146,7 +168,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
         "sys.argv",
         ["qsl_generator.py", "samples/test_log.adi", "--height", "9999"],
     )
-    def test_invalid_height_raises(self, mock_parse):
+    def test_height_over_max_raises(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
             qslgen.main()
@@ -353,9 +375,7 @@ class TestUnlinkIfExists(unittest.TestCase):
             f.write("test content")
 
         self.assertTrue(os.path.exists(test_file))
-
         qslgen.unlink_if_exists(test_file)
-
         self.assertFalse(os.path.exists(test_file))
 
     def test_delete_file_with_long_path(self):
@@ -369,9 +389,7 @@ class TestUnlinkIfExists(unittest.TestCase):
             f.write("test content")
 
         self.assertTrue(os.path.exists(test_file))
-
         qslgen.unlink_if_exists(test_file)
-
         self.assertFalse(os.path.exists(test_file))
 
     def test_unlink_empty_string_path(self):
@@ -476,9 +494,7 @@ class TestRmtreeIfExists(unittest.TestCase):
             f.write("test")
 
         self.assertTrue(os.path.exists(test_dir_path))
-
         qslgen.rmtree_if_exists(test_dir_path)
-
         self.assertFalse(os.path.exists(test_dir_path))
 
     def test_delete_empty_directory(self):
@@ -487,9 +503,7 @@ class TestRmtreeIfExists(unittest.TestCase):
         os.makedirs(test_dir_path)
 
         self.assertTrue(os.path.exists(test_dir_path))
-
         qslgen.rmtree_if_exists(test_dir_path)
-
         self.assertFalse(os.path.exists(test_dir_path))
 
     def test_rmtree_empty_string_path(self):
@@ -498,6 +512,222 @@ class TestRmtreeIfExists(unittest.TestCase):
             qslgen.rmtree_if_exists("")
         except (FileNotFoundError, OSError):
             pass  # Both exceptions are acceptabl
+
+
+class TestGenerateQslImagePdf(unittest.TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+
+        self.qso = QSO(
+            {
+                "CALL": "IW9YZA",
+                "QSO_DATE": "20251005",
+                "TIME_ON": "123000",
+                "BAND": "20m",
+                "MODE": "FT8",
+            }
+        )
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir, ignore_errors=True)
+
+    @patch("qsl_generator.logging.error")
+    def test_no_output_selected(self, mock_error):
+
+        qslgen.generate_qsl_image_pdf(
+            [self.qso],
+            _image=False,
+            _pdf=False,
+        )
+
+        mock_error.assert_called_once_with("No output specified!")
+
+    @patch("qsl_generator.playwright_wrapper.QSLRenderer")
+    def test_dry_run_image(self, mock_renderer):
+
+        qslgen.generate_qsl_image_pdf(
+            [self.qso],
+            _image=True,
+            _pdf=False,
+            _dry_run=True,
+        )
+
+        mock_renderer.assert_called()
+
+    @patch("qsl_generator.playwright_wrapper.QSLRenderer")
+    def test_generate_image(self, mock_renderer):
+
+        renderer_instance = MagicMock()
+        mock_renderer.return_value.__enter__.return_value = renderer_instance
+
+        qslgen.generate_qsl_image_pdf(
+            [self.qso],
+            _image=True,
+            _pdf=False,
+            _out_folder=self.tempdir,
+        )
+
+        renderer_instance.render.assert_called()
+
+    @patch("qsl_generator.playwright_wrapper.QSLRenderer")
+    @patch("qsl_generator.pypdf.PdfWriter")
+    def test_generate_pdf(self, mock_writer, mock_renderer):
+
+        renderer_instance = MagicMock()
+        mock_renderer.return_value.__enter__.return_value = renderer_instance
+
+        writer_instance = MagicMock()
+        mock_writer.return_value = writer_instance
+
+        qslgen.generate_qsl_image_pdf(
+            [self.qso],
+            _image=False,
+            _pdf=True,
+            _out_folder=self.tempdir,
+        )
+
+        renderer_instance.render.assert_called()
+
+    @patch("qsl_generator.playwright_wrapper.QSLRenderer")
+    @patch("qsl_generator.pypdf.PdfWriter")
+    def test_generate_image_and_pdf(
+        self,
+        mock_writer,
+        mock_renderer,
+    ):
+        renderer_instance = MagicMock()
+        mock_renderer.return_value.__enter__.return_value = renderer_instance
+
+        qslgen.generate_qsl_image_pdf(
+            [self.qso],
+            _image=True,
+            _pdf=True,
+            _out_folder=self.tempdir,
+        )
+
+        self.assertGreaterEqual(
+            renderer_instance.render.call_count,
+            2,
+        )
+
+    @patch("qsl_generator.playwright_wrapper.QSLRenderer")
+    def test_empty_qso_list(self, mock_renderer):
+
+        qslgen.generate_qsl_image_pdf(
+            [],
+            _image=True,
+            _out_folder=self.tempdir,
+        )
+
+        mock_renderer.assert_not_called()
+
+    @patch("qsl_generator.playwright_wrapper.QSLRenderer")
+    def test_multiple_qso_rendered(self, mock_renderer):
+
+        qso2 = QSO(
+            {
+                "CALL": "IK4XYZ",
+                "QSO_DATE": "20251005",
+                "TIME_ON": "123000",
+                "BAND": "40m",
+                "MODE": "CW",
+            }
+        )
+
+        renderer_instance = MagicMock()
+        mock_renderer.return_value.__enter__.return_value = renderer_instance
+
+        qslgen.generate_qsl_image_pdf(
+            [self.qso, qso2],
+            _image=True,
+            _out_folder=self.tempdir,
+        )
+
+        self.assertEqual(
+            renderer_instance.render.call_count,
+            2,
+        )
+
+    @patch("qsl_generator.playwright_wrapper.QSLRenderer")
+    @patch("qsl_generator.Environment")
+    def test_qso_keys_are_lowercased(
+        self,
+        mock_env,
+        mock_renderer,
+    ):
+
+        template = MagicMock()
+        mock_env.return_value.get_template.return_value = template
+
+        qslgen.generate_qsl_image_pdf(
+            [self.qso],
+            _image=True,
+            _dry_run=True,
+        )
+
+        _, kwargs = template.render.call_args
+
+        self.assertIn("call", kwargs["qso"])
+        self.assertNotIn("CALL", kwargs["qso"])
+
+    @patch("qsl_generator.os.path.isfile")
+    @patch("qsl_generator.pypdf.PdfWriter")
+    @patch("qsl_generator.playwright_wrapper.QSLRenderer")
+    def test_pdf_merge_called(
+        self,
+        mock_renderer,
+        mock_writer,
+        mock_isfile,
+    ):
+
+        mock_isfile.return_value = True
+
+        writer_instance = MagicMock()
+        mock_writer.return_value = writer_instance
+
+        renderer_instance = MagicMock()
+        mock_renderer.return_value.__enter__.return_value = renderer_instance
+
+        qslgen.generate_qsl_image_pdf(
+            [self.qso],
+            _pdf=True,
+            _out_folder=self.tempdir,
+        )
+
+        writer_instance.append.assert_called()
+        writer_instance.write.assert_called()
+
+
+@pytest.mark.parametrize(
+    "argv,expected_pdf,expected_image",
+    [
+        (["qsl_generator.py", "samples/minimal_1qso.adi"], True, False),
+        (["qsl_generator.py", "samples/minimal_1qso.adi", "--image"], False, True),
+        (["qsl_generator.py", "samples/minimal_1qso.adi", "--pdf"], True, False),
+    ],
+)
+def test_output_selection(
+    argv,
+    expected_pdf,
+    expected_image,
+):
+
+    qso_list = ["dummy_qso"]
+
+    with patch("sys.argv", argv), patch(
+        "qsl_generator.adif.qso_list_from_file", return_value=qso_list
+    ), patch("qsl_generator.generate_qsl_image_pdf") as mock_generate:
+
+        qslgen.main()
+
+        mock_generate.assert_called_once()
+
+        args, kwargs = mock_generate.call_args
+
+        assert args[0] == qso_list
+        assert kwargs["_pdf"] is expected_pdf
+        assert kwargs["_image"] is expected_image
 
 
 if __name__ == "__main__":

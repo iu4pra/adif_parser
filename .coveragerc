@@ -1,9 +1,10 @@
 [run]
 branch = True
 omit =
-    test_*.py
-    unit_test.py
+    __init__.py
     gui.py
+    conftest.py
+    test_*.py
 
 [report]
 exclude_lines =
