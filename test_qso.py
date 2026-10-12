@@ -64,13 +64,25 @@ class QSOTest(unittest.TestCase):
 
     def test_missing_essential_field_single_1(self):
         # Missing TIME_ON
-        data = {"STATION_CALLSIGN": "W1ABC", "CALL": "W1AW", "QSO_DATE": "20230101", "BAND": "20m", "MODE": "CW"}
+        data = {
+            "STATION_CALLSIGN": "W1ABC",
+            "CALL": "W1AW",
+            "QSO_DATE": "20230101",
+            "BAND": "20m",
+            "MODE": "CW",
+        }
         q = QSO(data)
         self.assertFalse(q.is_valid())
 
     def test_missing_essential_field_single_2(self):
         # Missing STATION_CALLSIGN
-        data = {"CALL": "W1AW", "QSO_DATE": "20230101", "TIME_ON": "120000", "BAND": "20m", "MODE": "CW"}
+        data = {
+            "CALL": "W1AW",
+            "QSO_DATE": "20230101",
+            "TIME_ON": "120000",
+            "BAND": "20m",
+            "MODE": "CW",
+        }
         q = QSO(data)
         self.assertFalse(q.is_valid())
 
