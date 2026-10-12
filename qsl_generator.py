@@ -118,6 +118,51 @@ def generate_qsl_image_pdf(
 
     assert isinstance(qso_list, list)
 
+    # TODO add function to beautify QSO list (all elements' keys uppercase...)
+
+    # === BEGIN TEST CODE ===
+    qso_grouped = {}
+
+    # Get any unique sending station callsign (typically should be only one)
+    unique_send_stations = set(
+        [
+            qso._d.get("STATION_CALLSIGN").upper()
+            for qso in qso_list
+            if isinstance(qso, QSO)
+        ]
+    )
+    for _station in unique_send_stations:
+        qso_grouped[_station] = {}
+        # Get all unique recipients for each sending station
+        unique_recipients = set(
+            [
+                qso._d.get("CALL").upper()
+                for qso in qso_list
+                if isinstance(qso, QSO) and qso._d.get("STATION_CALLSIGN") == _station
+            ]
+        )
+        for _recipient in unique_recipients:
+            qso_grouped[_station][_recipient] = [
+                qso
+                for qso in qso_list
+                if isinstance(qso, QSO)
+                and qso._d.get("STATION_CALLSIGN") == _station
+                and qso._d.get("CALL") == _recipient
+            ]
+            no_qsos = len(
+                [
+                    qso
+                    for qso in qso_list
+                    if isinstance(qso, QSO)
+                    and qso._d.get("STATION_CALLSIGN") == _station
+                    and qso._d.get("CALL") == _recipient
+                ]
+            )
+            logging.info(
+                f"Detected QSOs from {_station} to {_recipient} ({no_qsos} QSOs)"
+            )
+    # === END TEST CODE ===
+
     # Template file full path
     template_path = os.path.join(TEMPLATE_FOLDER, _template)
     if not os.path.isfile(template_path):
