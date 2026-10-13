@@ -521,6 +521,7 @@ class TestGenerateQslImagePdf(unittest.TestCase):
 
         self.qso = QSO(
             {
+                "STATION_CALLSIGN": "K1ABC",
                 "CALL": "IW9YZA",
                 "QSO_DATE": "20251005",
                 "TIME_ON": "123000",
@@ -627,6 +628,7 @@ class TestGenerateQslImagePdf(unittest.TestCase):
 
         qso2 = QSO(
             {
+                "STATION_CALLSIGN": "K1ABC",
                 "CALL": "IK4XYZ",
                 "QSO_DATE": "20251005",
                 "TIME_ON": "123000",
