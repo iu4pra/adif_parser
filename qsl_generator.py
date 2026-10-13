@@ -54,14 +54,16 @@ IMG_OUT_BASE_NAME = "./qsl_%04d."
 PDF_OUTPUT = "./qsl.pdf"
 
 
-def cm_to_px(cm, dpi): # TODO remove, unused
+def cm_to_px(cm, dpi):  # TODO remove, unused
     """Converts centimeters to pixels given a DPI value"""
     return int(cm * dpi / 2.54)
 
+
 def split_every(items, every):
-    for i in range(math.ceil((len(items))/every)):
-        _from = i*every
-        _to = min(_from+every, len(items))
+    """Transform a list in sublists, each one with at most 'every' elements"""
+    for i in range(math.ceil((len(items)) / every)):
+        _from = i * every
+        _to = min(_from + every, len(items))
         yield items[_from:_to]
 
 
