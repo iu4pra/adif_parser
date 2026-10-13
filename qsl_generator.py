@@ -159,7 +159,7 @@ def generate_qsl_image_pdf(
                 ]
             )
             logging.info(
-                f"Detected QSOs from {_station} to {_recipient} ({no_qsos} QSOs)"
+                f"Detected {no_qsos} QSOs from {_station} to {_recipient}"
             )
     # === END TEST CODE ===
 
@@ -221,9 +221,15 @@ def generate_qsl_image_pdf(
         qso_data_lowercase = {}
 
         with playwright_wrapper.QSLRenderer() as renderer:
-            for key, value in _qso._d.items():
-                # Converting all keys into lowercase
-                qso_data_lowercase[key.casefold()] = value
+
+            # TODO here we should iterate on unique_send_stations,
+            # then on unique_recipients,
+            # then group the QSO from the list up to a maximum size,
+            # then call renderer.render()
+
+            # TODO would it be better to convert the template into uppercase ? Make dedicated function?
+            # Converting all keys into lowercase
+            qso_data_lowercase = {key.casefold(): value for key, value in _qso._d.items()} 
             output = template.render(qso=qso_data_lowercase)
 
             logging.info(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
