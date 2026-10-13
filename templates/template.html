@@ -35,12 +35,17 @@
     </style>
   </head>
   <body>
-    <p>{% if qso.station_callsign %}{{qso.station_callsign}}{% else %}IU4PRA{% endif %}<br>
+    <p>{% if qso is defined %}{{qso.station_callsign}}{% elif qsos is defined %}{{qsos[0].station_callsign}}{% else %}IU4PRA{% endif %}<br>
       Generic fuffa about my super duper station</p>
-    <p>Confirming QSO with: <span class="field">{{ qso.call }}</span></p>
+    <p>Confirming QSO with: <span class="field">{% if qso is defined %}{{qso.call}}{% elif qsos is defined %}{{qsos[0].call}}{% endif %}</span></p>
     <table class="qso-data">
+      {% if qso is defined %}
       <th colspan=2 style="text-align: center;">QSO DATA</th>
+      {% elif qsos is defined %}
+      <th colspan=6 style="text-align: center;">QSO DATA</th>
+      {% endif %}
       <tbody>
+        {% if qso is defined %}
         <tr>
           <td>Date: <span class="field">{{ qso.qso_date | format_date(fmt="%Y/%m/%d") }}</span></td>
           <td>Time UTC: <span class="field">{{ qso.time_on | format_time(False) }}</span> </td> <!-- format_time(include_seconds=False) also works -->
@@ -53,6 +58,18 @@
           <td>Mode: <span class="field">{{ qso.mode }}</span></td>
           <td>Ur sigs RS(T): <span class="field">{{ qso.rst_sent }}</span></td>
         </tr>
+      {% elif qsos is defined %}
+        {% for qso in qsos %}
+        <tr>
+          <td>Date: <span class="field">{{ qso.qso_date | format_date(fmt="%Y/%m/%d") }}</span></td>
+          <td>Time: <span class="field">{{ qso.time_on | format_time(False) }}</span> </td>
+          {% if qso.band %}<td {% if not qso.freq %}colspan=2{% endif %}>Band: <span class="field">{{ qso.band }}</span></td>{% endif %}
+          {% if qso.freq %}<td {% if not qso.band %}colspan=2{% endif %}>Freq: <span class="field">{{ qso.freq }} MHz</span></td>{% endif %}
+          <td>Mode: <span class="field">{{ qso.mode }}</span></td>
+          <td>Ur sigs RS(T): <span class="field">{{ qso.rst_sent }}</span></td>
+        </tr>
+        {% endfor %}
+      {% endif %}
       </tbody>
     </table>
     <span>Other generic fuffa</span>
