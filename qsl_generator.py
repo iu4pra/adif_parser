@@ -58,6 +58,22 @@ def cm_to_px(cm, dpi):
     return int(cm * dpi / 2.54)
 
 
+def unlink_if_exists(path):
+    """Utility function to delete a file without throwing an exception if it doesn't exist"""
+    try:
+        os.unlink(path)
+    except FileNotFoundError:
+        pass
+
+
+def rmtree_if_exists(path):
+    """Utility function to delete a folder and its subfolders and contents without throwing an exception if it doesn't exist"""
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
+
+
 def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
     try:
         dt = datetime.strptime(value, "%Y%m%d")
@@ -77,22 +93,6 @@ def qsl_filter_format_time(value, include_seconds=False, separator=":"):
         parts.append(value[4:6])
 
     return separator.join(parts)
-
-
-def unlink_if_exists(path):
-    """Utility function to delete a file without throwing an exception if it doesn't exist"""
-    try:
-        os.unlink(path)
-    except FileNotFoundError:
-        pass
-
-
-def rmtree_if_exists(path):
-    """Utility function to delete a folder and its subfolders and contents without throwing an exception if it doesn't exist"""
-    try:
-        shutil.rmtree(path)
-    except FileNotFoundError:
-        pass
 
 
 def generate_qsl_image_pdf(
@@ -241,7 +241,9 @@ def generate_qsl_image_pdf(
                     }
                     output = template.render(qso=qso_data_lowercase)
 
-                    logging.info(f"\tCompiling QSL {_i+1} to {qso_data_lowercase['call']} ")
+                    logging.info(
+                        f"\tCompiling QSL {_i+1} to {qso_data_lowercase['call']} "
+                    )
 
                     if _dry_run is False:
                         # Write compiled template to file
