@@ -42,7 +42,8 @@
       <th colspan=6 style="text-align: center;">QSO DATA</th>
       <tbody>
         <tr>
-        <!-- so far we assume iterating on a list named qsos whose size will be bouded by Python e.g. to 5 -->
+        <!-- so far we assume iterating on a list named qsos whose size will be bounded by Python e.g. to 5 -->
+        <!-- TODO merge with main template to create a single reference, possibly using sub-templates -->
           {% for qso in qsos %}
             <td>Date: <span class="field">{{ qso.qso_date | format_date(fmt="%Y/%m/%d") }}</span></td>
             <td>Time: <span class="field">{{ qso.time_on | format_time(False) }}</span> </td>

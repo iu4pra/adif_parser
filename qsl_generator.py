@@ -158,9 +158,7 @@ def generate_qsl_image_pdf(
                     and qso._d.get("CALL") == _recipient
                 ]
             )
-            logging.info(
-                f"Detected {no_qsos} QSOs from {_station} to {_recipient}"
-            )
+            logging.info(f"Detected {no_qsos} QSOs from {_station} to {_recipient}")
     # === END TEST CODE ===
 
     # Template file full path
@@ -204,23 +202,23 @@ def generate_qsl_image_pdf(
     # Loading HTML template
     template = env.get_template(_template)
 
-    # Generate each QSL
-    for i, _qso in enumerate(qso_list):
-        assert isinstance(_qso, QSO)
+    with playwright_wrapper.QSLRenderer() as renderer:
 
-        # ---------------------------------------------------------------------
-        # DATA FLOW: Python -> Jinja -> HTML
-        # 1. We extract the raw dictionary from the QSO object (_qso._d).
-        # 2. We convert all keys to lowercase (e.g., 'CALL' -> 'call').
-        #    This is done because Jinja templates usually prefer lowercase variables.
-        # 3. We pass this dictionary to the template context as 'qso'.
-        #    This allows the HTML template to access variables like {{ qso.call }}
-        #    or {{ qso.band }}.
-        # ---------------------------------------------------------------------
+        # Generate each QSL
+        for i, _qso in enumerate(qso_list):
+            assert isinstance(_qso, QSO)
 
-        qso_data_lowercase = {}
+            # ---------------------------------------------------------------------
+            # DATA FLOW: Python -> Jinja -> HTML
+            # 1. We extract the raw dictionary from the QSO object (_qso._d).
+            # 2. We convert all keys to lowercase (e.g., 'CALL' -> 'call').
+            #    This is done because Jinja templates usually prefer lowercase variables.
+            # 3. We pass this dictionary to the template context as 'qso'.
+            #    This allows the HTML template to access variables like {{ qso.call }}
+            #    or {{ qso.band }}.
+            # ---------------------------------------------------------------------
 
-        with playwright_wrapper.QSLRenderer() as renderer:
+            qso_data_lowercase = {}
 
             # TODO here we should iterate on unique_send_stations,
             # then on unique_recipients,
@@ -229,7 +227,9 @@ def generate_qsl_image_pdf(
 
             # TODO would it be better to convert the template into uppercase ? Make dedicated function?
             # Converting all keys into lowercase
-            qso_data_lowercase = {key.casefold(): value for key, value in _qso._d.items()} 
+            qso_data_lowercase = {
+                key.casefold(): value for key, value in _qso._d.items()
+            }
             output = template.render(qso=qso_data_lowercase)
 
             logging.info(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
