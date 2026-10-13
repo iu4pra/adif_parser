@@ -745,5 +745,9 @@ class TestSplitEvery(unittest.TestCase):
         _split = [l for l in qslgen.split_every([i for i in range(3)], 5)]
         self.assertEqual(_split, [[0, 1, 2]])
 
+    def test_with_every_one(self):
+        _split = [l for l in qslgen.split_every([i for i in range(3)], 1)]
+        self.assertEqual(_split, [[0], [1], [2]])
+
 if __name__ == "__main__":
     unittest.main()
