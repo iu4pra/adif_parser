@@ -670,8 +670,8 @@ class TestGenerateQslImagePdf(unittest.TestCase):
 
         _, kwargs = template.render.call_args
 
-        self.assertIn("call", kwargs["qso"])
-        self.assertNotIn("CALL", kwargs["qso"])
+        self.assertIn("call", kwargs["qsos"][0])
+        self.assertNotIn("CALL", kwargs["qsos"][0])
 
     @patch("qsl_generator.os.path.isfile")
     @patch("qsl_generator.pypdf.PdfWriter")

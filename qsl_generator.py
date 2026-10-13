@@ -229,9 +229,9 @@ def generate_qsl_image_pdf(
         # Generate each QSL
         for _station in unique_send_stations:
             for _recipient in unique_recipients:
-                for _qso in qso_grouped[_station][_recipient]:
+                for _qso_list in split_every(qso_grouped[_station][_recipient], 3):
 
-                    assert isinstance(_qso, QSO)
+                    # assert isinstance(_qso, QSO)
 
                     # ---------------------------------------------------------------------
                     # DATA FLOW: Python -> Jinja -> HTML
@@ -245,13 +245,16 @@ def generate_qsl_image_pdf(
 
                     # TODO would it be better to convert the template into uppercase ? Make dedicated function?
                     # Converting all keys into lowercase
-                    qso_data_lowercase = {
-                        key.casefold(): value for key, value in _qso._d.items()
-                    }
-                    output = template.render(qso=qso_data_lowercase)
+                    qsos_data_lowercase = [
+                        {key.casefold(): value for key, value in _qso._d.items()}
+                        for _qso in _qso_list
+                    ]
+
+                    # output = template.render(qso=qso_data_lowercase)
+                    output = template.render(qsos=qsos_data_lowercase)
 
                     logging.info(
-                        f"\tCompiling QSL {_i+1} to {qso_data_lowercase['call']} "
+                        f"\tCompiling QSL {_i+1} to {qsos_data_lowercase[0]['call']} "
                     )
 
                     if _dry_run is False:
@@ -262,7 +265,8 @@ def generate_qsl_image_pdf(
                     # Convert template page to image
                     if _image:
                         out_name = os.path.join(
-                            _out_folder, (out_base_name + "_%04d." % (_i + 1) + _format)
+                            _out_folder,
+                            (out_base_name + "_%04d." % (_i + 1) + _format),
                         )
                         if _dry_run is False:
                             renderer.render(
@@ -297,7 +301,7 @@ def generate_qsl_image_pdf(
         if not _dry_run:
             writer = pypdf.PdfWriter()
             for pdf in [
-                (PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))
+                (PDF_TEMP_BASE_NAME % i) for i in range(_i)
             ]:  # TODO check i against _i
                 if os.path.isfile(pdf):
                     writer.append(pdf)
