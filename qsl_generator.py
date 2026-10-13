@@ -10,6 +10,7 @@ from qso import QSO
 import adif
 import argparse
 import logging
+import math
 import os
 import pickle
 import playwright_wrapper
@@ -53,9 +54,15 @@ IMG_OUT_BASE_NAME = "./qsl_%04d."
 PDF_OUTPUT = "./qsl.pdf"
 
 
-def cm_to_px(cm, dpi):
+def cm_to_px(cm, dpi): # TODO remove, unused
     """Converts centimeters to pixels given a DPI value"""
     return int(cm * dpi / 2.54)
+
+def split_every(items, every):
+    for i in range(math.ceil((len(items))/every)):
+        _from = i*every
+        _to = min(_from+every, len(items))
+        yield items[_from:_to]
 
 
 def unlink_if_exists(path):

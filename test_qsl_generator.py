@@ -731,6 +731,19 @@ def test_output_selection(
         assert kwargs["_pdf"] is expected_pdf
         assert kwargs["_image"] is expected_image
 
+class TestSplitEvery(unittest.TestCase):
+
+    def test_with_every_multiple(self):
+        _split = [l for l in qslgen.split_every([i for i in range(15)], 5)]
+        self.assertEqual(_split, [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12, 13, 14]])
+
+    def test_with_every_non_multiple(self):
+        _split = [l for l in qslgen.split_every([i for i in range(13)], 5)]
+        self.assertEqual(_split, [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12]])
+
+    def test_with_every_smaller(self):
+        _split = [l for l in qslgen.split_every([i for i in range(3)], 5)]
+        self.assertEqual(_split, [[0, 1, 2]])
 
 if __name__ == "__main__":
     unittest.main()
