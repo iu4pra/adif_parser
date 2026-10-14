@@ -521,6 +521,7 @@ class TestGenerateQslImagePdf(unittest.TestCase):
 
         self.qso = QSO(
             {
+                "STATION_CALLSIGN": "K1ABC",
                 "CALL": "IW9YZA",
                 "QSO_DATE": "20251005",
                 "TIME_ON": "123000",
@@ -627,6 +628,7 @@ class TestGenerateQslImagePdf(unittest.TestCase):
 
         qso2 = QSO(
             {
+                "STATION_CALLSIGN": "K1ABC",
                 "CALL": "IK4XYZ",
                 "QSO_DATE": "20251005",
                 "TIME_ON": "123000",
@@ -670,6 +672,28 @@ class TestGenerateQslImagePdf(unittest.TestCase):
 
         self.assertIn("call", kwargs["qso"])
         self.assertNotIn("CALL", kwargs["qso"])
+
+    @patch("qsl_generator.playwright_wrapper.QSLRenderer")
+    @patch("qsl_generator.Environment")
+    def test_qsos_keys_are_lowercased(
+        self,
+        mock_env,
+        mock_renderer,
+    ):
+
+        template = MagicMock()
+        mock_env.return_value.get_template.return_value = template
+
+        qslgen.generate_qsl_image_pdf(
+            [self.qso] * 2,
+            _image=True,
+            _dry_run=True,
+        )
+
+        _, kwargs = template.render.call_args
+
+        self.assertIn("call", kwargs["qsos"][0])
+        self.assertNotIn("CALL", kwargs["qsos"][0])
 
     @patch("qsl_generator.os.path.isfile")
     @patch("qsl_generator.pypdf.PdfWriter")
@@ -728,6 +752,27 @@ def test_output_selection(
         assert args[0] == qso_list
         assert kwargs["_pdf"] is expected_pdf
         assert kwargs["_image"] is expected_image
+
+
+class TestSplitEvery(unittest.TestCase):
+
+    def test_with_every_multiple(self):
+        _split = [l for l in qslgen.split_every([i for i in range(15)], 5)]
+        self.assertEqual(
+            _split, [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12, 13, 14]]
+        )
+
+    def test_with_every_non_multiple(self):
+        _split = [l for l in qslgen.split_every([i for i in range(13)], 5)]
+        self.assertEqual(_split, [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12]])
+
+    def test_with_every_smaller(self):
+        _split = [l for l in qslgen.split_every([i for i in range(3)], 5)]
+        self.assertEqual(_split, [[0, 1, 2]])
+
+    def test_with_every_one(self):
+        _split = [l for l in qslgen.split_every([i for i in range(3)], 1)]
+        self.assertEqual(_split, [[0], [1], [2]])
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ from qso import QSO
 import adif
 import argparse
 import logging
+import math
 import os
 import pickle
 import playwright_wrapper
@@ -53,9 +54,33 @@ IMG_OUT_BASE_NAME = "./qsl_%04d."
 PDF_OUTPUT = "./qsl.pdf"
 
 
-def cm_to_px(cm, dpi):
+def cm_to_px(cm, dpi):  # TODO remove, unused
     """Converts centimeters to pixels given a DPI value"""
     return int(cm * dpi / 2.54)
+
+
+def split_every(items, every):
+    """Transform a list in sublists, each one with at most 'every' elements"""
+    for i in range(math.ceil((len(items)) / every)):
+        _from = i * every
+        _to = min(_from + every, len(items))
+        yield items[_from:_to]
+
+
+def unlink_if_exists(path):
+    """Utility function to delete a file without throwing an exception if it doesn't exist"""
+    try:
+        os.unlink(path)
+    except FileNotFoundError:
+        pass
+
+
+def rmtree_if_exists(path):
+    """Utility function to delete a folder and its subfolders and contents without throwing an exception if it doesn't exist"""
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
 
 
 def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
@@ -77,22 +102,6 @@ def qsl_filter_format_time(value, include_seconds=False, separator=":"):
         parts.append(value[4:6])
 
     return separator.join(parts)
-
-
-def unlink_if_exists(path):
-    """Utility function to delete a file without throwing an exception if it doesn't exist"""
-    try:
-        os.unlink(path)
-    except FileNotFoundError:
-        pass
-
-
-def rmtree_if_exists(path):
-    """Utility function to delete a folder and its subfolders and contents without throwing an exception if it doesn't exist"""
-    try:
-        shutil.rmtree(path)
-    except FileNotFoundError:
-        pass
 
 
 def generate_qsl_image_pdf(
@@ -117,6 +126,59 @@ def generate_qsl_image_pdf(
         return
 
     assert isinstance(qso_list, list)
+
+    # TODO check QSO validity here and remove invalid ones
+
+    if len(qso_list) == 0:
+        logging.warning("No QSO found")
+        return
+
+    # Remove any extension in the passed out filename, will be added later
+    out_base_name = _out_filename.rsplit(".", 1)[0]
+    logging.debug(
+        f"Passed output filename : {_out_filename}\nBase name without extension: {out_base_name}"
+    )
+
+    # TODO add function to beautify QSO list (all elements' keys uppercase...)
+
+    qso_grouped = {}
+
+    # Get any unique sending station callsign (typically should be only one)
+    unique_send_stations = set(
+        [
+            qso._d.get("STATION_CALLSIGN", "").upper()
+            for qso in qso_list
+            if isinstance(qso, QSO)
+        ]
+    )
+    if len(unique_send_stations) > 1:
+        logging.warning(
+            f"Found {len(unique_send_stations)} unique sending stations, everything should work as expected anyway"
+        )
+
+    for _station in unique_send_stations:
+        qso_grouped[_station] = {}
+        # Get all unique recipients for each sending station
+        unique_recipients = set(
+            [
+                qso._d.get("CALL", "").upper()
+                for qso in qso_list
+                if isinstance(qso, QSO)
+                and qso._d.get("STATION_CALLSIGN") == _station
+                and qso.is_valid()
+            ]
+        )
+        for _recipient in unique_recipients:
+            qso_grouped[_station][_recipient] = [
+                qso
+                for qso in qso_list
+                if isinstance(qso, QSO)
+                and qso._d.get("STATION_CALLSIGN") == _station
+                and qso._d.get("CALL") == _recipient
+                and qso.is_valid()
+            ]
+            no_qsos = len(qso_grouped[_station][_recipient])
+            logging.info(f"Detected {no_qsos} QSOs from {_station} to {_recipient}")
 
     # Template file full path
     template_path = os.path.join(TEMPLATE_FOLDER, _template)
@@ -159,78 +221,92 @@ def generate_qsl_image_pdf(
     # Loading HTML template
     template = env.get_template(_template)
 
-    # Generate each QSL
-    for i, _qso in enumerate(qso_list):
-        assert isinstance(_qso, QSO)
+    with playwright_wrapper.QSLRenderer() as renderer:
 
-        # ---------------------------------------------------------------------
-        # DATA FLOW: Python -> Jinja -> HTML
-        # 1. We extract the raw dictionary from the QSO object (_qso._d).
-        # 2. We convert all keys to lowercase (e.g., 'CALL' -> 'call').
-        #    This is done because Jinja templates usually prefer lowercase variables.
-        # 3. We pass this dictionary to the template context as 'qso'.
-        #    This allows the HTML template to access variables like {{ qso.call }}
-        #    or {{ qso.band }}.
-        # ---------------------------------------------------------------------
+        # Initialize counter
+        _i = 0
 
-        qso_data_lowercase = {}
+        # Generate each QSL
+        for _station in unique_send_stations:
+            for _recipient in unique_recipients:
+                for _qso_list in split_every(qso_grouped[_station][_recipient], 3):
 
-        with playwright_wrapper.QSLRenderer() as renderer:
-            for key, value in _qso._d.items():
-                # Converting all keys into lowercase
-                qso_data_lowercase[key.casefold()] = value
-            output = template.render(qso=qso_data_lowercase)
+                    # assert isinstance(_qso, QSO)
 
-            logging.info(f"\tCompiling QSL {i+1} to {qso_data_lowercase['call']} ")
+                    # ---------------------------------------------------------------------
+                    # DATA FLOW: Python -> Jinja -> HTML
+                    # 1. We extract the raw dictionary from the QSO object (_qso._d).
+                    # 2. We convert all keys to lowercase (e.g., 'CALL' -> 'call').
+                    #    This is done because Jinja templates usually prefer lowercase variables.
+                    # 3. We pass this dictionary to the template context as 'qso'.
+                    #    This allows the HTML template to access variables like {{ qso.call }}
+                    #    or {{ qso.band }}.
+                    # ---------------------------------------------------------------------
 
-            if _dry_run is False:
-                # Write compiled template to file
-                with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
-                    f.write(output)
+                    # TODO would it be better to convert the template into uppercase ? Make dedicated function?
+                    # Converting all keys into lowercase
+                    qsos_data_lowercase = [
+                        {key.casefold(): value for key, value in _qso._d.items()}
+                        for _qso in _qso_list
+                    ]
 
-            # Remove any extension in the passed out filename, will be added later
-            out_base_name = _out_filename.rsplit(".", 1)[0]
-            logging.debug(
-                f"Passed output filename : {_out_filename}\nBase name without extension: {out_base_name}"
-            )
+                    if len(_qso_list) == 1:
+                        # Render template in single QSO mode
+                        output = template.render(qso=qsos_data_lowercase[0])
+                    else:
+                        # Render template in multiple QSO mode
+                        output = template.render(qsos=qsos_data_lowercase)
 
-            # Convert template page to image
-            if _image:
-                out_name = os.path.join(
-                    _out_folder, (out_base_name + "_%04d." % (i + 1) + _format)
-                )
-                if _dry_run is False:
-                    renderer.render(
-                        TEMPLATE_TEMP_FILENAME,
-                        out_name,
-                        _width,
-                        _height,
-                    )
-                else:
                     logging.info(
-                        f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, out_name,str(_width),str(_height)])}"
+                        f"\tCompiling QSL {_i+1} to {qsos_data_lowercase[0]['call']} "
                     )
 
-            # Convert template page to PDF
-            if _pdf:
-                if _dry_run is False:
-                    renderer.render(
-                        TEMPLATE_TEMP_FILENAME,
-                        (PDF_TEMP_BASE_NAME % i),
-                        _width,
-                        _height,
-                    )
-                else:
-                    logging.info(
-                        f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % i), str(_width),str(_height)])}"
-                    )
+                    if _dry_run is False:
+                        # Write compiled template to file
+                        with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
+                            f.write(output)
+
+                    # Convert template page to image
+                    if _image:
+                        out_name = os.path.join(
+                            _out_folder,
+                            (out_base_name + "_%04d." % (_i + 1) + _format),
+                        )
+                        if _dry_run is False:
+                            renderer.render(
+                                TEMPLATE_TEMP_FILENAME,
+                                out_name,
+                                _width,
+                                _height,
+                            )
+                        else:
+                            logging.info(
+                                f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, out_name,str(_width),str(_height)])}"
+                            )
+
+                    # Convert template page to PDF
+                    if _pdf:
+                        if _dry_run is False:
+                            renderer.render(
+                                TEMPLATE_TEMP_FILENAME,
+                                (PDF_TEMP_BASE_NAME % _i),
+                                _width,
+                                _height,
+                            )
+                        else:
+                            logging.info(
+                                f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % _i), str(_width),str(_height)])}"
+                            )
+                    _i += 1
 
     if _pdf:
         # Concatenate all files to create a single PDF to print
         out_name = os.path.join(_out_folder, out_base_name + ".pdf")
         if not _dry_run:
             writer = pypdf.PdfWriter()
-            for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(len(qso_list))]:
+            for pdf in [
+                (PDF_TEMP_BASE_NAME % i) for i in range(_i)
+            ]:  # TODO check i against _i
                 if os.path.isfile(pdf):
                     writer.append(pdf)
                 else:
@@ -261,7 +337,7 @@ def setup_logging(level=logging.INFO):
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
 
-    # Remove ecisting handlers
+    # Remove existing handlers
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
 

@@ -6,6 +6,7 @@ import logging
 
 # List of essential QSO keys
 _ESSENTIAL_KEYS = [
+    "STATION_CALLSIGN",
     "QSO_DATE",
     "TIME_ON",
     "CALL",
