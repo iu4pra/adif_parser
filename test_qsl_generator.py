@@ -670,6 +670,28 @@ class TestGenerateQslImagePdf(unittest.TestCase):
 
         _, kwargs = template.render.call_args
 
+        self.assertIn("call", kwargs["qso"])
+        self.assertNotIn("CALL", kwargs["qso"])
+
+    @patch("qsl_generator.playwright_wrapper.QSLRenderer")
+    @patch("qsl_generator.Environment")
+    def test_qsos_keys_are_lowercased(
+        self,
+        mock_env,
+        mock_renderer,
+    ):
+
+        template = MagicMock()
+        mock_env.return_value.get_template.return_value = template
+
+        qslgen.generate_qsl_image_pdf(
+            [self.qso]*2,
+            _image=True,
+            _dry_run=True,
+        )
+
+        _, kwargs = template.render.call_args
+
         self.assertIn("call", kwargs["qsos"][0])
         self.assertNotIn("CALL", kwargs["qsos"][0])
 

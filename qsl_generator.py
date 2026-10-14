@@ -250,8 +250,12 @@ def generate_qsl_image_pdf(
                         for _qso in _qso_list
                     ]
 
-                    # output = template.render(qso=qso_data_lowercase)
-                    output = template.render(qsos=qsos_data_lowercase)
+                    if len(_qso_list) == 1:
+                        # Render template in single QSO mode
+                        output = template.render(qso=qsos_data_lowercase[0])
+                    else:
+                        # Render template in multiple QSO mode
+                        output = template.render(qsos=qsos_data_lowercase)
 
                     logging.info(
                         f"\tCompiling QSL {_i+1} to {qsos_data_lowercase[0]['call']} "
