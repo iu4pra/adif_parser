@@ -685,7 +685,7 @@ class TestGenerateQslImagePdf(unittest.TestCase):
         mock_env.return_value.get_template.return_value = template
 
         qslgen.generate_qsl_image_pdf(
-            [self.qso]*2,
+            [self.qso] * 2,
             _image=True,
             _dry_run=True,
         )
