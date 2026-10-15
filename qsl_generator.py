@@ -231,8 +231,6 @@ def generate_qsl_image_pdf(
             for _recipient in unique_recipients:
                 for _qso_list in split_every(qso_grouped[_station][_recipient], 3):
 
-                    # assert isinstance(_qso, QSO)
-
                     # ---------------------------------------------------------------------
                     # DATA FLOW: Python -> Jinja -> HTML
                     # 1. We extract the raw dictionary from the QSO object (_qso._d).
@@ -248,6 +246,7 @@ def generate_qsl_image_pdf(
                     qsos_data_lowercase = [
                         {key.casefold(): value for key, value in _qso._d.items()}
                         for _qso in _qso_list
+                        if isinstance(_qso, QSO)
                     ]
 
                     if len(_qso_list) == 1:
