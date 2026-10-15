@@ -111,19 +111,21 @@ def qso_list_generator(qso_list, every):
 
 
 def render_qsl(
-    _qso_list,
-    _i,
-    _image,
-    _pdf,
-    _width,
-    _height,
-    _format,
-    _dry_run,
-    _out_folder,
-    out_base_name,
+    _qso_list: list[QSO],
+    _i: int,
+    _image: bool,
+    _pdf: bool,
+    _width: float,
+    _height: float,
+    _format: str,
+    _dry_run: bool,
+    _out_folder: str,
+    out_base_name: str,
     template,
-    renderer,
+    renderer: playwright_wrapper.QSLRenderer,
 ):
+
+    logging.info(f"\trender_qsl(_i={_i})")
 
     # TODO would it be better to convert the template into uppercase ? Make dedicated function?
     # Converting all keys into lowercase
