@@ -133,6 +133,9 @@ def generate_qsl_image_pdf(
         logging.warning("No QSO found")
         return
 
+    # Sort the list by timestamp
+    qso_list.sort(key=QSO.timestamp_on)
+
     # Remove any extension in the passed out filename, will be added later
     out_base_name = _out_filename.rsplit(".", 1)[0]
     logging.debug(
