@@ -253,7 +253,10 @@ def generate_qsl_image_pdf(
                 if isinstance(_qso, QSO)
             ]
 
-            if len(_qso_list) == 1:
+            if len(_qso_list) == 0:
+                logging.warning(f"QSO list empty! Skipping to next one")
+                continue
+            elif len(_qso_list) == 1:
                 # Render template in single QSO mode
                 output = template.render(qso=qsos_data_lowercase[0])
             else:
