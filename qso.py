@@ -2,6 +2,7 @@
 
 # This software under the MIT License
 
+import datetime
 import logging
 
 # List of essential QSO keys
@@ -66,3 +67,37 @@ class QSO:
                     logging.warning(f"Essential field {key} not found, invalid QSO")
                     return False
         return True
+
+    @staticmethod
+    def timestamp(qso_date: str, time_on: str):
+        """Returns the timestamp of the QSO in UTC"""
+
+        # Get date and time
+        qso_date = qso_date[:8]  # Discard extra characters if present
+        time_on = time_on[:6]  # Discard extra characters if present
+        if len(time_on) < 6:  # HHMMSS
+            time_on = time_on.ljust(
+                6, "0"
+            )  # Pad with zeros so everything is in HHMMSS format
+
+        # Parse date and time
+        dt = datetime.datetime.strptime(qso_date + time_on, "%Y%m%d%H%M%S")
+        dt = dt.replace(tzinfo=datetime.timezone.utc)
+
+        return dt
+
+    def timestamp_on(self):
+        """Returns the timestamp of the QSO start time in UTC"""
+        # Check if essential fields are present
+        if not self.is_valid():
+            raise ValueError("Invalid QSO, cannot compute timestamp")
+
+        return QSO.timestamp(self._d.get("QSO_DATE"), self._d.get("TIME_ON"))
+
+    def timestamp_off(self):
+        """Returns the timestamp of the QSO end time in UTC"""
+        # Check if essential fields are present
+        if not self.is_valid():
+            raise ValueError("Invalid QSO, cannot compute timestamp")
+
+        return QSO.timestamp(self._d.get("QSO_DATE_OFF"), self._d.get("TIME_OFF"))

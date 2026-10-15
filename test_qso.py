@@ -3,6 +3,8 @@
 # This software under the MIT License
 # Unit test for QSO class
 
+import datetime
+
 import adif
 import unittest
 from qso import QSO
@@ -118,6 +120,77 @@ class QSOTest(unittest.TestCase):
         # Internal dictionary should have 'CALL'
         self.assertIn("CALL", q._d)
         self.assertEqual(q._d["CALL"], "K1ABC")
+
+
+class QSOTimestampTest(unittest.TestCase):
+
+    def test_timestamp(self):
+        timestamp = QSO.timestamp("20230101", "123456")
+
+        self.assertEqual(
+            timestamp,
+            datetime.datetime(2023, 1, 1, 12, 34, 56, tzinfo=datetime.timezone.utc),
+        )
+
+    def test_timestamp_truncates_extra_characters(self):
+        timestamp = QSO.timestamp("2023010199", "123456789")
+
+        self.assertEqual(
+            timestamp,
+            datetime.datetime(2023, 1, 1, 12, 34, 56, tzinfo=datetime.timezone.utc),
+        )
+
+    def test_timestamp_pads_short_time(self):
+        timestamp = QSO.timestamp("20230101", "1234")
+
+        self.assertEqual(
+            timestamp,
+            datetime.datetime(2023, 1, 1, 12, 34, 0, tzinfo=datetime.timezone.utc),
+        )
+
+    def test_timestamp_on(self):
+        q = QSO(
+            {
+                "STATION_CALLSIGN": "K1ABC",
+                "CALL": "W1AW",
+                "QSO_DATE": "20230101",
+                "TIME_ON": "123456",
+                "BAND": "20m",
+                "MODE": "CW",
+            }
+        )
+
+        self.assertEqual(
+            q.timestamp_on(),
+            datetime.datetime(2023, 1, 1, 12, 34, 56, tzinfo=datetime.timezone.utc),
+        )
+
+    def test_timestamp_on_invalid_qso(self):
+        with self.assertRaises(ValueError):
+            QSO({}).timestamp_on()
+
+    def test_timestamp_off(self):
+        q = QSO(
+            {
+                "STATION_CALLSIGN": "K1ABC",
+                "CALL": "W1AW",
+                "QSO_DATE": "20230101",
+                "TIME_ON": "123456",
+                "QSO_DATE_OFF": "20230102",
+                "TIME_OFF": "010203",
+                "BAND": "20m",
+                "MODE": "CW",
+            }
+        )
+
+        self.assertEqual(
+            q.timestamp_off(),
+            datetime.datetime(2023, 1, 2, 1, 2, 3, tzinfo=datetime.timezone.utc),
+        )
+
+    def test_timestamp_off_invalid_qso(self):
+        with self.assertRaises(ValueError):
+            QSO({}).timestamp_off()
 
 
 if __name__ == "__main__":
