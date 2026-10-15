@@ -134,14 +134,24 @@ def render_qsl(
     ]
 
     if len(qsos_data_lowercase) == 0:
-        logging.warning(f"Empty QSO list, nothing to do")
-        return
+        logging.warning("Empty QSO list, nothing to do")
+        return False
     elif len(qsos_data_lowercase) == 1:
         # Render template in single QSO mode
         output = template.render(qso=qsos_data_lowercase[0])
     else:
         # Render template in multiple QSO mode
         output = template.render(qsos=qsos_data_lowercase)
+
+    # ---------------------------------------------------------------------
+    # DATA FLOW: Python -> Jinja -> HTML
+    # 1. We extract the raw dictionary from the QSO object (_qso._d).
+    # 2. We convert all keys to lowercase (e.g., 'CALL' -> 'call').
+    #    This is done because Jinja templates usually prefer lowercase variables.
+    # 3. We pass this dictionary to the template context as 'qso'.
+    #    This allows the HTML template to access variables like {{ qso.call }}
+    #    or {{ qso.band }}.
+    # ---------------------------------------------------------------------
 
     logging.info(f"\tCompiling QSL {_i+1} to {qsos_data_lowercase[0]['call']} ")
 
@@ -181,6 +191,8 @@ def render_qsl(
             logging.info(
                 f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % _i), str(_width),str(_height)])}"
             )
+
+    return True
 
 
 def unlink_if_exists(path):
@@ -308,20 +320,11 @@ def generate_qsl_image_pdf(
 
         # Generate each QSL
         for _qso_list in qso_list_generator(qso_list, 3):
-            # ---------------------------------------------------------------------
-            # DATA FLOW: Python -> Jinja -> HTML
-            # 1. We extract the raw dictionary from the QSO object (_qso._d).
-            # 2. We convert all keys to lowercase (e.g., 'CALL' -> 'call').
-            #    This is done because Jinja templates usually prefer lowercase variables.
-            # 3. We pass this dictionary to the template context as 'qso'.
-            #    This allows the HTML template to access variables like {{ qso.call }}
-            #    or {{ qso.band }}.
-            # ---------------------------------------------------------------------
             if len(_qso_list) == 0:
-                logging.warning(f"Empty QSO list! Skipping to next one")
+                logging.warning("Empty QSO list! Skipping to next one")
                 continue
 
-            render_qsl(
+            if render_qsl(
                 _qso_list,
                 _i,
                 _image,
@@ -334,9 +337,10 @@ def generate_qsl_image_pdf(
                 out_base_name,
                 template,
                 renderer,
-            )
-
-            _i += 1
+            ):
+                _i += 1
+            else:
+                logging.warning("Didn't render anything")
 
     if _pdf:
         # Concatenate all files to create a single PDF to print
