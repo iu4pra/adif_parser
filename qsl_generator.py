@@ -110,6 +110,79 @@ def qso_list_generator(qso_list, every):
                 yield _qso_list
 
 
+def render_qsl(
+    _qso_list,
+    _i,
+    _image,
+    _pdf,
+    _width,
+    _height,
+    _format,
+    _dry_run,
+    _out_folder,
+    out_base_name,
+    template,
+    renderer,
+):
+
+    # TODO would it be better to convert the template into uppercase ? Make dedicated function?
+    # Converting all keys into lowercase
+    qsos_data_lowercase = [
+        {key.casefold(): value for key, value in _qso._d.items()}
+        for _qso in _qso_list
+        if isinstance(_qso, QSO)
+    ]
+
+    if len(qsos_data_lowercase) == 0:
+        logging.warning(f"Empty QSO list, nothing to do")
+        return
+    elif len(qsos_data_lowercase) == 1:
+        # Render template in single QSO mode
+        output = template.render(qso=qsos_data_lowercase[0])
+    else:
+        # Render template in multiple QSO mode
+        output = template.render(qsos=qsos_data_lowercase)
+
+    logging.info(f"\tCompiling QSL {_i+1} to {qsos_data_lowercase[0]['call']} ")
+
+    if _dry_run is False:
+        # Write compiled template to file
+        with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
+            f.write(output)
+
+    # Convert template page to image
+    if _image:
+        out_name = os.path.join(
+            _out_folder,
+            (out_base_name + "_%04d." % (_i + 1) + _format),
+        )
+        if _dry_run is False:
+            renderer.render(
+                TEMPLATE_TEMP_FILENAME,
+                out_name,
+                _width,
+                _height,
+            )
+        else:
+            logging.info(
+                f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, out_name,str(_width),str(_height)])}"
+            )
+
+    # Convert template page to PDF
+    if _pdf:
+        if _dry_run is False:
+            renderer.render(
+                TEMPLATE_TEMP_FILENAME,
+                (PDF_TEMP_BASE_NAME % _i),
+                _width,
+                _height,
+            )
+        else:
+            logging.info(
+                f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % _i), str(_width),str(_height)])}"
+            )
+
+
 def unlink_if_exists(path):
     """Utility function to delete a file without throwing an exception if it doesn't exist"""
     try:
@@ -244,63 +317,25 @@ def generate_qsl_image_pdf(
             #    This allows the HTML template to access variables like {{ qso.call }}
             #    or {{ qso.band }}.
             # ---------------------------------------------------------------------
-
-            # TODO would it be better to convert the template into uppercase ? Make dedicated function?
-            # Converting all keys into lowercase
-            qsos_data_lowercase = [
-                {key.casefold(): value for key, value in _qso._d.items()}
-                for _qso in _qso_list
-                if isinstance(_qso, QSO)
-            ]
-
             if len(_qso_list) == 0:
-                logging.warning(f"QSO list empty! Skipping to next one")
+                logging.warning(f"Empty QSO list! Skipping to next one")
                 continue
-            elif len(_qso_list) == 1:
-                # Render template in single QSO mode
-                output = template.render(qso=qsos_data_lowercase[0])
-            else:
-                # Render template in multiple QSO mode
-                output = template.render(qsos=qsos_data_lowercase)
 
-            logging.info(f"\tCompiling QSL {_i+1} to {qsos_data_lowercase[0]['call']} ")
+            render_qsl(
+                _qso_list,
+                _i,
+                _image,
+                _pdf,
+                _width,
+                _height,
+                _format,
+                _dry_run,
+                _out_folder,
+                out_base_name,
+                template,
+                renderer,
+            )
 
-            if _dry_run is False:
-                # Write compiled template to file
-                with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
-                    f.write(output)
-
-            # Convert template page to image
-            if _image:
-                out_name = os.path.join(
-                    _out_folder,
-                    (out_base_name + "_%04d." % (_i + 1) + _format),
-                )
-                if _dry_run is False:
-                    renderer.render(
-                        TEMPLATE_TEMP_FILENAME,
-                        out_name,
-                        _width,
-                        _height,
-                    )
-                else:
-                    logging.info(
-                        f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, out_name,str(_width),str(_height)])}"
-                    )
-
-            # Convert template page to PDF
-            if _pdf:
-                if _dry_run is False:
-                    renderer.render(
-                        TEMPLATE_TEMP_FILENAME,
-                        (PDF_TEMP_BASE_NAME % _i),
-                        _width,
-                        _height,
-                    )
-                else:
-                    logging.info(
-                        f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % _i), str(_width),str(_height)])}"
-                    )
             _i += 1
 
     if _pdf:
