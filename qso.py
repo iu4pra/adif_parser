@@ -92,7 +92,7 @@ class QSO:
         if not self.is_valid():
             raise ValueError("Invalid QSO, cannot compute timestamp")
 
-        return qso.timestamp(self._d.get("QSO_DATE"), self._d.get("TIME_ON"))
+        return QSO.timestamp(self._d.get("QSO_DATE"), self._d.get("TIME_ON"))
 
     def timestamp_off(self):
         """Returns the timestamp of the QSO end time in UTC"""
@@ -100,4 +100,4 @@ class QSO:
         if not self.is_valid():
             raise ValueError("Invalid QSO, cannot compute timestamp")
 
-        return qso.timestamp(self._d.get("QSO_DATE_OFF"), self._d.get("TIME_OFF"))
+        return QSO.timestamp(self._d.get("QSO_DATE_OFF"), self._d.get("TIME_OFF"))
