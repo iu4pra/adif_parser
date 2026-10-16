@@ -4,12 +4,13 @@
 
   render_qsl() supplies exactly one context variable:
     qso  : one contact, as a dictionary of lowercase ADIF fields -> strings.
-    qsos : two or three contacts, as a list of those dictionaries. qso is absent.
+    qsos : multiple contacts (up to --max-qso; default 3), as a list of those
+           dictionaries. qso is absent.
   A loop may use qso as its local variable. A final chunk can contain just one
   contact, so keep both branches below when customizing this template.
 
   The generator sorts contacts by UTC QSO_DATE/TIME_ON, then groups them by
-  STATION_CALLSIGN and CALL, at most three per card. Within a group, use
+  STATION_CALLSIGN and CALL, at most three per card by default. Within a group, use
   qsos[0].station_callsign and qsos[0].call for the common callsigns.
 
   Essential fields (lowercase in this template):

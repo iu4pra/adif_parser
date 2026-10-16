@@ -754,6 +754,25 @@ def test_output_selection(
         assert kwargs["_image"] is expected_image
 
 
+@pytest.mark.parametrize(
+    "options,expected_limit",
+    [([], 3), (["--max-qso", "1"], 1), (["--max-qso", "5"], 5)],
+)
+def test_cli_grouping_limit(options, expected_limit):
+    qsos = qslgen.adif.qso_list_from_file("samples/multi_qso_same_station.adi")
+    with patch(
+        "sys.argv", ["qsl_generator.py", "samples/multi_qso_same_station.adi", *options]
+    ), patch("qsl_generator.generate_qsl_image_pdf") as generate:
+        qslgen.main()
+    limit = generate.call_args.kwargs["_max_qso"]
+    groups = list(qslgen.qso_list_generator(qsos, limit))
+    assert limit == expected_limit
+    assert sum(map(len, groups)) == len(qsos)
+    assert max(map(len, groups)) <= expected_limit
+    if expected_limit == 1:
+        assert all(len(group) == 1 for group in groups)
+
+
 class TestSplitEvery(unittest.TestCase):
 
     def test_with_every_multiple(self):

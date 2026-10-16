@@ -8,7 +8,7 @@ A Python tool to parse ADIF (Amateur Data Interchange Format) log files and gene
 * **Dual Output:** Generate printable PDFs or digital JPEG images.
 * **Cross-Platform:** Works on Windows and Linux
 * **GUI & CLI:** Includes a simple Tkinter GUI for ease of use and a CLI for scripting.
-* **Grouped Cards:** Contacts with the same sending and receiving callsigns share a card, up to three QSOs per card.
+* **Grouped Cards:** Contacts with the same sending and receiving callsigns share a card, up to three QSOs per card by default.
 * **Chronological Contacts:** QSOs are sorted by their UTC start date and time before grouping and rendering.
 
 ## Installation
@@ -35,8 +35,7 @@ A Python tool to parse ADIF (Amateur Data Interchange Format) log files and gene
     `python -m playwright install --with-deps chromium`.
 
 Run the commands below from the repository root, so the relative `templates/`,
-`samples/`, `tmp/`, and `out/` paths resolve correctly. No wkhtmltopdf or
-wkhtmltoimage installation is needed.
+`samples/`, `tmp/`, and `out/` paths resolve correctly.
 
 ## How to Run
 
@@ -96,6 +95,7 @@ overwritten, and `tmp/` is recreated and removed during generation.
 | `--output-dir PATH` | Output directory; default `./out/`. |
 | `--image-format FORMAT` | Image filename extension; default `jpg` (for example, `png`). |
 | `--width CM`, `--height CM` | Card dimensions in centimeters; defaults 14 by 9. Width must be greater than 0 and at most 700; height greater than 0 and at most 180. |
+| `--max-qso N` | Maximum contacts per card; default 3. Use 1 to disable multi-contact cards. Must be a positive integer. |
 | `--only-valid` | Discard contacts missing essential fields during parsing. It does not validate calendar dates or time values. |
 | `--dry-run` | Log the planned rendering without writing output files. Chromium is still launched, so its installation is required. |
 | `--quiet`, `--verbose` | Suppress normal logging or enable debug logging; cannot be combined. |
@@ -109,15 +109,17 @@ The generator sorts the input list in place by `QSO_DATE` and `TIME_ON`, using
 four-digit times are padded with zero seconds. Dates and times must be parseable.
 
 Contacts are then grouped by both `STATION_CALLSIGN` (sender) and `CALL`
-(recipient), with at most **three QSOs per card**. Different bands and modes for
+(recipient), with at most **three QSOs per card by default**. Different bands and modes for
 the same callsign pair stay in the same group; `CALL/P` remains distinct from
 `CALL`. Within each group, contacts appear chronologically. The order of separate
 station groups is not guaranteed.
 
-Grouping is automatic in both GUI and CLI. There is currently no `--group-by-call`
-or `--max-qso` option, and no grouping checkbox. Extra contacts start another
-card. A one-contact chunk uses the single-contact template context described
-below, including the last chunk of a larger group.
+Grouping is automatic in both GUI and CLI. The CLI supports `--max-qso N` to
+change the maximum contacts per card; `--max-qso 1` produces one contact per card
+and uses the single-contact QSL format. There is no `--group-by-call` option or
+grouping checkbox. Extra contacts start another card. A one-contact chunk uses
+the single-contact template context described below, including the last chunk
+of a larger group.
 
 `QSO.is_valid()` checks for `STATION_CALLSIGN`, `CALL`, `QSO_DATE`, `TIME_ON`,
 `MODE`, and at least one of `FREQ` or `BAND`. It checks presence, not full ADIF
@@ -133,6 +135,11 @@ the full context and filters. `templates/template_multi.html` is a separate
 multi-contact example that expects `qsos`; it does not handle single-contact
 chunks. Use the default reference template when the log can produce both kinds.
 
+The template structure is simple HTML/CSS with Jinja2 placeholders, so you can
+customize the layout, colors, text, and fields or supply your own HTML template.
+Keep both single- and multi-contact branches when your log may produce either
+kind of card, and adjust the card dimensions as described below.
+
 ### Template context
 
 The context contains the ADIF fields of the current card, with **lowercase field
@@ -142,7 +149,7 @@ one of these variables:
 | Variable | When supplied | Example |
 | --- | --- | --- |
 | `qso` | The card has exactly one contact. | `{{ qso.call }}` |
-| `qsos` | The card has two or three contacts. A list of dictionaries, one per contact. | `{% for contact in qsos %}{{ contact.call }}{% endfor %}` |
+| `qsos` | The card has multiple contacts (up to `--max-qso`; default 3). A list of dictionaries, one per contact. | `{% for contact in qsos %}{{ contact.call }}{% endfor %}` |
 
 `qso` is not supplied alongside `qsos`. Inside a loop, the template can name its
 local variable `qso`, as the default template does. For a template that handles
@@ -234,7 +241,7 @@ single- and multi-contact layouts. Do not rely on a fixed order between recipien
 
 Use the files in `samples/` for reproducible checks. Random stress-log generation
 is still tracked in [#77](https://github.com/iu4pra/adif_parser/issues/77);
-`QSO.generate_random()` is not currently available.
+`QSO.generate_random()` is planned but not currently available.
 
 ## Project Structure
 

@@ -23,7 +23,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          ref: ${{ github.head_ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -33,17 +34,25 @@ jobs:
       - name: Install black
         run: pip install black
 
+      - name: Check formatting for fork pull requests
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        run: black --check --diff .
+
       - name: Run black formatter
-        run: black . # black --check --diff . to fail if format is not ok + show what to change
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        run: black .
 
       - name: Commit and push changes if needed
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          PR_HEAD_REF: ${{ github.head_ref }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           if [[ `git status --porcelain` ]]; then
             git add .
             git commit -m "ci: format Python code with Black"
-            git push
+            git push origin "HEAD:$PR_HEAD_REF"
           else
             echo "No formatting changes to commit."
           fi
