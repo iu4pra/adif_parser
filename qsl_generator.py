@@ -245,6 +245,7 @@ def generate_qsl_image_pdf(
     _width: float = QSL_WIDTH,
     _height: float = QSL_HEIGHT,
     _dry_run: bool = False,
+    _max_qso: int = 3,
 ):
     """Generates one QSL image per QSO, a PDF file with the QSLs contained in the given QSO list, or both."""
 
@@ -321,7 +322,7 @@ def generate_qsl_image_pdf(
         _i = 0
 
         # Generate each QSL
-        for _qso_list in qso_list_generator(qso_list, 3):
+        for _qso_list in qso_list_generator(qso_list, _max_qso):
             if len(_qso_list) == 0:
                 logging.warning("Empty QSO list! Skipping to next one")
                 continue
@@ -483,6 +484,14 @@ def main():
         help="Process only valid QSOs",
     )
 
+    parser.add_argument(
+        "--max-qso",
+        metavar="max_qso",
+        type=int,
+        default=QSL_HEIGHT,
+        help="Maximum QSOs per multiple QSL card (default 3, 1 to disable multi-QSO cards)",
+    )
+
     # Parse arguments
     args = parser.parse_args()
 
@@ -538,6 +547,9 @@ def main():
     elif args.height > QSL_HEIGHT_MAX:
         raise ValueError(f"--height must be <= {QSL_HEIGHT_MAX}")
 
+    if args.max_qso <= 0:
+        raise ValueError("--max-qso must be positive (1 to disable multi-QSO cards)")
+
     # All OK, generate QSLs
     generate_qsl_image_pdf(
         qso_list,
@@ -550,6 +562,7 @@ def main():
         _width=args.width,
         _height=args.height,
         _dry_run=args.dry_run,
+        _max_qso=args.max_qso,
     )
 
 
