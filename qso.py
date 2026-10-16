@@ -2,8 +2,10 @@
 
 # This software under the MIT License
 
-import datetime
+from datetime import date, datetime, timedelta, timezone
+from random import choice, choices, randint
 import logging
+import string
 
 # List of essential QSO keys
 _ESSENTIAL_KEYS = [
@@ -81,8 +83,8 @@ class QSO:
             )  # Pad with zeros so everything is in HHMMSS format
 
         # Parse date and time
-        dt = datetime.datetime.strptime(qso_date + time_on, "%Y%m%d%H%M%S")
-        dt = dt.replace(tzinfo=datetime.timezone.utc)
+        dt = datetime.strptime(qso_date + time_on, "%Y%m%d%H%M%S")
+        dt = dt.replace(tzinfo=timezone.utc)
 
         return dt
 
@@ -101,3 +103,24 @@ class QSO:
             raise ValueError("Invalid QSO, cannot compute timestamp")
 
         return QSO.timestamp(self._d.get("QSO_DATE_OFF"), self._d.get("TIME_OFF"))
+
+    @staticmethod
+    def random(valid: bool = True):
+        """Generate a random QSO object"""
+        time_on_min = randint(0, 1399)
+
+        start_date = date(2020, 1, 1)
+        end_date = date.today()
+        qso_date = start_date + timedelta(days=randint(0, (end_date - start_date).days))
+
+        _dict = {
+            "STATION_CALLSIGN": f"I{choice('KWZ')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=3))}",
+            "QSO_DATE": strftime(qso_date, "%Y%m%d"),
+            "TIME_ON": f"{time_on_min//60:02d}{time_on_min % 60:02d}",
+            "CALL": f"{choice('KNW')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=randint(1,3)))}",
+            "BAND": choice(["80m", "40m", "20m", "15m", "10m"]),
+            "MODE": choice(["SSB", "CW", "FT8"]),
+        }
+        _qso = QSO(_dict)
+        assert valid == False or _qso.is_valid()
+        return _qso
