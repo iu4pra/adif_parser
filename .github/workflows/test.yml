@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - dev
   pull_request:
     types:
       - opened
@@ -13,6 +14,7 @@ on:
       - ready_for_review
     branches:
       - master
+      - dev
   workflow_call:
   workflow_dispatch:
 
@@ -58,8 +60,9 @@ jobs:
           name: coverage-html
           path: htmlcov/
           retention-days: 10
+      # Fork tokens cannot post PR comments; tests and coverage artifacts still run.
       - name: Get Cover
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.x'
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.x' && github.event.pull_request.head.repo.full_name == github.repository
         uses: orgoro/coverage@v3.3.1
         with:
             coverageFile: ./coverage.xml
