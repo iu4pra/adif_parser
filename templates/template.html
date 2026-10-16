@@ -1,4 +1,41 @@
 <!DOCTYPE html>
+{#
+  TEMPLATE REFERENCE (Jinja comments are not included in the rendered HTML)
+
+  render_qsl() supplies exactly one context variable:
+    qso  : one contact, as a dictionary of lowercase ADIF fields -> strings.
+    qsos : multiple contacts (up to --max-qso; default 3), as a list of those
+           dictionaries. qso is absent.
+  A loop may use qso as its local variable. A final chunk can contain just one
+  contact, so keep both branches below when customizing this template.
+
+  The generator sorts contacts by UTC QSO_DATE/TIME_ON, then groups them by
+  STATION_CALLSIGN and CALL, at most three per card by default. Within a group, use
+  qsos[0].station_callsign and qsos[0].call for the common callsigns.
+
+  Essential fields (lowercase in this template):
+    station_callsign, call, qso_date (YYYYMMDD), time_on (HHMM or HHMMSS),
+    mode, and at least one of band or freq (MHz).
+  Every other non-empty ADIF field retained in the QSO is also available:
+    rst_sent, rst_rcvd, name, qth, gridsquare, country, submode, operator,
+    my_name, my_gridsquare, my_rig, comment, qslmsg, qso_date_off, time_off, ...
+  No optional field is guaranteed. Check `qso.name is defined` or use
+  `qso.name | default('')`; use the corresponding loop variable for qsos.
+  Use bracket access for names colliding with dictionary methods.
+  ADIF header fields and QSO methods are not exposed. Values are autoescaped.
+
+  Custom filters, available for any matching field:
+    format_date(fmt="%d/%m/%Y")
+      Parses YYYYMMDD; accepts strftime formats. On invalid input, logs an
+      error and returns the original value.
+    format_time(include_seconds=False, separator=":")
+      Displays HH:MM, optionally HH:MM:SS if seconds exist. Does not validate
+      time ranges or convert timezones.
+
+  CLI: --template template.html (relative to templates/).
+  Match CSS width/height to the CLI dimensions (default 14 by 9 cm).
+  See README.md for context examples, field reference, and verification steps.
+#}
 <html>
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">

@@ -488,7 +488,7 @@ def main():
         "--max-qso",
         metavar="max_qso",
         type=int,
-        default=QSL_HEIGHT,
+        default=3,
         help="Maximum QSOs per multiple QSL card (default 3, 1 to disable multi-QSO cards)",
     )
 
