@@ -10,14 +10,14 @@ import requests
 import string
 
 # List of essential QSO keys
-_ESSENTIAL_KEYS = [
+_ESSENTIAL_KEYS = frozenset([
     "STATION_CALLSIGN",
     "QSO_DATE",
     "TIME_ON",
     "CALL",
-    ["FREQ", "BAND"],  # At least one among these fields must be present
-    "MODE",
-]
+    frozenset(["FREQ", "BAND"]),  # At least one among these fields must be present
+    "MODE",]
+)
 
 
 class RandomCallGenerator:
@@ -91,8 +91,8 @@ class QSO:
         """Checks if the QSO is valid"""
         # All essential fields must be present
         for key in _ESSENTIAL_KEYS:
-            # If the key itself is a list the check at least one of the elements is present
-            if isinstance(key, list):
+            # If the element itself is a frozenset, then check at least one of the elements is present
+            if isinstance(key, frozenset):
                 if (
                     len(
                         [
