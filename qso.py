@@ -26,7 +26,7 @@ class RandomCallGenerator:
     def __init__(self):
         """Class constructor"""
 
-        self._call_generator = None
+        self.generate_call = None
         self.load_generator()
 
     def load_generator(self):
@@ -62,13 +62,13 @@ class RandomCallGenerator:
             )
         finally:
             if os.path.isfile("MASTER.SCP"):
-                self._call_generator = self.generate_call_scp
+                self.generate_call = self.generate_call_scp
             else:
-                self._call_generator = self.generate_call
+                self.generate_call = self.generate_call_random
 
     # To use the object in a with context
     def __enter__(self):
-        if self._call_generator is None:
+        if self.generate_call is None:
             self.load_generator()
 
     def __exit__(self):
@@ -77,9 +77,25 @@ class RandomCallGenerator:
     def generate_call_scp(self):
         """Generates a call sign using SuperCheckPartial"""
         # Implementation for generating call signs using SuperCheckPartial file
-        pass
+        logging.warning(f"""SCP file size: {os.path.getsize("MASTER.SCP")}""")
 
-    def generate_call(self):
+        i = 1
+        with open("MASTER.SCP", "rt", encoding="utf-8") as f:
+            for _line in f: # More memory-efficient than for _line in f.readlines()
+                if not _line.startswith(("#","!")):
+                    if i == 1:
+                        retval = _line.strip()
+                    else:
+                        if randint(1, i) == 1:
+                            retval = _line.strip()
+                    i += 1
+                else:
+                    logging.info(f"Skipping line: {_line.strip()}")
+
+        logging.warning(f"Generated callsign {retval}")
+        return retval
+
+    def generate_call_random(self):
         """Generates a random call sign without using SuperCheckPartial"""
         if randint(1, 100) <= 50:
             return f"{choice('KNW')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=randint(1,3)))}"
