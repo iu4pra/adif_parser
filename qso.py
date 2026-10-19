@@ -10,13 +10,15 @@ import requests
 import string
 
 # List of essential QSO keys
-_ESSENTIAL_KEYS = frozenset([
-    "STATION_CALLSIGN",
-    "QSO_DATE",
-    "TIME_ON",
-    "CALL",
-    frozenset(["FREQ", "BAND"]),  # At least one among these fields must be present
-    "MODE",]
+_ESSENTIAL_KEYS = frozenset(
+    [
+        "STATION_CALLSIGN",
+        "QSO_DATE",
+        "TIME_ON",
+        "CALL",
+        frozenset(["FREQ", "BAND"]),  # At least one among these fields must be present
+        "MODE",
+    ]
 )
 
 
@@ -30,9 +32,14 @@ class RandomCallGenerator:
             if os.path.isfile("MASTER.SCP"):
                 logging.info("SuperCheckPartial file found locally")
             else:
-                logging.warning("SuperCheckPartial file not found locally, attempting download...")
+                logging.warning(
+                    "SuperCheckPartial file not found locally, attempting download..."
+                )
                 # Try to download it if not present
-                response = requests.get("https://www.supercheckpartial.com/downloads/MASTER.SCP", allow_redirects=True)
+                response = requests.get(
+                    "https://www.supercheckpartial.com/downloads/MASTER.SCP",
+                    allow_redirects=True,
+                )
                 if response.status_code != 200:
                     logging.error("Failed to download SuperCheckPartial file")
                     # Download failed, generate random callsigns instead
@@ -42,7 +49,9 @@ class RandomCallGenerator:
                         f.write(response.content)
                     logging.info("SuperCheckPartial file downloaded successfully!")
         except Exception as e:
-            logging.error(f"Error while checking/downloading SuperCheckPartial file: {e}")
+            logging.error(
+                f"Error while checking/downloading SuperCheckPartial file: {e}"
+            )
         finally:
             if os.path.isfile("MASTER.SCP"):
                 self._call_generator = self.generate_call_scp
