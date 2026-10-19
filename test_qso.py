@@ -7,7 +7,8 @@ import datetime
 
 import adif
 import unittest
-from qso import QSO
+from qso import QSO, RandomCallGenerator
+from unittest.mock import patch
 
 
 class QSOTest(unittest.TestCase):
@@ -191,6 +192,67 @@ class QSOTimestampTest(unittest.TestCase):
     def test_timestamp_off_invalid_qso(self):
         with self.assertRaises(ValueError):
             QSO({}).timestamp_off()
+
+
+class RandomQSOTest(unittest.TestCase):
+    def test_random_valis_qso_is_valid(self):
+        self.assertTrue(QSO.random(valid=True).is_valid())
+
+
+class RandomCallGeneratorTest(unittest.TestCase):
+    def test_callsign_is_generated_1(self):
+        callgen = RandomCallGenerator()
+        assert callgen.generate_call() is not None
+
+    def test_callsign_is_generated_2(self):
+        callgen = RandomCallGenerator()
+        assert callgen.generate_call().strip() != ""
+
+# TODO split + mock randint
+    @patch("qso.randint")
+    def test_callsign_is_generated_local_1(self, mock_randint):
+        mock_randint.return_value = 1
+        callgen = RandomCallGenerator()
+        assert callgen.generate_call_random() is not None
+
+    @patch("qso.randint")
+    def test_callsign_is_generated_local_2(self, mock_randint):
+        mock_randint.return_value = 51
+        callgen = RandomCallGenerator()
+        assert callgen.generate_call_random() is not None
+
+    @patch("qso.randint")
+    def test_callsign_is_generated_local_3(self, mock_randint):
+        mock_randint.return_value = 1
+        callgen = RandomCallGenerator()
+        assert callgen.generate_call_random().strip() != ""
+
+
+    @patch("qso.randint")
+    def test_callsign_is_generated_local_4(self, mock_randint):
+        mock_randint.return_value = 51
+        callgen = RandomCallGenerator()
+        assert callgen.generate_call_random().strip() != ""
+
+    @patch("qso.RandomCallGenerator.generate_call_random", wraps=None)
+    @patch("qso.RandomCallGenerator.generate_call_scp", wraps=None)
+    @patch("qso.os.path.isfile")
+    def test_scp_file_found_1(self, mock_isfile, mock_gencall_scp, mock_gencall_random):
+        mock_isfile.return_value = True
+        callgen = RandomCallGenerator()
+        callgen.generate_call()
+        mock_gencall_random.assert_not_called()
+        mock_gencall_scp.assert_called()
+
+    @patch("qso.RandomCallGenerator.generate_call_random", wraps=None)
+    @patch("qso.RandomCallGenerator.generate_call_scp", wraps=None)
+    @patch("qso.os.path.isfile")
+    def test_scp_file_not_found_1(self, mock_isfile, mock_gencall_scp, mock_gencall_random):
+        mock_isfile.return_value = False
+        callgen = RandomCallGenerator()
+        callgen.generate_call()
+        mock_gencall_scp.assert_not_called()
+        mock_gencall_random.assert_called()
 
 
 if __name__ == "__main__":

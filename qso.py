@@ -81,8 +81,8 @@ class RandomCallGenerator:
 
         i = 1
         with open("MASTER.SCP", "rt", encoding="utf-8") as f:
-            for _line in f: # More memory-efficient than for _line in f.readlines()
-                if not _line.startswith(("#","!")):
+            for _line in f:  # More memory-efficient than for _line in f.readlines()
+                if not _line.startswith(("#", "!")):
                     if i == 1:
                         retval = _line.strip()
                     else:
@@ -206,5 +206,4 @@ class QSO:
             "MODE": choice(["SSB", "CW", "FT8"]),
         }
         _qso = QSO(_dict)
-        assert valid == False or _qso.is_valid()
         return _qso
