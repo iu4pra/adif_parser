@@ -71,8 +71,10 @@ class RandomCallGenerator:
         if self.generate_call is None:
             self.load_generator()
 
-    def __exit__(self):
-        pass  # TODO
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            logging.error(f"Error: {exc_type}: {exc_val}")
+        # TODO complete
 
     def generate_call_scp(self):
         """Generates a call sign using SuperCheckPartial"""
