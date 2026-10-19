@@ -5,6 +5,8 @@
 from datetime import date, datetime, timedelta, timezone
 from random import choice, choices, randint
 import logging
+import os.path
+import requests
 import string
 
 # List of essential QSO keys
@@ -17,6 +19,46 @@ _ESSENTIAL_KEYS = [
     "MODE",
 ]
 
+
+class RandomCallGenerator:
+
+    def __init__(self):
+        """Class constructor"""
+
+        try:
+            # Check if SuperCheckPartial file exists locally
+            if os.path.isfile("MASTER.SCP"):
+                logging.info("SuperCheckPartial file found locally")
+            else:
+                logging.warning("SuperCheckPartial file not found locally, attempting download...")
+                # Try to download it if not present
+                response = requests.get("https://www.supercheckpartial.com/downloads/MASTER.SCP", allow_redirects=True)
+                if response.status_code != 200:
+                    logging.error("Failed to download SuperCheckPartial file")
+                    # Download failed, generate random callsigns instead
+                else:
+                    # Download successfull, save the file locally fot future use
+                    with open("MASTER.SCP", "wb", encoding="utf-8") as f:
+                        f.write(response.content)
+                    logging.info("SuperCheckPartial file downloaded successfully!")
+        except Exception as e:
+            logging.error(f"Error while checking/downloading SuperCheckPartial file: {e}")
+        finally:
+            if os.path.isfile("MASTER.SCP"):
+                self._call_generator = self.generate_call_scp
+            else:
+                self._call_generator = self.generate_call
+
+    def generate_call_scp(self):
+        """Generates a call sign using SuperCheckPartial"""
+        # Implementation for generating call signs using SuperCheckPartial
+        pass
+
+    def generate_call(self):
+        """Generates a random call sign without using SuperCheckPartial"""
+        if randint(1, 100) <= 50:
+            return f"{choice('KNW')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=randint(1,3)))}"
+        return f"I{choice('KUWZ')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=3))}"
 
 
 class QSO:
@@ -110,7 +152,9 @@ class QSO:
         """Generate a random QSO object"""
         start_date = datetime(2020, 1, 1)
         end_date = datetime.today()
-        qso_date = start_date + timedelta(days=randint(0, (end_date - start_date).days), minutes=randint(0, 1399))
+        qso_date = start_date + timedelta(
+            days=randint(0, (end_date - start_date).days), minutes=randint(0, 1399)
+        )
 
         _dict = {
             "STATION_CALLSIGN": f"I{choice('KUWZ')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=3))}",
