@@ -18,6 +18,7 @@ _ESSENTIAL_KEYS = [
 ]
 
 
+
 class QSO:
     """Class representing a single QSO record"""
 
@@ -107,16 +108,14 @@ class QSO:
     @staticmethod
     def random(valid: bool = True):
         """Generate a random QSO object"""
-        time_on_min = randint(0, 1399)
-
-        start_date = date(2020, 1, 1)
-        end_date = date.today()
-        qso_date = start_date + timedelta(days=randint(0, (end_date - start_date).days))
+        start_date = datetime(2020, 1, 1)
+        end_date = datetime.today()
+        qso_date = start_date + timedelta(days=randint(0, (end_date - start_date).days), minutes=randint(0, 1399))
 
         _dict = {
-            "STATION_CALLSIGN": f"I{choice('KWZ')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=3))}",
-            "QSO_DATE": strftime(qso_date, "%Y%m%d"),
-            "TIME_ON": f"{time_on_min//60:02d}{time_on_min % 60:02d}",
+            "STATION_CALLSIGN": f"I{choice('KUWZ')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=3))}",
+            "QSO_DATE": qso_date.strftime("%Y%m%d"),
+            "TIME_ON": qso_date.strftime("%H%M"),
             "CALL": f"{choice('KNW')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=randint(1,3)))}",
             "BAND": choice(["80m", "40m", "20m", "15m", "10m"]),
             "MODE": choice(["SSB", "CW", "FT8"]),
