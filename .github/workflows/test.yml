@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - dev
   pull_request:
     types:
       - opened
@@ -24,12 +23,18 @@ permissions:
 
 jobs:
   unit_testing:
+    if: |
+      github.event.pull_request.draft == false &&
+      (
+        github.base_ref != 'dev' ||
+        github.event.pull_request.head.repo.full_name != github.repository
+      )
+
     strategy:
       matrix:
           os: [ubuntu-latest, windows-latest, macos-latest]
           python-version: ['3.9', '3.x']
 
-    if: github.event.pull_request.draft == false
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
