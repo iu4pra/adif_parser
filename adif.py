@@ -23,7 +23,7 @@ import os.path
 import pickle
 import re
 from datetime import datetime, timedelta, timezone
-from qso import QSO
+from qso import QSO, RandomCallGenerator
 
 
 class AdifError(Exception):
@@ -254,4 +254,16 @@ def qso_list_from_file(filename: str, _only_valid=False):
     """Convenience function to convert an ADIF file into a QSO list"""
     field_list = parse_adif_file(filename)
     qso_list: list[QSO] = adif_to_qso_list(field_list, _only_valid)
+    return qso_list
+
+
+def qso_list_random(n: int, _only_valid=True):
+    """Generate a random QSO list of a given size"""
+    if n < 0:
+        raise ValueError(f"n must be positive, but n={n}")
+    elif n == 0:
+        return []
+
+    with RandomCallGenerator() as callgen:
+        qso_list = [QSO.random(_only_valid) for i in range(n)]
     return qso_list
