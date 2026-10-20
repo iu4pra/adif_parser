@@ -213,5 +213,36 @@ class TestAdifParser(unittest.TestCase):
         self.assertEqual(len(qso_list), 1)
 
 
+class TestRandomQSOListGenerator(unittest.TestCase):
+
+    def test_n_negative(self):
+        with self.assertRaises(ValueError):
+            qso_list = adif.qso_list_random(-1)
+
+    def test_n_zero(self):
+        qso_list = adif.qso_list_random(0)
+        self.assertEqual(qso_list, [])
+
+    def test_size_correct(self):
+        qso_list = adif.qso_list_random(5)
+        self.assertEqual(len(qso_list), 5)
+
+    def test_all_valid(self):
+        qso_list = adif.qso_list_random(5)
+        for qso in qso_list:
+            assert isinstance(qso, QSO)
+            self.assertEqual(qso.is_valid(), True)
+
+    def test_size_correct_big_array(self):
+        qso_list = adif.qso_list_random(5000)
+        self.assertEqual(len(qso_list), 5000)
+
+    def test_all_valid_big_array(self):
+        qso_list = adif.qso_list_random(5000)
+        for qso in qso_list:
+            assert isinstance(qso, QSO)
+            self.assertEqual(qso.is_valid(), True)
+
+
 if __name__ == "__main__":
     unittest.main()

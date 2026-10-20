@@ -12,6 +12,7 @@ wkhtmlto*
 __pycache__/**
 # Other files
 .env
+MASTER.SCP
 # Other temporary files
 *.dump
 *.pyc

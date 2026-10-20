@@ -173,6 +173,26 @@ class QSLGeneratorValidationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             qslgen.main()
 
+    @patch("qsl_generator.adif.qso_list_from_file")
+    @patch(
+        "sys.argv",
+        ["qsl_generator.py", "samples/test_log.adi", "--max-qso", "-1"],
+    )
+    def test_max_qso_negative(self, mock_parse):
+        mock_parse.return_value = []
+        with self.assertRaises(ValueError):
+            qslgen.main()
+
+    @patch("qsl_generator.adif.qso_list_from_file")
+    @patch(
+        "sys.argv",
+        ["qsl_generator.py", "samples/test_log.adi", "--max-qso", "0"],
+    )
+    def test_max_qso_zero(self, mock_parse):
+        mock_parse.return_value = []
+        with self.assertRaises(ValueError):
+            qslgen.main()
+
 
 class QSLGeneratorOutputNameTest(unittest.TestCase):
     @patch("qsl_generator.adif.qso_list_from_file")

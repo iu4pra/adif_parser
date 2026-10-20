@@ -4,10 +4,12 @@
 # Unit test for QSO class
 
 import datetime
+import unittest
+from unittest.mock import patch
 
 import adif
-import unittest
-from qso import QSO
+from requests.exceptions import RequestException
+from qso import QSO, RandomCallGenerator
 
 
 class QSOTest(unittest.TestCase):
@@ -112,6 +114,16 @@ class QSOTest(unittest.TestCase):
         q = QSO(data)
         self.assertTrue(q.is_valid())
 
+    def test_missing_band_and_freq(self):
+        data = {
+            "STATION_CALLSIGN": "W1ABC",
+            "CALL": "W1AW",
+            "QSO_DATE": "20230101",
+            "TIME_ON": "120000",
+            "MODE": "CW",
+        }
+        self.assertFalse(QSO(data).is_valid())
+
     def test_normalization(self):
         # Test that lowercase input keys are converted to uppercase
         data = {"call": "K1ABC"}  # lowercase key
@@ -191,6 +203,130 @@ class QSOTimestampTest(unittest.TestCase):
     def test_timestamp_off_invalid_qso(self):
         with self.assertRaises(ValueError):
             QSO({}).timestamp_off()
+
+
+class RandomQSOTest(unittest.TestCase):
+    def test_random_valis_qso_is_valid(self):
+        self.assertTrue(QSO.random(valid=True).is_valid())
+
+
+class RandomCallGeneratorTest(unittest.TestCase):
+
+    @patch("qso.os.path.isfile", return_value=False)
+    @patch("qso.requests.get")
+    def test_download_failure_uses_random_generator(self, mock_get, mock_isfile):
+        mock_get.return_value.status_code = 404  # Fake a failed connection
+
+        with self.assertLogs(level="ERROR") as logs:
+            callgen = RandomCallGenerator()
+
+        self.assertIn("Failed to download SuperCheckPartial file", logs.output[0])
+        self.assertIs(
+            callgen.generate_call.__func__, RandomCallGenerator.generate_call_random
+        )
+
+    @patch("qso.os.path.isfile", return_value=False)
+    @patch("qso.requests.get", side_effect=RequestException("offline"))
+    def test_download_request_exception_uses_random_generator(
+        self, mock_get, mock_isfile
+    ):
+        with self.assertLogs(level="WARNING") as logs:
+            callgen = RandomCallGenerator()
+
+        self.assertTrue(
+            any(
+                "HTTP Error while checking/downloading" in message
+                for message in logs.output
+            )
+        )
+        self.assertIs(
+            callgen.generate_call.__func__, RandomCallGenerator.generate_call_random
+        )
+
+    @patch("qso.os.path.isfile", return_value=False)
+    @patch("qso.requests.get", side_effect=OSError("network failure"))
+    def test_download_unexpected_exception_uses_random_generator(
+        self, mock_get, mock_isfile
+    ):
+        with self.assertLogs(level="ERROR") as logs:
+            callgen = RandomCallGenerator()
+
+        self.assertIn("Error while checking/downloading", logs.output[0])
+        self.assertIs(
+            callgen.generate_call.__func__, RandomCallGenerator.generate_call_random
+        )
+
+    def test_exit_logs_context_exception(self):
+        callgen = RandomCallGenerator()
+        error = ValueError("context failed")
+
+        with self.assertLogs(level="ERROR") as logs:
+            callgen.__exit__(ValueError, error, None)
+
+        self.assertIn("Error: <class 'ValueError'>: context failed", logs.output[0])
+
+    def test_callsign_is_generated_1(self):
+        callgen = RandomCallGenerator()
+        assert callgen.generate_call() is not None
+
+    def test_callsign_is_generated_2(self):
+        callgen = RandomCallGenerator()
+        assert callgen.generate_call().strip() != ""
+
+    # TODO split + mock randint
+    @patch("qso.randint")
+    def test_callsign_is_generated_local_1(self, mock_randint):
+        mock_randint.return_value = 1
+        callgen = RandomCallGenerator()
+        assert callgen.generate_call_random() is not None
+
+    @patch("qso.randint")
+    def test_callsign_is_generated_local_2(self, mock_randint):
+        mock_randint.return_value = 51
+        callgen = RandomCallGenerator()
+        assert callgen.generate_call_random() is not None
+
+    @patch("qso.randint")
+    def test_callsign_is_generated_local_3(self, mock_randint):
+        mock_randint.return_value = 1
+        callgen = RandomCallGenerator()
+        assert callgen.generate_call_random().strip() != ""
+
+    @patch("qso.randint")
+    def test_callsign_is_generated_local_4(self, mock_randint):
+        mock_randint.return_value = 51
+        callgen = RandomCallGenerator()
+        assert callgen.generate_call_random().strip() != ""
+
+    @patch("qso.RandomCallGenerator.generate_call_random", wraps=None)
+    @patch("qso.RandomCallGenerator.generate_call_scp", wraps=None)
+    @patch("qso.os.path.isfile")
+    def test_scp_file_found_1(self, mock_isfile, mock_gencall_scp, mock_gencall_random):
+        mock_isfile.return_value = True
+        callgen = RandomCallGenerator()
+        callgen.generate_call()
+        mock_gencall_random.assert_not_called()
+        mock_gencall_scp.assert_called()
+
+    @patch("qso.RandomCallGenerator.generate_call_random", wraps=None)
+    @patch("qso.RandomCallGenerator.generate_call_scp", wraps=None)
+    @patch("qso.os.path.isfile")
+    def test_scp_file_not_found_1(
+        self, mock_isfile, mock_gencall_scp, mock_gencall_random
+    ):
+        mock_isfile.return_value = False
+        callgen = RandomCallGenerator()
+        callgen.generate_call()
+        mock_gencall_scp.assert_not_called()
+        mock_gencall_random.assert_called()
+
+    @patch("qso.RandomCallGenerator.load_generator", wraps=None)
+    @patch("qso.os.path.isfile")
+    def test_with_scope(self, mock_isfile, mock_load_generator):
+        mock_isfile.return_value = False
+        callgen = RandomCallGenerator()
+        with callgen:
+            mock_load_generator.assert_called()
 
 
 if __name__ == "__main__":

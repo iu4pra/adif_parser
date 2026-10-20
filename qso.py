@@ -5,17 +5,105 @@
 from datetime import date, datetime, timedelta, timezone
 from random import choice, choices, randint
 import logging
+import os.path
+import requests
 import string
 
 # List of essential QSO keys
-_ESSENTIAL_KEYS = [
-    "STATION_CALLSIGN",
-    "QSO_DATE",
-    "TIME_ON",
-    "CALL",
-    ["FREQ", "BAND"],  # At least one among these fields must be present
-    "MODE",
-]
+_ESSENTIAL_KEYS = frozenset(
+    [
+        "STATION_CALLSIGN",
+        "QSO_DATE",
+        "TIME_ON",
+        "CALL",
+        frozenset(["FREQ", "BAND"]),  # At least one among these fields must be present
+        "MODE",
+    ]
+)
+
+
+class RandomCallGenerator:
+    """Helper class to generate random callsigns"""
+
+    def __init__(self):
+        """Class constructor"""
+
+        self.generate_call = None
+        self.load_generator()
+
+    def load_generator(self):
+        """Attempts to load a callsign generator"""
+        try:
+            # Check if SuperCheckPartial file exists locally
+            if os.path.isfile("MASTER.SCP"):
+                logging.info("SuperCheckPartial file found locally")
+            else:
+                logging.warning(
+                    "SuperCheckPartial file not found locally, attempting download..."
+                )
+                # Try to download it if not present
+                response = requests.get(
+                    "https://www.supercheckpartial.com/downloads/MASTER.SCP",
+                    allow_redirects=True,
+                )
+                if response.status_code != 200:
+                    logging.error("Failed to download SuperCheckPartial file")
+                    # Download failed, generate random callsigns instead
+                else:
+                    # Download successfull, save the file locally fot future use
+                    with open("MASTER.SCP", "wb") as f:
+                        f.write(response.content)
+                    logging.info("SuperCheckPartial file downloaded successfully!")
+        except requests.exceptions.RequestException as e:
+            logging.warning(
+                f"HTTP Error while checking/downloading SuperCheckPartial file:\n\t{e}"
+            )
+        except Exception as e:
+            logging.error(
+                f"Error while checking/downloading SuperCheckPartial file:\n\t{e}"
+            )
+        finally:
+            if os.path.isfile("MASTER.SCP"):
+                self.generate_call = self.generate_call_scp
+            else:
+                self.generate_call = self.generate_call_random
+
+    # To use the object in a with context
+    def __enter__(self):
+        if self.generate_call is None:
+            self.load_generator()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            logging.error(f"Error: {exc_type}: {exc_val}")
+        # TODO complete
+
+    def generate_call_scp(self):
+        """Generates a call sign using SuperCheckPartial"""
+        # Implementation for generating call signs using SuperCheckPartial file
+        logging.warning(f"""SCP file size: {os.path.getsize("MASTER.SCP")}""")
+
+        i = 1
+        with open("MASTER.SCP", "rt", encoding="utf-8") as f:
+            for _line in f:  # More memory-efficient than for _line in f.readlines()
+                if not _line.startswith(("#", "!")):
+                    if i == 1:
+                        retval = _line.strip()
+                    else:
+                        if randint(1, i) == 1:
+                            retval = _line.strip()
+                    i += 1
+                else:
+                    logging.info(f"Skipping line: {_line.strip()}")
+
+        logging.warning(f"Generated callsign {retval}")
+        return retval
+
+    def generate_call_random(self):
+        """Generates a random call sign without using SuperCheckPartial"""
+        if randint(1, 100) <= 50:
+            return f"{choice('KNW')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=randint(1,3)))}"
+        return f"I{choice('KUWZ')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=3))}"
 
 
 class QSO:
@@ -48,8 +136,8 @@ class QSO:
         """Checks if the QSO is valid"""
         # All essential fields must be present
         for key in _ESSENTIAL_KEYS:
-            # If the key itself is a list the check at least one of the elements is present
-            if isinstance(key, list):
+            # If the element itself is a frozenset, then check at least one of the elements is present
+            if isinstance(key, frozenset):
                 if (
                     len(
                         [
@@ -107,20 +195,19 @@ class QSO:
     @staticmethod
     def random(valid: bool = True):
         """Generate a random QSO object"""
-        time_on_min = randint(0, 1399)
-
-        start_date = date(2020, 1, 1)
-        end_date = date.today()
-        qso_date = start_date + timedelta(days=randint(0, (end_date - start_date).days))
+        start_date = datetime(2020, 1, 1)
+        end_date = datetime.today()
+        qso_date = start_date + timedelta(
+            days=randint(0, (end_date - start_date).days), minutes=randint(0, 1399)
+        )
 
         _dict = {
-            "STATION_CALLSIGN": f"I{choice('KWZ')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=3))}",
-            "QSO_DATE": strftime(qso_date, "%Y%m%d"),
-            "TIME_ON": f"{time_on_min//60:02d}{time_on_min % 60:02d}",
+            "STATION_CALLSIGN": f"I{choice('KUWZ')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=3))}",
+            "QSO_DATE": qso_date.strftime("%Y%m%d"),
+            "TIME_ON": qso_date.strftime("%H%M"),
             "CALL": f"{choice('KNW')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=randint(1,3)))}",
             "BAND": choice(["80m", "40m", "20m", "15m", "10m"]),
             "MODE": choice(["SSB", "CW", "FT8"]),
         }
         _qso = QSO(_dict)
-        assert valid == False or _qso.is_valid()
         return _qso

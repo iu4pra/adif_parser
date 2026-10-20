@@ -68,6 +68,15 @@ class QSLRendererContextManagerTest(unittest.TestCase):
         self.assertIsNone(renderer._playwright)
         self.assertIsNone(renderer._browser)
 
+    def test_renderer_exit_before_enter(self):
+        """Test cleanup when the context manager was never entered"""
+        renderer = playwright_wrapper.QSLRenderer()
+
+        renderer.__exit__(None, None, None)
+
+        self.assertIsNone(renderer._playwright)
+        self.assertIsNone(renderer._browser)
+
     def test_renderer_handles_exception_in_context(self):
         """Test that renderer handles exceptions gracefully"""
         # Mocking is handled by conftest.py fixture
