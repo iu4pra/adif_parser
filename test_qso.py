@@ -4,11 +4,12 @@
 # Unit test for QSO class
 
 import datetime
+import unittest
+from unittest.mock import patch
 
 import adif
-import unittest
+from requests.exceptions import RequestException
 from qso import QSO, RandomCallGenerator
-from unittest.mock import patch
 
 
 class QSOTest(unittest.TestCase):
@@ -113,6 +114,16 @@ class QSOTest(unittest.TestCase):
         q = QSO(data)
         self.assertTrue(q.is_valid())
 
+    def test_missing_band_and_freq(self):
+        data = {
+            "STATION_CALLSIGN": "W1ABC",
+            "CALL": "W1AW",
+            "QSO_DATE": "20230101",
+            "TIME_ON": "120000",
+            "MODE": "CW",
+        }
+        self.assertFalse(QSO(data).is_valid())
+
     def test_normalization(self):
         # Test that lowercase input keys are converted to uppercase
         data = {"call": "K1ABC"}  # lowercase key
@@ -200,6 +211,60 @@ class RandomQSOTest(unittest.TestCase):
 
 
 class RandomCallGeneratorTest(unittest.TestCase):
+
+    @patch("qso.os.path.isfile", return_value=False)
+    @patch("qso.requests.get")
+    def test_download_failure_uses_random_generator(self, mock_get, mock_isfile):
+        mock_get.return_value.status_code = 404  # Fake a failed connection
+
+        with self.assertLogs(level="ERROR") as logs:
+            callgen = RandomCallGenerator()
+
+        self.assertIn("Failed to download SuperCheckPartial file", logs.output[0])
+        self.assertIs(
+            callgen.generate_call.__func__, RandomCallGenerator.generate_call_random
+        )
+
+    @patch("qso.os.path.isfile", return_value=False)
+    @patch("qso.requests.get", side_effect=RequestException("offline"))
+    def test_download_request_exception_uses_random_generator(
+        self, mock_get, mock_isfile
+    ):
+        with self.assertLogs(level="WARNING") as logs:
+            callgen = RandomCallGenerator()
+
+        self.assertTrue(
+            any(
+                "HTTP Error while checking/downloading" in message
+                for message in logs.output
+            )
+        )
+        self.assertIs(
+            callgen.generate_call.__func__, RandomCallGenerator.generate_call_random
+        )
+
+    @patch("qso.os.path.isfile", return_value=False)
+    @patch("qso.requests.get", side_effect=OSError("network failure"))
+    def test_download_unexpected_exception_uses_random_generator(
+        self, mock_get, mock_isfile
+    ):
+        with self.assertLogs(level="ERROR") as logs:
+            callgen = RandomCallGenerator()
+
+        self.assertIn("Error while checking/downloading", logs.output[0])
+        self.assertIs(
+            callgen.generate_call.__func__, RandomCallGenerator.generate_call_random
+        )
+
+    def test_exit_logs_context_exception(self):
+        callgen = RandomCallGenerator()
+        error = ValueError("context failed")
+
+        with self.assertLogs(level="ERROR") as logs:
+            callgen.__exit__(ValueError, error, None)
+
+        self.assertIn("Error: <class 'ValueError'>: context failed", logs.output[0])
+
     def test_callsign_is_generated_1(self):
         callgen = RandomCallGenerator()
         assert callgen.generate_call() is not None

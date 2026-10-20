@@ -243,5 +243,6 @@ class TestRandomQSOListGenerator(unittest.TestCase):
             assert isinstance(qso, QSO)
             self.assertEqual(qso.is_valid(), True)
 
+
 if __name__ == "__main__":
     unittest.main()
