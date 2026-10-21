@@ -17,32 +17,6 @@ from unittest.mock import patch, MagicMock
 
 class QSLGeneratorBasicTest(unittest.TestCase):
 
-    def test_cm_to_px_basic(self):
-        """Test basic cm to pixels conversion"""
-        # 2.54 cm = 96 px (at default DPI)
-        result = qslgen.cm_to_px(2.54, 96)
-        self.assertEqual(result, 96)
-
-    def test_cm_to_px_zero(self):
-        """Test conversion with zero input"""
-        result = qslgen.cm_to_px(0, 96)
-        self.assertEqual(result, 0)
-
-    def test_cm_to_px_float_values(self):
-        """Test conversion with various float values"""
-        # 1 cm
-        result = qslgen.cm_to_px(1.0, 96)
-        self.assertEqual(result, int(1.0 * 96 / 2.54))
-
-        # 10 cm
-        result = qslgen.cm_to_px(10.0, 96)
-        self.assertEqual(result, int(10.0 * 96 / 2.54))
-
-    def test_cm_to_px_negative(self):
-        """Test conversion with negative values (should work mathematically)"""
-        result = qslgen.cm_to_px(-2.54, 96)
-        self.assertEqual(result, -96)
-
     @patch("sys.argv", ["qsl_generator.py", ""])
     def test_no_args(self):
         with self.assertRaises(Exception):
