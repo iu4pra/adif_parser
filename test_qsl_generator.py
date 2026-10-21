@@ -11,11 +11,50 @@ import qsl_generator as qslgen
 import unittest
 import tempfile
 import shutil
+from queue import Queue
 from qso import QSO
-from unittest.mock import patch, MagicMock
+from unittest.mock import call, patch, MagicMock
 
 
 class QSLGeneratorBasicTest(unittest.TestCase):
+
+    def test_main_displays_progress_updates(self):
+        progress_bar = MagicMock()
+
+        def generate_with_progress(_qso_list, **kwargs):
+            progress_queue = kwargs["progress_queue"]
+            progress_queue.put(qslgen.ProgressUpdate("rendering", 0, 1))
+            progress_queue.put(qslgen.ProgressUpdate("rendering", 1, 1))
+            progress_queue.put(qslgen.ProgressUpdate("done", 1, 1))
+
+        with (
+            patch(
+                "sys.argv",
+                ["qsl_generator.py", "samples/minimal_1qso.adi"],
+            ),
+            patch(
+                "qsl_generator.generate_qsl_image_pdf",
+                side_effect=generate_with_progress,
+            ) as mock_generate,
+            patch("qsl_generator.tqdm", return_value=progress_bar) as mock_tqdm,
+        ):
+            qslgen.main()
+
+        mock_tqdm.assert_called_once_with(desc="Preparing QSLs", unit="QSL")
+        self.assertEqual(
+            progress_bar.reset.call_args_list,
+            [call(total=1), call(total=1)],
+        )
+        self.assertEqual(
+            progress_bar.set_description.call_args_list,
+            [
+                call("Rendering single QSLs"),
+                call("QSL generation complete"),
+            ],
+        )
+        self.assertEqual(progress_bar.refresh.call_count, 3)
+        progress_bar.close.assert_called_once()
+        self.assertIsInstance(mock_generate.call_args.kwargs["progress_queue"], Queue)
 
     @patch("sys.argv", ["qsl_generator.py", ""])
     def test_no_args(self):
@@ -604,6 +643,41 @@ class TestGenerateQslImagePdf(unittest.TestCase):
         self.assertGreaterEqual(
             renderer_instance.render.call_count,
             2,
+        )
+
+    @patch("qsl_generator.playwright_wrapper.QSLRenderer")
+    @patch("qsl_generator.pypdf.PdfWriter")
+    def test_progress_queue_reports_render_and_pdf_stages(
+        self,
+        mock_writer,
+        mock_renderer,
+    ):
+        renderer_instance = MagicMock()
+        mock_renderer.return_value.__enter__.return_value = renderer_instance
+        progress_queue = Queue()
+
+        qslgen.generate_qsl_image_pdf(
+            [self.qso],
+            _image=True,
+            _pdf=True,
+            _out_filename=os.path.join(self.tempdir, "cards.pdf"),
+            _out_folder=self.tempdir,
+            progress_queue=progress_queue,
+        )
+
+        updates = []
+        while not progress_queue.empty():
+            updates.append(progress_queue.get_nowait())
+
+        self.assertEqual(
+            [(update.stage, update.completed, update.total) for update in updates],
+            [
+                ("rendering", 0, 1),
+                ("rendering", 1, 1),
+                ("assembling_pdf", 0, 1),
+                ("assembling_pdf", 1, 1),
+                ("done", 1, 1),
+            ],
         )
 
     @patch("qsl_generator.playwright_wrapper.QSLRenderer")

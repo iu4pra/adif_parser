@@ -5,9 +5,13 @@
 # Generates a printable QSL starting from an HTML template with Jinja2
 
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from qso import QSO
+from queue import Empty, Queue
+from tqdm import tqdm
+from typing import Optional
 import adif
 import argparse
 import logging
@@ -53,6 +57,15 @@ IMG_OUT_EXTENSION = "jpg"
 IMG_OUT_BASE_NAME = "./qsl_%04d."
 # Final PDF filename
 PDF_OUTPUT = "./qsl.pdf"
+
+
+@dataclass(frozen=True)
+class ProgressUpdate:
+    """Class to provide progress updates for QSL generation to the caller"""
+
+    stage: str
+    completed: int
+    total: int
 
 
 def split_every(items, every):
@@ -241,8 +254,13 @@ def generate_qsl_image_pdf(
     _height: float = QSL_HEIGHT,
     _dry_run: bool = False,
     _max_qso: int = 3,
+    progress_queue: Optional[Queue] = None,
 ):
-    """Generates one QSL image per QSO, a PDF file with the QSLs contained in the given QSO list, or both."""
+    """Generate QSL output and optionally send progress updates to a thread-safe queue."""
+
+    def report_progress(stage: str, completed: int, total: int) -> None:
+        if progress_queue is not None:
+            progress_queue.put(ProgressUpdate(stage, completed, total))
 
     if _dry_run:
         logging.warning("Running app in dry-run mode")
@@ -269,6 +287,7 @@ def generate_qsl_image_pdf(
 
     if len(qso_list) == 0:
         logging.warning("No QSO found")
+        report_progress("done", 0, 0)
         return
 
     # Sort the list by timestamp
@@ -321,13 +340,17 @@ def generate_qsl_image_pdf(
     # Loading HTML template
     template = env.get_template(_template)
 
+    qso_batches = list(qso_list_generator(qso_list, _max_qso))
+    total_batches = len(qso_batches)
+    report_progress("rendering", 0, total_batches)
+
     with playwright_wrapper.QSLRenderer() as renderer:
 
         # Initialize counter
         _i = 0
 
         # Generate each QSL
-        for _qso_list in qso_list_generator(qso_list, _max_qso):
+        for _qso_list in qso_batches:
             if len(_qso_list) == 0:
                 logging.warning("Empty QSO list! Skipping to next one")
                 continue
@@ -349,8 +372,10 @@ def generate_qsl_image_pdf(
                 _i += 1
             else:
                 logging.warning("Didn't render anything")
+            report_progress("rendering", _i, total_batches)
 
     if _pdf:
+        report_progress("assembling_pdf", 0, 1)
         # Concatenate all files to create a single PDF to print
         out_name = os.path.join(_out_folder, out_base_name + ".pdf")
         if not _dry_run:
@@ -366,10 +391,12 @@ def generate_qsl_image_pdf(
             writer.close()
         else:
             logging.info(f"Would create output file {out_name}")
+        report_progress("assembling_pdf", 1, 1)
 
     if _dry_run is False:
         # Delete temporary folder and its content
         rmtree_if_exists(TEMP_FOLDER)
+    report_progress("done", total_batches, total_batches)
 
 
 def setup_logging(level=logging.INFO):
@@ -555,6 +582,7 @@ def main():
 
     # All OK, generate QSLs
     with ThreadPoolExecutor() as executor:
+        progress_queue = Queue()
         future = executor.submit(
             generate_qsl_image_pdf,
             qso_list,
@@ -568,8 +596,39 @@ def main():
             _height=args.height,
             _dry_run=args.dry_run,
             _max_qso=args.max_qso,
+            progress_queue=progress_queue,
         )
-        future.result()  # Wait for completion and forward exceptions if any to the main thread
+
+        # Display progress bar in the main thread
+        progress_bar = tqdm(desc="Preparing QSLs", unit="QSL")
+        # Current progress bar stage to track when to reset the bar and change its description
+        current_stage = None
+        stage_descriptions = {
+            "rendering": "Rendering single QSLs",
+            "assembling_pdf": "Assembling final PDF",
+            "done": "QSL generation complete",
+        }
+        while True:
+            try:
+                progress_update = progress_queue.get(timeout=0.1)
+            except Empty:
+                if future.done():
+                    break
+                continue
+
+            if progress_update.stage != current_stage:
+                progress_bar.reset(total=progress_update.total)
+                progress_bar.set_description(
+                    stage_descriptions.get(progress_update.stage, progress_update.stage)
+                )
+                current_stage = progress_update.stage
+            progress_bar.n = progress_update.completed
+            progress_bar.refresh()
+
+        try:
+            future.result()  # Forward exceptions from the worker to the main thread
+        finally:
+            progress_bar.close()
 
 
 if __name__ == "__main__":
