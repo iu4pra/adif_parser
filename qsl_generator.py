@@ -253,7 +253,7 @@ def generate_qsl_image_pdf(
 
     assert isinstance(qso_list, list)
 
-    # NOTE the most Pythonic way would be alist comprehension: [ qso for qso in qso_list if qso.is_valid() ]
+    # NOTE the most Pythonic way would be a list comprehension: [ qso for qso in qso_list if qso.is_valid() ]
     removed_qsos = 0  # Counter for debugging
     for qso in qso_list[:]:
         if not qso.is_valid():
