@@ -4,6 +4,7 @@
 # QSL generator
 # Generates a printable QSL starting from an HTML template with Jinja2
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from qso import QSO
@@ -551,19 +552,22 @@ def main():
         raise ValueError("--max-qso must be positive (1 to disable multi-QSO cards)")
 
     # All OK, generate QSLs
-    generate_qsl_image_pdf(
-        qso_list,
-        _image=args.image,
-        _pdf=args.pdf,
-        _template=args.template,
-        _out_filename=args.outfile,
-        _out_folder=args.output_dir,
-        _format=args.image_format,
-        _width=args.width,
-        _height=args.height,
-        _dry_run=args.dry_run,
-        _max_qso=args.max_qso,
-    )
+    with ThreadPoolExecutor() as executor:
+        future = executor.submit(
+            generate_qsl_image_pdf,
+            qso_list,
+            _image=args.image,
+            _pdf=args.pdf,
+            _template=args.template,
+            _out_filename=args.outfile,
+            _out_folder=args.output_dir,
+            _format=args.image_format,
+            _width=args.width,
+            _height=args.height,
+            _dry_run=args.dry_run,
+            _max_qso=args.max_qso,
+        )
+        future.result()  # Wait for completion and forward exceptions if any to the main thread
 
 
 if __name__ == "__main__":
