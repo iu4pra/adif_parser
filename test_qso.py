@@ -273,7 +273,6 @@ class RandomCallGeneratorTest(unittest.TestCase):
         callgen = RandomCallGenerator()
         assert callgen.generate_call().strip() != ""
 
-    # TODO split + mock randint
     @patch("qso.randint")
     def test_callsign_is_generated_local_1(self, mock_randint):
         mock_randint.return_value = 1

@@ -55,11 +55,6 @@ IMG_OUT_BASE_NAME = "./qsl_%04d."
 PDF_OUTPUT = "./qsl.pdf"
 
 
-def cm_to_px(cm, dpi):  # TODO remove, unused
-    """Converts centimeters to pixels given a DPI value"""
-    return int(cm * dpi / 2.54)
-
-
 def split_every(items, every):
     """Transform a list in sublists, each one with at most 'every' elements"""
     for i in range(math.ceil((len(items)) / every)):
@@ -128,7 +123,6 @@ def render_qsl(
 
     logging.info(f"\trender_qsl(_i={_i})")
 
-    # TODO would it be better to convert the template into uppercase ? Make dedicated function?
     # Converting all keys into lowercase
     qsos_data_lowercase = [
         {key.casefold(): value for key, value in _qso._d.items()}
@@ -259,7 +253,18 @@ def generate_qsl_image_pdf(
 
     assert isinstance(qso_list, list)
 
-    # TODO check QSO validity here and remove invalid ones
+    removed_qsos = 0  # Counter for debugging
+    for qso in qso_list:
+        if not qso.is_valid():
+            logging.warning(
+                f"Invalid QSO found: {qso._d.get('CALL','<no_call>')} on {qso._d.get('QSO_DATE','<no_date>')}"
+            )
+            qso_list.remove(qso)
+            removed_qsos += 1
+    if removed_qsos > 0:
+        logging.warning(
+            f"Removed {removed_qsos} invalid QSOs from the list, which now contains {len(qso_list)} QSOs"
+        )
 
     if len(qso_list) == 0:
         logging.warning("No QSO found")
@@ -273,8 +278,6 @@ def generate_qsl_image_pdf(
     logging.debug(
         f"Passed output filename : {_out_filename}\nBase name without extension: {out_base_name}"
     )
-
-    # TODO add function to beautify QSO list (all elements' keys uppercase...)
 
     # Template file full path
     template_path = os.path.join(TEMPLATE_FOLDER, _template)
@@ -351,9 +354,7 @@ def generate_qsl_image_pdf(
         out_name = os.path.join(_out_folder, out_base_name + ".pdf")
         if not _dry_run:
             writer = pypdf.PdfWriter()
-            for pdf in [
-                (PDF_TEMP_BASE_NAME % i) for i in range(_i)
-            ]:  # TODO check i against _i
+            for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(_i)]:
                 if os.path.isfile(pdf):
                     writer.append(pdf)
                 else:
