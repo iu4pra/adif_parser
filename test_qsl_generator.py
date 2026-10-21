@@ -807,9 +807,11 @@ def test_output_selection(
 
     qso_list = ["dummy_qso"]
 
-    with patch("sys.argv", argv), patch(
-        "qsl_generator.adif.qso_list_from_file", return_value=qso_list
-    ), patch("qsl_generator.generate_qsl_image_pdf") as mock_generate:
+    with (
+        patch("sys.argv", argv),
+        patch("qsl_generator.adif.qso_list_from_file", return_value=qso_list),
+        patch("qsl_generator.generate_qsl_image_pdf") as mock_generate,
+    ):
 
         qslgen.main()
 
@@ -828,9 +830,13 @@ def test_output_selection(
 )
 def test_cli_grouping_limit(options, expected_limit):
     qsos = qslgen.adif.qso_list_from_file("samples/multi_qso_same_station.adi")
-    with patch(
-        "sys.argv", ["qsl_generator.py", "samples/multi_qso_same_station.adi", *options]
-    ), patch("qsl_generator.generate_qsl_image_pdf") as generate:
+    with (
+        patch(
+            "sys.argv",
+            ["qsl_generator.py", "samples/multi_qso_same_station.adi", *options],
+        ),
+        patch("qsl_generator.generate_qsl_image_pdf") as generate,
+    ):
         qslgen.main()
     limit = generate.call_args.kwargs["_max_qso"]
     groups = list(qslgen.qso_list_generator(qsos, limit))
