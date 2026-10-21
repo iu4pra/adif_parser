@@ -11,37 +11,50 @@ import qsl_generator as qslgen
 import unittest
 import tempfile
 import shutil
+from queue import Queue
 from qso import QSO
-from unittest.mock import patch, MagicMock
+from unittest.mock import call, patch, MagicMock
 
 
 class QSLGeneratorBasicTest(unittest.TestCase):
 
-    def test_cm_to_px_basic(self):
-        """Test basic cm to pixels conversion"""
-        # 2.54 cm = 96 px (at default DPI)
-        result = qslgen.cm_to_px(2.54, 96)
-        self.assertEqual(result, 96)
+    def test_main_displays_progress_updates(self):
+        progress_bar = MagicMock()
 
-    def test_cm_to_px_zero(self):
-        """Test conversion with zero input"""
-        result = qslgen.cm_to_px(0, 96)
-        self.assertEqual(result, 0)
+        def generate_with_progress(_qso_list, **kwargs):
+            progress_queue = kwargs["progress_queue"]
+            progress_queue.put(qslgen.ProgressUpdate("rendering", 0, 1))
+            progress_queue.put(qslgen.ProgressUpdate("rendering", 1, 1))
+            progress_queue.put(qslgen.ProgressUpdate("done", 1, 1))
 
-    def test_cm_to_px_float_values(self):
-        """Test conversion with various float values"""
-        # 1 cm
-        result = qslgen.cm_to_px(1.0, 96)
-        self.assertEqual(result, int(1.0 * 96 / 2.54))
+        with (
+            patch(
+                "sys.argv",
+                ["qsl_generator.py", "samples/minimal_1qso.adi"],
+            ),
+            patch(
+                "qsl_generator.generate_qsl_image_pdf",
+                side_effect=generate_with_progress,
+            ) as mock_generate,
+            patch("qsl_generator.tqdm", return_value=progress_bar) as mock_tqdm,
+        ):
+            qslgen.main()
 
-        # 10 cm
-        result = qslgen.cm_to_px(10.0, 96)
-        self.assertEqual(result, int(10.0 * 96 / 2.54))
-
-    def test_cm_to_px_negative(self):
-        """Test conversion with negative values (should work mathematically)"""
-        result = qslgen.cm_to_px(-2.54, 96)
-        self.assertEqual(result, -96)
+        mock_tqdm.assert_called_once_with(desc="Preparing QSLs", unit="QSL")
+        self.assertEqual(
+            progress_bar.reset.call_args_list,
+            [call(total=1), call(total=1)],
+        )
+        self.assertEqual(
+            progress_bar.set_description.call_args_list,
+            [
+                call("Rendering single QSLs"),
+                call("QSL generation complete"),
+            ],
+        )
+        self.assertEqual(progress_bar.refresh.call_count, 3)
+        progress_bar.close.assert_called_once()
+        self.assertIsInstance(mock_generate.call_args.kwargs["progress_queue"], Queue)
 
     @patch("sys.argv", ["qsl_generator.py", ""])
     def test_no_args(self):
@@ -633,6 +646,41 @@ class TestGenerateQslImagePdf(unittest.TestCase):
         )
 
     @patch("qsl_generator.playwright_wrapper.QSLRenderer")
+    @patch("qsl_generator.pypdf.PdfWriter")
+    def test_progress_queue_reports_render_and_pdf_stages(
+        self,
+        mock_writer,
+        mock_renderer,
+    ):
+        renderer_instance = MagicMock()
+        mock_renderer.return_value.__enter__.return_value = renderer_instance
+        progress_queue = Queue()
+
+        qslgen.generate_qsl_image_pdf(
+            [self.qso],
+            _image=True,
+            _pdf=True,
+            _out_filename=os.path.join(self.tempdir, "cards.pdf"),
+            _out_folder=self.tempdir,
+            progress_queue=progress_queue,
+        )
+
+        updates = []
+        while not progress_queue.empty():
+            updates.append(progress_queue.get_nowait())
+
+        self.assertEqual(
+            [(update.stage, update.completed, update.total) for update in updates],
+            [
+                ("rendering", 0, 1),
+                ("rendering", 1, 1),
+                ("assembling_pdf", 0, 1),
+                ("assembling_pdf", 1, 1),
+                ("done", 1, 1),
+            ],
+        )
+
+    @patch("qsl_generator.playwright_wrapper.QSLRenderer")
     def test_empty_qso_list(self, mock_renderer):
 
         qslgen.generate_qsl_image_pdf(
@@ -759,9 +807,11 @@ def test_output_selection(
 
     qso_list = ["dummy_qso"]
 
-    with patch("sys.argv", argv), patch(
-        "qsl_generator.adif.qso_list_from_file", return_value=qso_list
-    ), patch("qsl_generator.generate_qsl_image_pdf") as mock_generate:
+    with (
+        patch("sys.argv", argv),
+        patch("qsl_generator.adif.qso_list_from_file", return_value=qso_list),
+        patch("qsl_generator.generate_qsl_image_pdf") as mock_generate,
+    ):
 
         qslgen.main()
 
@@ -780,9 +830,13 @@ def test_output_selection(
 )
 def test_cli_grouping_limit(options, expected_limit):
     qsos = qslgen.adif.qso_list_from_file("samples/multi_qso_same_station.adi")
-    with patch(
-        "sys.argv", ["qsl_generator.py", "samples/multi_qso_same_station.adi", *options]
-    ), patch("qsl_generator.generate_qsl_image_pdf") as generate:
+    with (
+        patch(
+            "sys.argv",
+            ["qsl_generator.py", "samples/multi_qso_same_station.adi", *options],
+        ),
+        patch("qsl_generator.generate_qsl_image_pdf") as generate,
+    ):
         qslgen.main()
     limit = generate.call_args.kwargs["_max_qso"]
     groups = list(qslgen.qso_list_generator(qsos, limit))

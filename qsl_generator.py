@@ -4,9 +4,14 @@
 # QSL generator
 # Generates a printable QSL starting from an HTML template with Jinja2
 
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from qso import QSO
+from queue import Empty, Queue
+from tqdm import tqdm
+from typing import Optional
 import adif
 import argparse
 import logging
@@ -54,9 +59,13 @@ IMG_OUT_BASE_NAME = "./qsl_%04d."
 PDF_OUTPUT = "./qsl.pdf"
 
 
-def cm_to_px(cm, dpi):  # TODO remove, unused
-    """Converts centimeters to pixels given a DPI value"""
-    return int(cm * dpi / 2.54)
+@dataclass(frozen=True)
+class ProgressUpdate:
+    """Class to provide progress updates for QSL generation to the caller"""
+
+    stage: str
+    completed: int
+    total: int
 
 
 def split_every(items, every):
@@ -125,9 +134,8 @@ def render_qsl(
     renderer: playwright_wrapper.QSLRenderer,
 ):
 
-    logging.info(f"\trender_qsl(_i={_i})")
+    logging.debug(f"\trender_qsl(_i={_i})")
 
-    # TODO would it be better to convert the template into uppercase ? Make dedicated function?
     # Converting all keys into lowercase
     qsos_data_lowercase = [
         {key.casefold(): value for key, value in _qso._d.items()}
@@ -246,8 +254,13 @@ def generate_qsl_image_pdf(
     _height: float = QSL_HEIGHT,
     _dry_run: bool = False,
     _max_qso: int = 3,
+    progress_queue: Optional[Queue] = None,
 ):
-    """Generates one QSL image per QSO, a PDF file with the QSLs contained in the given QSO list, or both."""
+    """Generate QSL output and optionally send progress updates to a thread-safe queue."""
+
+    def report_progress(stage: str, completed: int, total: int) -> None:
+        if progress_queue is not None:
+            progress_queue.put(ProgressUpdate(stage, completed, total))
 
     if _dry_run:
         logging.warning("Running app in dry-run mode")
@@ -258,10 +271,23 @@ def generate_qsl_image_pdf(
 
     assert isinstance(qso_list, list)
 
-    # TODO check QSO validity here and remove invalid ones
+    # NOTE the most Pythonic way would be a list comprehension: [ qso for qso in qso_list if qso.is_valid() ]
+    removed_qsos = 0  # Counter for debugging
+    for qso in qso_list[:]:
+        if not qso.is_valid():
+            logging.warning(
+                f"Invalid QSO found: {qso._d.get('CALL','<no_call>')} on {qso._d.get('QSO_DATE','<no_date>')}"
+            )
+            qso_list.remove(qso)
+            removed_qsos += 1
+    if removed_qsos > 0:
+        logging.warning(
+            f"Removed {removed_qsos} invalid QSOs from the list, which now contains {len(qso_list)} QSOs"
+        )
 
     if len(qso_list) == 0:
         logging.warning("No QSO found")
+        report_progress("done", 0, 0)
         return
 
     # Sort the list by timestamp
@@ -272,8 +298,6 @@ def generate_qsl_image_pdf(
     logging.debug(
         f"Passed output filename : {_out_filename}\nBase name without extension: {out_base_name}"
     )
-
-    # TODO add function to beautify QSO list (all elements' keys uppercase...)
 
     # Template file full path
     template_path = os.path.join(TEMPLATE_FOLDER, _template)
@@ -316,13 +340,17 @@ def generate_qsl_image_pdf(
     # Loading HTML template
     template = env.get_template(_template)
 
+    qso_batches = list(qso_list_generator(qso_list, _max_qso))
+    total_batches = len(qso_batches)
+    report_progress("rendering", 0, total_batches)
+
     with playwright_wrapper.QSLRenderer() as renderer:
 
         # Initialize counter
         _i = 0
 
         # Generate each QSL
-        for _qso_list in qso_list_generator(qso_list, _max_qso):
+        for _qso_list in qso_batches:
             if len(_qso_list) == 0:
                 logging.warning("Empty QSO list! Skipping to next one")
                 continue
@@ -344,15 +372,15 @@ def generate_qsl_image_pdf(
                 _i += 1
             else:
                 logging.warning("Didn't render anything")
+            report_progress("rendering", _i, total_batches)
 
     if _pdf:
+        report_progress("assembling_pdf", 0, 1)
         # Concatenate all files to create a single PDF to print
         out_name = os.path.join(_out_folder, out_base_name + ".pdf")
         if not _dry_run:
             writer = pypdf.PdfWriter()
-            for pdf in [
-                (PDF_TEMP_BASE_NAME % i) for i in range(_i)
-            ]:  # TODO check i against _i
+            for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(_i)]:
                 if os.path.isfile(pdf):
                     writer.append(pdf)
                 else:
@@ -363,10 +391,12 @@ def generate_qsl_image_pdf(
             writer.close()
         else:
             logging.info(f"Would create output file {out_name}")
+        report_progress("assembling_pdf", 1, 1)
 
     if _dry_run is False:
         # Delete temporary folder and its content
         rmtree_if_exists(TEMP_FOLDER)
+    report_progress("done", total_batches, total_batches)
 
 
 def setup_logging(level=logging.INFO):
@@ -551,19 +581,55 @@ def main():
         raise ValueError("--max-qso must be positive (1 to disable multi-QSO cards)")
 
     # All OK, generate QSLs
-    generate_qsl_image_pdf(
-        qso_list,
-        _image=args.image,
-        _pdf=args.pdf,
-        _template=args.template,
-        _out_filename=args.outfile,
-        _out_folder=args.output_dir,
-        _format=args.image_format,
-        _width=args.width,
-        _height=args.height,
-        _dry_run=args.dry_run,
-        _max_qso=args.max_qso,
-    )
+    with ThreadPoolExecutor() as executor:
+        progress_queue = Queue()  # To display progress
+
+        future = executor.submit(
+            generate_qsl_image_pdf,
+            qso_list,
+            _image=args.image,
+            _pdf=args.pdf,
+            _template=args.template,
+            _out_filename=args.outfile,
+            _out_folder=args.output_dir,
+            _format=args.image_format,
+            _width=args.width,
+            _height=args.height,
+            _dry_run=args.dry_run,
+            _max_qso=args.max_qso,
+            progress_queue=progress_queue,
+        )
+
+        # Display progress bar in the main thread
+        progress_bar = tqdm(desc="Preparing QSLs", unit="QSL")
+        # Current progress bar stage to track when to reset the bar and change its description
+        current_stage = None
+        stage_descriptions = {
+            "rendering": "Rendering single QSLs",
+            "assembling_pdf": "Assembling final PDF",
+            "done": "QSL generation complete",
+        }
+        while True:
+            try:
+                progress_update = progress_queue.get(timeout=0.1)
+            except Empty:
+                if future.done():
+                    break
+                continue
+
+            if progress_update.stage != current_stage:
+                progress_bar.reset(total=progress_update.total)
+                progress_bar.set_description(
+                    stage_descriptions.get(progress_update.stage, progress_update.stage)
+                )
+                current_stage = progress_update.stage
+            progress_bar.n = progress_update.completed
+            progress_bar.refresh()
+
+        try:
+            future.result()  # Forward exceptions from the worker to the main thread
+        finally:
+            progress_bar.close()
 
 
 if __name__ == "__main__":
