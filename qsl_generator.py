@@ -121,7 +121,7 @@ def render_qsl(
     renderer: playwright_wrapper.QSLRenderer,
 ):
 
-    logging.info(f"\trender_qsl(_i={_i})")
+    logging.debug(f"\trender_qsl(_i={_i})")
 
     # Converting all keys into lowercase
     qsos_data_lowercase = [
