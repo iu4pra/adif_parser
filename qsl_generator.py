@@ -254,7 +254,7 @@ def generate_qsl_image_pdf(
     assert isinstance(qso_list, list)
 
     removed_qsos = 0  # Counter for debugging
-    for qso in qso_list:
+    for qso in qso_list[:]:
         if not qso.is_valid():
             logging.warning(
                 f"Invalid QSO found: {qso._d.get('CALL','<no_call>')} on {qso._d.get('QSO_DATE','<no_date>')}"
