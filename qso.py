@@ -2,7 +2,7 @@
 
 # This software under the MIT License
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from random import choice, choices, randint
 import logging
 import os.path
