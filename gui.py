@@ -3,6 +3,8 @@
 # This software under the MIT License
 # GUI for QSL generator written in Tkinter
 
+from concurrent.futures import ThreadPoolExecutor
+
 import adif
 import qsl_generator
 
@@ -219,12 +221,18 @@ class App:
         if hasattr(self, "logfile") and os.path.isfile(self.logfile):
             qso_list = adif.qso_list_from_file(self.logfile)
 
-            qsl_generator.generate_qsl_image_pdf(
-                qso_list,
-                _template=self.template_file or qsl_generator.TEMPLATE_DEFAULT_FILE,
-                _image=(self.out_img.get() == 1),
-                _pdf=(self.out_pdf.get() == 1),
-            )
+            with ThreadPoolExecutor() as executor:
+                future = executor.submit(
+                    qsl_generator.generate_qsl_image_pdf,
+                    qso_list,
+                    _template=self.template_file or qsl_generator.TEMPLATE_DEFAULT_FILE,
+                    _image=(self.out_img.get() == 1),
+                    _pdf=(self.out_pdf.get() == 1)
+                )
+                try:
+                    future.result()  # Forward exceptions from the worker to the main thread
+                finally:
+                    self.logger.info("QSL generation completed")
         else:
             self.logger.error("No logfile chosen!")
 

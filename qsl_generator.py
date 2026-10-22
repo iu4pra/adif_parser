@@ -12,12 +12,12 @@ from qso import QSO
 from queue import Empty, Queue
 from tqdm import tqdm
 from typing import Optional
+
 import adif
 import argparse
 import logging
 import math
 import os
-import pickle
 import playwright_wrapper
 import pypdf
 import shutil
