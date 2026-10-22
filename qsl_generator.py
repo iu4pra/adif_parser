@@ -582,7 +582,8 @@ def main():
 
     # All OK, generate QSLs
     with ThreadPoolExecutor() as executor:
-        progress_queue = Queue()
+        progress_queue = Queue()  # To display progress
+
         future = executor.submit(
             generate_qsl_image_pdf,
             qso_list,
