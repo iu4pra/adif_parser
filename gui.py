@@ -227,7 +227,7 @@ class App:
                     qso_list,
                     _template=self.template_file or qsl_generator.TEMPLATE_DEFAULT_FILE,
                     _image=(self.out_img.get() == 1),
-                    _pdf=(self.out_pdf.get() == 1)
+                    _pdf=(self.out_pdf.get() == 1),
                 )
                 try:
                     future.result()  # Forward exceptions from the worker to the main thread
