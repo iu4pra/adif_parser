@@ -45,6 +45,7 @@ class RandomCallGenerator:
                 response = requests.get(
                     "https://www.supercheckpartial.com/downloads/MASTER.SCP",
                     allow_redirects=True,
+                    timeout=5, # 5 seconds
                 )
                 if response.status_code != 200:
                     logging.error("Failed to download SuperCheckPartial file")
