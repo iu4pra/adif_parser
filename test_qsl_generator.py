@@ -3,8 +3,6 @@
 # This software under the MIT License
 # Unit test for the qsl_generator module
 
-import adif
-import logging
 import os
 import pytest
 import qsl_generator as qslgen
@@ -17,7 +15,6 @@ from unittest.mock import call, patch, MagicMock
 
 
 class QSLGeneratorBasicTest(unittest.TestCase):
-
     def test_main_displays_progress_updates(self):
         progress_bar = MagicMock()
 
@@ -107,7 +104,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
         "sys.argv",
         ["qsl_generator.py", "samples/test_log.adi", "--width", "-1"],
     )
-    def test_invalid_width_raises(self, mock_parse):
+    def test_invalid_width_negative_raises(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
             qslgen.main()
@@ -141,7 +138,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
         "sys.argv",
         ["qsl_generator.py", "samples/test_log.adi", "--width", "0"],
     )
-    def test_invalid_width_raises(self, mock_parse):
+    def test_invalid_width_zero_raises(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
             qslgen.main()
@@ -548,7 +545,6 @@ class TestRmtreeIfExists(unittest.TestCase):
 
 
 class TestGenerateQslImagePdf(unittest.TestCase):
-
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
 
@@ -812,7 +808,6 @@ def test_output_selection(
         patch("qsl_generator.adif.qso_list_from_file", return_value=qso_list),
         patch("qsl_generator.generate_qsl_image_pdf") as mock_generate,
     ):
-
         qslgen.main()
 
         mock_generate.assert_called_once()
@@ -848,23 +843,22 @@ def test_cli_grouping_limit(options, expected_limit):
 
 
 class TestSplitEvery(unittest.TestCase):
-
     def test_with_every_multiple(self):
-        _split = [l for l in qslgen.split_every([i for i in range(15)], 5)]
+        _split = [line for line in qslgen.split_every([i for i in range(15)], 5)]
         self.assertEqual(
             _split, [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12, 13, 14]]
         )
 
     def test_with_every_non_multiple(self):
-        _split = [l for l in qslgen.split_every([i for i in range(13)], 5)]
+        _split = [line for line in qslgen.split_every([i for i in range(13)], 5)]
         self.assertEqual(_split, [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], [10, 11, 12]])
 
     def test_with_every_smaller(self):
-        _split = [l for l in qslgen.split_every([i for i in range(3)], 5)]
+        _split = [line for line in qslgen.split_every([i for i in range(3)], 5)]
         self.assertEqual(_split, [[0, 1, 2]])
 
     def test_with_every_one(self):
-        _split = [l for l in qslgen.split_every([i for i in range(3)], 1)]
+        _split = [line for line in qslgen.split_every([i for i in range(3)], 1)]
         self.assertEqual(_split, [[0], [1], [2]])
 
 

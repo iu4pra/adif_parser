@@ -20,9 +20,7 @@ It is responsible for:
 
 import logging
 import os.path
-import pickle
 import re
-from datetime import datetime, timedelta, timezone
 from qso import QSO, RandomCallGenerator
 
 
@@ -50,7 +48,7 @@ def check_field(t: dict):
         try:
             length = t.get("len")
             assert isinstance(length, int)
-        except AssertionError as e:
+        except AssertionError:
             raise AdifError(f"Invalid length value for field {field} ({length})")
 
         # Field length is now valid
@@ -123,7 +121,7 @@ def parse_adif_string(_adif: str):
             # Log discared data
             discared_string_pretty = _adif[cursor : match.start()].replace("\n", "\\n")
             logging.debug(
-                f"Discarded {match.start()-cursor} byte(s) ({discared_string_pretty})"
+                f"Discarded {match.start() - cursor} byte(s) ({discared_string_pretty})"
             )
 
             # Compile field from match
@@ -161,10 +159,10 @@ def parse_adif_string(_adif: str):
             cursor = match.end() + field["len"]
 
             logging.debug(
-                f"Next match search will go from position {cursor} to {len(_adif)-1}"
+                f"Next match search will go from position {cursor} to {len(_adif) - 1}"
             )
         else:
-            logging.debug(f"No match found starting from {cursor} to {len(_adif)-1}")
+            logging.debug(f"No match found starting from {cursor} to {len(_adif) - 1}")
             logging.info("No more matches, exiting")
             break
     return field_list
@@ -194,7 +192,7 @@ def remove_header(_adif_fields: list):
     # Remove header data
     del _adif_fields[0 : eoh_index + 1]
     logging.debug(
-        f"ADIF field list has {len(_adif_fields)} entries after stripping {eoh_index+1} header entries"
+        f"ADIF field list has {len(_adif_fields)} entries after stripping {eoh_index + 1} header entries"
     )
     return _adif_fields, eoh_index
 
@@ -265,5 +263,5 @@ def qso_list_random(n: int, _only_valid=True):
         return []
 
     with RandomCallGenerator() as callgen:
-        qso_list = [QSO.random(_only_valid) for i in range(n)]
+        qso_list = [QSO.random(_only_valid, callgen.generate_call) for i in range(n)]
     return qso_list

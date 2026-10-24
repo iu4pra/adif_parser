@@ -2,7 +2,7 @@
 
 # This software under the MIT License
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from random import choice, choices, randint
 import logging
 import os.path
@@ -45,6 +45,7 @@ class RandomCallGenerator:
                 response = requests.get(
                     "https://www.supercheckpartial.com/downloads/MASTER.SCP",
                     allow_redirects=True,
+                    timeout=5,  # 5 seconds
                 )
                 if response.status_code != 200:
                     logging.error("Failed to download SuperCheckPartial file")
@@ -66,12 +67,13 @@ class RandomCallGenerator:
             if os.path.isfile("MASTER.SCP"):
                 self.generate_call = self.generate_call_scp
             else:
-                self.generate_call = self.generate_call_random
+                self.generate_call = RandomCallGenerator.generate_call_random
 
     # To use the object in a with context
     def __enter__(self):
         if self.generate_call is None:
             self.load_generator()
+        return self  # This way
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type:
@@ -98,11 +100,12 @@ class RandomCallGenerator:
         logging.warning(f"Generated callsign {retval}")
         return retval
 
-    def generate_call_random(self):
+    @staticmethod
+    def generate_call_random():
         """Generates a random call sign without using SuperCheckPartial"""
         if randint(1, 100) <= 50:
-            return f"{choice('KNW')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=randint(1,3)))}"
-        return f"I{choice('KUWZ')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=3))}"
+            return f"{choice('KNW')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=randint(1, 3)))}"
+        return f"I{choice('KUWZ')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=3))}"
 
 
 class QSO:
@@ -192,7 +195,9 @@ class QSO:
         return QSO.timestamp(self._d.get("QSO_DATE_OFF"), self._d.get("TIME_OFF"))
 
     @staticmethod
-    def random(valid: bool = True):
+    def random(
+        valid: bool = True, _call_generator=RandomCallGenerator.generate_call_random
+    ):
         """Generate a random QSO object"""
         start_date = datetime(2020, 1, 1)
         end_date = datetime.today()
@@ -201,10 +206,10 @@ class QSO:
         )
 
         _dict = {
-            "STATION_CALLSIGN": f"I{choice('KUWZ')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=3))}",
+            "STATION_CALLSIGN": _call_generator(),
             "QSO_DATE": qso_date.strftime("%Y%m%d"),
             "TIME_ON": qso_date.strftime("%H%M"),
-            "CALL": f"{choice('KNW')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=randint(1,3)))}",
+            "CALL": _call_generator(),
             "BAND": choice(["80m", "40m", "20m", "15m", "10m"]),
             "MODE": choice(["SSB", "CW", "FT8"]),
         }

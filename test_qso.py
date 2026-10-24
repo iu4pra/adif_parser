@@ -13,7 +13,6 @@ from qso import QSO, RandomCallGenerator
 
 
 class QSOTest(unittest.TestCase):
-
     def test_blank_qso_not_valid(self):
         """A blank QSO must not be valid"""
         self.assertFalse(QSO({}).is_valid())
@@ -135,7 +134,6 @@ class QSOTest(unittest.TestCase):
 
 
 class QSOTimestampTest(unittest.TestCase):
-
     def test_timestamp(self):
         timestamp = QSO.timestamp("20230101", "123456")
 
@@ -211,7 +209,6 @@ class RandomQSOTest(unittest.TestCase):
 
 
 class RandomCallGeneratorTest(unittest.TestCase):
-
     @patch("qso.os.path.isfile", return_value=False)
     @patch("qso.requests.get")
     def test_download_failure_uses_random_generator(self, mock_get, mock_isfile):
@@ -221,9 +218,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
             callgen = RandomCallGenerator()
 
         self.assertIn("Failed to download SuperCheckPartial file", logs.output[0])
-        self.assertIs(
-            callgen.generate_call.__func__, RandomCallGenerator.generate_call_random
-        )
+        self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
     @patch("qso.os.path.isfile", return_value=False)
     @patch("qso.requests.get", side_effect=RequestException("offline"))
@@ -239,9 +234,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
                 for message in logs.output
             )
         )
-        self.assertIs(
-            callgen.generate_call.__func__, RandomCallGenerator.generate_call_random
-        )
+        self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
     @patch("qso.os.path.isfile", return_value=False)
     @patch("qso.requests.get", side_effect=OSError("network failure"))
@@ -252,9 +245,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
             callgen = RandomCallGenerator()
 
         self.assertIn("Error while checking/downloading", logs.output[0])
-        self.assertIs(
-            callgen.generate_call.__func__, RandomCallGenerator.generate_call_random
-        )
+        self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
     def test_exit_logs_context_exception(self):
         callgen = RandomCallGenerator()

@@ -12,12 +12,12 @@ from qso import QSO
 from queue import Empty, Queue
 from tqdm import tqdm
 from typing import Optional
+
 import adif
 import argparse
 import logging
 import math
 import os
-import pickle
 import playwright_wrapper
 import pypdf
 import shutil
@@ -163,7 +163,7 @@ def render_qsl(
     #    or {{ qso.band }}.
     # ---------------------------------------------------------------------
 
-    logging.info(f"\tCompiling QSL {_i+1} to {qsos_data_lowercase[0]['call']} ")
+    logging.info(f"\tCompiling QSL {_i + 1} to {qsos_data_lowercase[0]['call']} ")
 
     if _dry_run is False:
         # Write compiled template to file
@@ -185,7 +185,7 @@ def render_qsl(
             )
         else:
             logging.info(
-                f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, out_name,str(_width),str(_height)])}"
+                f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, out_name, str(_width), str(_height)])}"
             )
 
     # Convert template page to PDF
@@ -199,7 +199,7 @@ def render_qsl(
             )
         else:
             logging.info(
-                f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % _i), str(_width),str(_height)])}"
+                f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % _i), str(_width), str(_height)])}"
             )
 
     return True
@@ -276,7 +276,7 @@ def generate_qsl_image_pdf(
     for qso in qso_list[:]:
         if not qso.is_valid():
             logging.warning(
-                f"Invalid QSO found: {qso._d.get('CALL','<no_call>')} on {qso._d.get('QSO_DATE','<no_date>')}"
+                f"Invalid QSO found: {qso._d.get('CALL', '<no_call>')} on {qso._d.get('QSO_DATE', '<no_date>')}"
             )
             qso_list.remove(qso)
             removed_qsos += 1
@@ -345,7 +345,6 @@ def generate_qsl_image_pdf(
     report_progress("rendering", 0, total_batches)
 
     with playwright_wrapper.QSLRenderer() as renderer:
-
         # Initialize counter
         _i = 0
 
@@ -551,7 +550,7 @@ def main():
     if args.image and not args.pdf:
         args.pdf = False
 
-    if not args.pdf and args.pdf is not None and args.image == False:
+    if not args.pdf and args.pdf is not None and not args.image:
         raise ValueError("At least one output option must be specified")
 
     # File extension

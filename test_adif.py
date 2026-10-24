@@ -9,7 +9,6 @@ from qso import QSO
 
 
 class TestAdifParser(unittest.TestCase):
-
     def test_empty_string(self):
         """Empty strings return no fields"""
         self.assertEqual(adif.parse_adif_string(""), [])
@@ -172,17 +171,17 @@ class TestAdifParser(unittest.TestCase):
     def test_qso_bad_data_1(self):
         with self.assertRaises(adif.AdifError):
             fields = adif.parse_adif_string("<CALL:3>K1A <CALL:3>K2B<EOR>")
-            qso_list = adif.adif_to_qso_list(fields)
+            adif.adif_to_qso_list(fields)
 
     def test_qso_bad_data_2(self):
         with self.assertRaises(adif.AdifError):
             fields = adif.parse_adif_string("<CALL:3>K1A <EOR> <CALL:3>K2B")
-            qso_list = adif.adif_to_qso_list(fields)
+            adif.adif_to_qso_list(fields)
 
     def test_qso_bad_data_3(self):
         with self.assertRaises(adif.AdifError):
             fields = adif.parse_adif_string("<CALL:5>K1A <EOR><CALL:3>K2B<EOR>")
-            qso_list = adif.adif_to_qso_list(fields)
+            adif.adif_to_qso_list(fields)
 
     def test_qso_bad_data_4(self):
         fields = [
@@ -214,10 +213,9 @@ class TestAdifParser(unittest.TestCase):
 
 
 class TestRandomQSOListGenerator(unittest.TestCase):
-
     def test_n_negative(self):
         with self.assertRaises(ValueError):
-            qso_list = adif.qso_list_random(-1)
+            adif.qso_list_random(-1)
 
     def test_n_zero(self):
         qso_list = adif.qso_list_random(0)
