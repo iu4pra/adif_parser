@@ -256,7 +256,9 @@ What to expect:
 * Sender and recipient are drawn independently, so almost every contact ends up
   on its own card. This suits volume tests but does not exercise grouped cards;
   use `samples/multi_qso_same_station.adi` for that.
-* Optional fields and deliberately invalid contacts are not generated yet.
+* Optional fields and deliberately invalid contacts are not generated yet; this
+  and other improvements are tracked in
+  [#92](https://github.com/iu4pra/adif_parser/issues/92).
 
 ## Development and verification
 
@@ -337,6 +339,7 @@ Recent changes:
 Planned (open issues):
 
 * GUI improvements: progress bar, cancel button, and output folder selection ([#59](https://github.com/iu4pra/adif_parser/issues/59)).
+* Random test logs: optional fields, invalid contacts, and custom callsign pools ([#92](https://github.com/iu4pra/adif_parser/issues/92)).
 * Parallel card generation to speed up large logs ([#79](https://github.com/iu4pra/adif_parser/issues/79)).
 * HTML output ([#78](https://github.com/iu4pra/adif_parser/issues/78)).
 * Standalone executable and GitHub Releases ([#61](https://github.com/iu4pra/adif_parser/issues/61)).
