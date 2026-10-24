@@ -238,7 +238,6 @@ class App:
 
 
 if __name__ == "__main__":
-
     # Run the module
     root = tk.Tk()
     root.wm_title("QSL generator by IU4PRA")

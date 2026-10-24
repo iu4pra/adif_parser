@@ -1,4 +1,4 @@
-name: Format Python code with Black
+name: Format Python code with Ruff
 
 on:
   pull_request:
@@ -31,16 +31,16 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install black
-        run: pip install black
+      - name: Install Ruff
+        run: pip install ruff
 
       - name: Check formatting for fork pull requests
         if: github.event.pull_request.head.repo.full_name != github.repository
-        run: black --check --diff .
+        run: ruff format --check --diff .
 
-      - name: Run black formatter
+      - name: Run ruff formatter
         if: github.event.pull_request.head.repo.full_name == github.repository
-        run: black .
+        run: ruff format .
 
       - name: Commit and push changes if needed
         if: github.event.pull_request.head.repo.full_name == github.repository
@@ -51,9 +51,11 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           if [[ `git status --porcelain` ]]; then
             git add .
-            git commit -m "ci: format Python code with Black"
+            git commit -m "ci: format Python code with Ruff"
             git push origin "HEAD:$PR_HEAD_REF"
           else
             echo "No formatting changes to commit."
           fi
   
+      - name: Run ruff linter
+        run: ruff check --output-format=github .

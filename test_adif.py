@@ -9,7 +9,6 @@ from qso import QSO
 
 
 class TestAdifParser(unittest.TestCase):
-
     def test_empty_string(self):
         """Empty strings return no fields"""
         self.assertEqual(adif.parse_adif_string(""), [])
@@ -214,7 +213,6 @@ class TestAdifParser(unittest.TestCase):
 
 
 class TestRandomQSOListGenerator(unittest.TestCase):
-
     def test_n_negative(self):
         with self.assertRaises(ValueError):
             qso_list = adif.qso_list_random(-1)
