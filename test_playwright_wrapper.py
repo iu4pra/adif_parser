@@ -57,6 +57,8 @@ class QSLRendererContextManagerTest(unittest.TestCase):
         with renderer:
             playwright_obj = renderer._playwright
             browser_obj = renderer._browser
+            self.assertIsNotNone(playwright_obj)  # To avoid unused warning from linter
+            self.assertIsNotNone(browser_obj)  # To avoid unused warning from linter
 
         # After exit, these should be cleaned up (browser closed)
         # We can't directly test if they're None, but no exception should be raised
@@ -80,7 +82,7 @@ class QSLRendererContextManagerTest(unittest.TestCase):
         """Test that renderer handles exceptions gracefully"""
         # Mocking is handled by conftest.py fixture
         with self.assertRaises(ValueError):
-            with playwright_wrapper.QSLRenderer() as renderer:
+            with playwright_wrapper.QSLRenderer():
                 raise ValueError("Test exception")
 
 
