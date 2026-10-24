@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install ruff
+      - name: Install Ruff
         run: pip install ruff
 
       - name: Check formatting for fork pull requests
@@ -41,9 +41,6 @@ jobs:
       - name: Run ruff formatter
         if: github.event.pull_request.head.repo.full_name == github.repository
         run: ruff format .
-
-      - name: Run ruff linter
-        run: ruff check --output-format=github .
 
       - name: Commit and push changes if needed
         if: github.event.pull_request.head.repo.full_name == github.repository
@@ -60,3 +57,5 @@ jobs:
             echo "No formatting changes to commit."
           fi
   
+      - name: Run ruff linter
+        run: ruff check --output-format=github .
