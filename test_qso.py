@@ -132,6 +132,16 @@ class QSOTest(unittest.TestCase):
         self.assertIn("CALL", q._d)
         self.assertEqual(q._d["CALL"], "K1ABC")
 
+    def test_call_value_is_normalized_to_uppercase(self):
+        q = QSO({"CALL": "dl1abc"})
+
+        self.assertEqual(q._d["CALL"], "DL1ABC")
+
+    def test_station_callsign_value_is_normalized_to_uppercase(self):
+        q = QSO({"STATION_CALLSIGN": "iu4pra"})
+
+        self.assertEqual(q._d["STATION_CALLSIGN"], "IU4PRA")
+
 
 class QSOTimestampTest(unittest.TestCase):
     def test_timestamp(self):
