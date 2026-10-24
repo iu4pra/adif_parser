@@ -263,5 +263,5 @@ def qso_list_random(n: int, _only_valid=True):
         return []
 
     with RandomCallGenerator() as callgen:
-        qso_list = [QSO.random(_only_valid) for i in range(n)]
+        qso_list = [QSO.random(_only_valid, callgen.generate_call) for i in range(n)]
     return qso_list

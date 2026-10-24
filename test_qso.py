@@ -218,9 +218,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
             callgen = RandomCallGenerator()
 
         self.assertIn("Failed to download SuperCheckPartial file", logs.output[0])
-        self.assertIs(
-            callgen.generate_call.__func__, RandomCallGenerator.generate_call_random
-        )
+        self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
     @patch("qso.os.path.isfile", return_value=False)
     @patch("qso.requests.get", side_effect=RequestException("offline"))
@@ -236,9 +234,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
                 for message in logs.output
             )
         )
-        self.assertIs(
-            callgen.generate_call.__func__, RandomCallGenerator.generate_call_random
-        )
+        self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
     @patch("qso.os.path.isfile", return_value=False)
     @patch("qso.requests.get", side_effect=OSError("network failure"))
@@ -249,9 +245,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
             callgen = RandomCallGenerator()
 
         self.assertIn("Error while checking/downloading", logs.output[0])
-        self.assertIs(
-            callgen.generate_call.__func__, RandomCallGenerator.generate_call_random
-        )
+        self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
     def test_exit_logs_context_exception(self):
         callgen = RandomCallGenerator()
