@@ -123,7 +123,7 @@ def parse_adif_string(_adif: str):
             # Log discared data
             discared_string_pretty = _adif[cursor : match.start()].replace("\n", "\\n")
             logging.debug(
-                f"Discarded {match.start()-cursor} byte(s) ({discared_string_pretty})"
+                f"Discarded {match.start() - cursor} byte(s) ({discared_string_pretty})"
             )
 
             # Compile field from match
@@ -161,10 +161,10 @@ def parse_adif_string(_adif: str):
             cursor = match.end() + field["len"]
 
             logging.debug(
-                f"Next match search will go from position {cursor} to {len(_adif)-1}"
+                f"Next match search will go from position {cursor} to {len(_adif) - 1}"
             )
         else:
-            logging.debug(f"No match found starting from {cursor} to {len(_adif)-1}")
+            logging.debug(f"No match found starting from {cursor} to {len(_adif) - 1}")
             logging.info("No more matches, exiting")
             break
     return field_list
@@ -194,7 +194,7 @@ def remove_header(_adif_fields: list):
     # Remove header data
     del _adif_fields[0 : eoh_index + 1]
     logging.debug(
-        f"ADIF field list has {len(_adif_fields)} entries after stripping {eoh_index+1} header entries"
+        f"ADIF field list has {len(_adif_fields)} entries after stripping {eoh_index + 1} header entries"
     )
     return _adif_fields, eoh_index
 

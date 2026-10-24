@@ -45,7 +45,7 @@ class RandomCallGenerator:
                 response = requests.get(
                     "https://www.supercheckpartial.com/downloads/MASTER.SCP",
                     allow_redirects=True,
-                    timeout=5, # 5 seconds
+                    timeout=5,  # 5 seconds
                 )
                 if response.status_code != 200:
                     logging.error("Failed to download SuperCheckPartial file")
@@ -102,8 +102,8 @@ class RandomCallGenerator:
     def generate_call_random(self):
         """Generates a random call sign without using SuperCheckPartial"""
         if randint(1, 100) <= 50:
-            return f"{choice('KNW')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=randint(1,3)))}"
-        return f"I{choice('KUWZ')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=3))}"
+            return f"{choice('KNW')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=randint(1, 3)))}"
+        return f"I{choice('KUWZ')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=3))}"
 
 
 class QSO:
@@ -202,10 +202,10 @@ class QSO:
         )
 
         _dict = {
-            "STATION_CALLSIGN": f"I{choice('KUWZ')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=3))}",
+            "STATION_CALLSIGN": f"I{choice('KUWZ')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=3))}",
             "QSO_DATE": qso_date.strftime("%Y%m%d"),
             "TIME_ON": qso_date.strftime("%H%M"),
-            "CALL": f"{choice('KNW')}{randint(0,9)}{''.join(choices(string.ascii_uppercase, k=randint(1,3)))}",
+            "CALL": f"{choice('KNW')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=randint(1, 3)))}",
             "BAND": choice(["80m", "40m", "20m", "15m", "10m"]),
             "MODE": choice(["SSB", "CW", "FT8"]),
         }

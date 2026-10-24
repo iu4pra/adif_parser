@@ -13,7 +13,6 @@ from qso import QSO, RandomCallGenerator
 
 
 class QSOTest(unittest.TestCase):
-
     def test_blank_qso_not_valid(self):
         """A blank QSO must not be valid"""
         self.assertFalse(QSO({}).is_valid())
@@ -135,7 +134,6 @@ class QSOTest(unittest.TestCase):
 
 
 class QSOTimestampTest(unittest.TestCase):
-
     def test_timestamp(self):
         timestamp = QSO.timestamp("20230101", "123456")
 
@@ -211,7 +209,6 @@ class RandomQSOTest(unittest.TestCase):
 
 
 class RandomCallGeneratorTest(unittest.TestCase):
-
     @patch("qso.os.path.isfile", return_value=False)
     @patch("qso.requests.get")
     def test_download_failure_uses_random_generator(self, mock_get, mock_isfile):
