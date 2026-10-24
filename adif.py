@@ -20,9 +20,7 @@ It is responsible for:
 
 import logging
 import os.path
-import pickle
 import re
-from datetime import datetime, timedelta, timezone
 from qso import QSO, RandomCallGenerator
 
 
@@ -50,7 +48,7 @@ def check_field(t: dict):
         try:
             length = t.get("len")
             assert isinstance(length, int)
-        except AssertionError as e:
+        except AssertionError:
             raise AdifError(f"Invalid length value for field {field} ({length})")
 
         # Field length is now valid

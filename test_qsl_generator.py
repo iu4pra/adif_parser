@@ -3,8 +3,6 @@
 # This software under the MIT License
 # Unit test for the qsl_generator module
 
-import adif
-import logging
 import os
 import pytest
 import qsl_generator as qslgen

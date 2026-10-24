@@ -4,7 +4,6 @@
 # Simple Playwright wrapper
 
 import logging
-import os.path
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 

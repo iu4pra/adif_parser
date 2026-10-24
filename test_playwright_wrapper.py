@@ -7,7 +7,6 @@ import logging
 import os
 import tempfile
 import unittest
-from pathlib import Path
 
 import playwright_wrapper
 from playwright_wrapper import PLAYWRIGHT_SCREENSHOT_DPI
