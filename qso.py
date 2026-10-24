@@ -80,7 +80,7 @@ class RandomCallGenerator:
     def __enter__(self):
         if self.generate_call is None:
             self.load_generator()
-        return self # This way "with RandomCallGenerator as callgen:" works!
+        return self  # This way "with RandomCallGenerator as callgen:" works!
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type:
@@ -113,6 +113,7 @@ class RandomCallGenerator:
         if randint(1, 100) <= 50:
             return f"{choice('KNW')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=randint(1, 3)))}"
         return f"I{choice('KUWZ')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=3))}"
+
 
 class QSO:
     """Class representing a single QSO record"""
@@ -204,7 +205,9 @@ class QSO:
         return QSO.timestamp(self._d.get("QSO_DATE_OFF"), self._d.get("TIME_OFF"))
 
     @staticmethod
-    def random(valid: bool = True, _call_generator = RandomCallGenerator.generate_call_random):
+    def random(
+        valid: bool = True, _call_generator=RandomCallGenerator.generate_call_random
+    ):
         """Generate a random QSO object"""
         start_date = datetime(2020, 1, 1)
         end_date = datetime.today()

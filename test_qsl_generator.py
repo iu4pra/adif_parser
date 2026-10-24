@@ -856,8 +856,7 @@ def test_grouping_preserves_qsos_with_mixed_case_callsigns(filename):
     assert len(groups) == 2
     assert sum(map(len, groups)) == len([qso for qso in qsos if qso.is_valid()])
     assert {
-        group[0]._d["CALL"]: [qso._d["QSO_DATE"] for qso in group]
-        for group in groups
+        group[0]._d["CALL"]: [qso._d["QSO_DATE"] for qso in group] for group in groups
     } == {
         "DL1ABC": ["20260912", "20260913"],
         "K1XYZ": ["20260912"],
