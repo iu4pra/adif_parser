@@ -1,0 +1,20 @@
+[tool.ruff]
+# Same line length as Black's default, so existing wrapping is preserved.
+line-length = 88
+# Matches the oldest Python version in the CI matrix.
+target-version = "py39"
+
+[tool.ruff.format]
+# Black-compatible defaults, stated explicitly.
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+skip-magic-trailing-comma = false
+docstring-code-format = false
+
+[tool.ruff.lint]
+# PEP 8 checks: pycodestyle errors (E) and warnings (W), plus pyflakes (F).
+# Further rule sets (B, I, UP, N) can be enabled gradually.
+select = ["E", "W", "F"]
+# E501 (line too long) is left to the formatter, as with Black.
+ignore = ["E501"]
