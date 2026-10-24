@@ -21,6 +21,13 @@ _ESSENTIAL_KEYS = frozenset(
     ]
 )
 
+_UPPERCASE_FIELDS = frozenset(
+    [
+        "STATION_CALLSIGN",
+        "CALL",
+    ]
+)
+
 
 class RandomCallGenerator:
     """Helper class to generate random callsigns"""
@@ -124,7 +131,10 @@ class QSO:
                 logging.warning(f"Skipping key {key} with invalid value")
             else:
                 # All keys are put uppercase and values are converted to string
-                self._d[key.upper()] = str(value)
+                if key.upper() in _UPPERCASE_FIELDS:
+                    self._d[key.upper()] = str(value.upper())
+                else:
+                    self._d[key.upper()] = str(value)
 
     def __str__(self):
         """String representation of the object"""
