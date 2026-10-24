@@ -202,7 +202,7 @@ class App:
                 _result = False
                 self.logger.error(e)
             finally:
-                if _result == True:
+                if _result:
                     self.logger.info("Validation passed!")
                 else:
                     self.logger.error("Validation failed!")

@@ -550,7 +550,7 @@ def main():
     if args.image and not args.pdf:
         args.pdf = False
 
-    if not args.pdf and args.pdf is not None and args.image == False:
+    if not args.pdf and args.pdf is not None and not args.image:
         raise ValueError("At least one output option must be specified")
 
     # File extension

@@ -104,7 +104,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
         "sys.argv",
         ["qsl_generator.py", "samples/test_log.adi", "--width", "-1"],
     )
-    def test_invalid_width_raises(self, mock_parse):
+    def test_invalid_width_negative_raises(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
             qslgen.main()
@@ -138,7 +138,7 @@ class QSLGeneratorValidationTest(unittest.TestCase):
         "sys.argv",
         ["qsl_generator.py", "samples/test_log.adi", "--width", "0"],
     )
-    def test_invalid_width_raises(self, mock_parse):
+    def test_invalid_width_zero_raises(self, mock_parse):
         mock_parse.return_value = []
         with self.assertRaises(ValueError):
             qslgen.main()
