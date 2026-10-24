@@ -127,9 +127,10 @@ four-digit times are padded with zero seconds. Dates and times must be parseable
 
 Contacts are then grouped by both `STATION_CALLSIGN` (sender) and `CALL`
 (recipient), with at most **three QSOs per card by default**. Different bands and modes for
-the same callsign pair stay in the same group; `CALL/P` remains distinct from
-`CALL`. Within each group, contacts appear chronologically. The order of separate
-station groups is not guaranteed.
+the same callsign pair stay in the same group. Callsign matching is case-insensitive
+(`dl1abc` and `DL1ABC` are treated as the same callsign); `CALL/P` remains distinct
+from `CALL`. Within each group, contacts appear chronologically. The order of
+separate station groups is not guaranteed.
 
 Grouping is automatic in both GUI and CLI. The CLI supports `--max-qso N` to
 change the maximum contacts per card; `--max-qso 1` produces one contact per card
