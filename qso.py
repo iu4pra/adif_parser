@@ -135,7 +135,7 @@ class QSO:
             else:
                 # All keys are put uppercase and values are converted to string
                 if key.upper() in _UPPERCASE_FIELDS:
-                    self._d[key.upper()] = str(value.upper())
+                    self._d[key.upper()] = str(value).upper()
                 else:
                     self._d[key.upper()] = str(value)
 
