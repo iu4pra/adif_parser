@@ -153,7 +153,7 @@ def parse_adif_string(_adif: str):
             field_list.append(field)
 
             # Field data check
-            logging.debug(f"{field} \t Check: {check_field(field)}")
+            logging.debug(f"{field} \t Check: {check_field(field)}") # TODO actually use check_field somewhere else
 
             # Update cursor position
             cursor = match.end() + field["len"]
