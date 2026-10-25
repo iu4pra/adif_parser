@@ -235,8 +235,9 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=False):
 
             logging.debug(f"Creating a QSO object based on {_dict}")
             _new_qso = QSO(_dict)
-            logging.debug(f"Valid QSO: {_new_qso.is_valid()}")
-            if not _only_valid or _new_qso.is_valid():
+            _valid = _new_qso.is_valid() # To avoid multiple calls to is_valid()
+            logging.debug(f"Valid QSO: {_valid}")
+            if not _only_valid or _valid:
                 _qso_list.append(_new_qso)
             else:
                 logging.warning(f"Invalid QSO object will be ignored: {_dict}")
