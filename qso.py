@@ -172,7 +172,7 @@ class QSO:
                     return False
         for key in _UPPERCASE_FIELDS:
               if self._d.get(key, None):
-                if self._d.get(key).upper() != self._d.get(ke):
+                if self._d.get(key).upper() != self._d.get(key):
                     logging.warning(f"Bad mandatory uppercase field {key}, invalid QSO: {self._d.get(key)}")
                     return False
         return True
