@@ -21,10 +21,12 @@ _ESSENTIAL_KEYS = frozenset(
     ]
 )
 
+# List of QSO keys that will be automatically converted to uppercase upon QSO creation
 _UPPERCASE_FIELDS = frozenset(
     [
         "STATION_CALLSIGN",
         "CALL",
+        "MODE",
     ]
 )
 
