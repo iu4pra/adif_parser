@@ -219,7 +219,7 @@ class QSO:
         start_date = datetime(2020, 1, 1)
         end_date = datetime.today()
         qso_date = start_date + timedelta(
-            days=randint(0, (end_date - start_date).days), minutes=randint(0, 1399)
+            days=randint(0, (end_date - start_date).days), minutes=randint(0, 1439)
         )
 
         _dict = {
