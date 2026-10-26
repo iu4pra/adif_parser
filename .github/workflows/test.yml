@@ -23,12 +23,11 @@ permissions:
 
 jobs:
   unit_testing:
-    if: |
-      github.event.pull_request.draft == false &&
-      (
-        github.base_ref != 'dev' ||
-        github.event.pull_request.head.repo.full_name != github.repository
-      )
+    # Only skip draft PRs. The previous condition also skipped PRs that target
+    # `dev` from branches of this repository, so the tests never ran on the
+    # normal `feature -> dev` flow. A required check that is skipped like that
+    # either never reports or gives a false green, so the condition was removed.
+    if: github.event.pull_request.draft == false
 
     strategy:
       matrix:
@@ -76,3 +75,22 @@ jobs:
             thresholdNew: 0.85
             thresholdModified: 0.75
             token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Single, stable status check for branch protection.
+  # `unit_testing` is a matrix job: its checks are named
+  # "unit_testing (<os>, <python>)", and when the job is skipped no such checks
+  # exist, so requiring them directly would leave the PR stuck in "Expected".
+  # This job always runs and reports one fixed name, `tests-ok`, which is the
+  # only test-related check the "CI must pass" ruleset has to require.
+  tests-ok:
+    name: tests-ok
+    needs: unit_testing
+    # always(): run even when `unit_testing` fails, otherwise this job would be
+    # skipped and a skipped required check is reported as passing.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      # Skipped is accepted (draft PRs); failure and cancellation are not.
+      - name: Fail if any test job did not succeed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
