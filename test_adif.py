@@ -232,11 +232,11 @@ class TestRandomQSOListGenerator(unittest.TestCase):
             self.assertEqual(qso.is_valid(), True)
 
     def test_size_correct_big_array(self):
-        qso_list = adif.qso_list_random(500)
-        self.assertEqual(len(qso_list), 500)
+        qso_list = adif.qso_list_random(5000)
+        self.assertEqual(len(qso_list), 5000)
 
     def test_all_valid_big_array(self):
-        qso_list = adif.qso_list_random(500)
+        qso_list = adif.qso_list_random(5000)
         for qso in qso_list:
             assert isinstance(qso, QSO)
             self.assertEqual(qso.is_valid(), True)

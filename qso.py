@@ -53,24 +53,29 @@ class RandomCallGenerator:
                         cls.scp_fail = True
                         return False
                     else:
+                        logging.info("SuperCheckPartial file downloaded successfully!")
                         with open("MASTER.SCP", "wb") as f:
                             f.write(response.content)
                         # TODO: Add file validation (maybe checksum?)
+                else:
+                    logging.debug("SuperCheckPartial file present locally, no download needed")
 
-                if os.path.isfile("MASTER.SCP"):
+                if len(cls.scp_calls) == 0 and os.path.isfile("MASTER.SCP"):
+                        logging.info(f"""SCP file size: {os.path.getsize("MASTER.SCP")}""")
                         with open("MASTER.SCP", "rt", encoding="utf-8") as f:
                             cls.scp_calls = [
                                 _line.strip()
                                 for _line in f
                                 if not _line.startswith(("#", "!"))
                             ]
-                        logging.warning(len(cls.scp_calls))
-                        logging.info("SuperCheckPartial file downloaded successfully!")
-                        cls.scp_fail = False
-                        return True
+
+                if len(cls.scp_calls) > 0:
+                    cls.scp_fail = False
+                    return True
                 else:
                     cls.scp_fail = True
                     return False
+
             except requests.exceptions.RequestException as e:
                 logging.warning(
                     f"HTTP Error while downloading SuperCheckPartial file:\n\t{e}"
@@ -82,7 +87,7 @@ class RandomCallGenerator:
                 cls.scp_fail = True
                 return False
         else:
-            logging.warning("SCP file download already failed, skipping download")
+            # Method already failed
             return False
 
     def __init__(self):
@@ -94,7 +99,7 @@ class RandomCallGenerator:
     def load_generator(self):
         """Attempts to load a callsign generator"""
         # Check if SuperCheckPartial generation is possible
-        if not self.fetch_scp():
+        if not RandomCallGenerator.fetch_scp():
             logging.warning(
                 "Failed to download SuperCheckPartial file, using random callsign generator"
             )
@@ -119,9 +124,6 @@ class RandomCallGenerator:
         # Implementation for generating call signs using SuperCheckPartial file
         if not cls.fetch_scp():
             return None
-        
-        logging.warning(f"""SCP file size: {os.path.getsize("MASTER.SCP")}""")
-
         return choice(cls.scp_calls)
 
     @staticmethod
@@ -251,5 +253,6 @@ class QSO:
         return _qso
 
 if __name__ == "__main__":
+    logging.getLogger().setLevel(logging.INFO)
     callgen = RandomCallGenerator()
-    print(RandomCallGenerator.generate_call_scp())
+    print("CALLSIGN:",RandomCallGenerator.generate_call_scp())
