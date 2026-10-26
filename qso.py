@@ -35,28 +35,42 @@ class RandomCallGenerator:
     """Helper class to generate random callsigns"""
 
     scp_fail = False  # Class-level flag to indicate if SCP file download failed
+    scp_calls = []  # SuperCheckPartial calls list
 
     @classmethod
     def fetch_scp(cls):
         """Fetches the SuperCheckPartial file from the official source"""
         if not cls.scp_fail:
             try:
-                response = requests.get(
-                    "https://www.supercheckpartial.com/downloads/MASTER.SCP",
-                    allow_redirects=True,
-                    timeout=5,  # 5 seconds
-                )
-                if response.status_code != 200:
-                    logging.error("Failed to download SuperCheckPartial file")
+                if not os.path.isfile("MASTER.SCP"):
+                    response = requests.get(
+                        "https://www.supercheckpartial.com/downloads/MASTER.SCP",
+                        allow_redirects=True,
+                        timeout=5,  # 5 seconds
+                    )
+                    if response.status_code != 200:
+                        logging.error("Failed to download SuperCheckPartial file")
+                        cls.scp_fail = True
+                        return False
+                    else:
+                        with open("MASTER.SCP", "wb") as f:
+                            f.write(response.content)
+                        # TODO: Add file validation (maybe checksum?)
+
+                if os.path.isfile("MASTER.SCP"):
+                        with open("MASTER.SCP", "rt", encoding="utf-8") as f:
+                            cls.scp_calls = [
+                                _line.strip()
+                                for _line in f
+                                if not _line.startswith(("#", "!"))
+                            ]
+                        logging.warning(len(cls.scp_calls))
+                        logging.info("SuperCheckPartial file downloaded successfully!")
+                        cls.scp_fail = False
+                        return True
+                else:
                     cls.scp_fail = True
                     return False
-                else:
-                    with open("MASTER.SCP", "wb") as f:
-                        f.write(response.content)
-                    # TODO: Add file validation (maybe checksum?)
-                    logging.info("SuperCheckPartial file downloaded successfully!")
-                    cls.scp_fail = False
-                    return True
             except requests.exceptions.RequestException as e:
                 logging.warning(
                     f"HTTP Error while downloading SuperCheckPartial file:\n\t{e}"
@@ -79,22 +93,15 @@ class RandomCallGenerator:
 
     def load_generator(self):
         """Attempts to load a callsign generator"""
-        # Check if SuperCheckPartial file exists locally
-        if os.path.isfile("MASTER.SCP"):
-            logging.info("SuperCheckPartial file found locally")
-            self.generate_call = self.generate_call_scp
-        else:
-            logging.info(
-                "SuperCheckPartial file not found locally, attempting to download"
+        # Check if SuperCheckPartial generation is possible
+        if not self.fetch_scp():
+            logging.warning(
+                "Failed to download SuperCheckPartial file, using random callsign generator"
             )
-            if not self.fetch_scp():
-                logging.warning(
-                    "Failed to download SuperCheckPartial file, using random callsign generator"
-                )
-                self.generate_call = RandomCallGenerator.generate_call_random
-                return
-            else:
-                self.generate_call = self.generate_call_scp
+            self.generate_call = RandomCallGenerator.generate_call_random
+            return
+        else:
+            self.generate_call = self.generate_call_scp
 
     # To use the object in a with context
     def __enter__(self):
@@ -106,26 +113,16 @@ class RandomCallGenerator:
         if exc_type:
             logging.error(f"Error: {exc_type}: {exc_val}")
 
-    def generate_call_scp(self):
+    @classmethod
+    def generate_call_scp(cls):
         """Generates a call sign using SuperCheckPartial"""
         # Implementation for generating call signs using SuperCheckPartial file
+        if not cls.fetch_scp():
+            return None
+        
         logging.warning(f"""SCP file size: {os.path.getsize("MASTER.SCP")}""")
 
-        i = 1
-        with open("MASTER.SCP", "rt", encoding="utf-8") as f:
-            for _line in f:  # More memory-efficient than for _line in f.readlines()
-                if not _line.startswith(("#", "!")):
-                    if i == 1:
-                        retval = _line.strip()
-                    else:
-                        if randint(1, i) == 1:
-                            retval = _line.strip()
-                    i += 1
-                else:
-                    logging.info(f"Skipping line: {_line.strip()}")
-
-        logging.warning(f"Generated callsign {retval}")
-        return retval
+        return choice(cls.scp_calls)
 
     @staticmethod
     def generate_call_random():
@@ -252,3 +249,7 @@ class QSO:
         }
         _qso = QSO(_dict)
         return _qso
+
+if __name__ == "__main__":
+    callgen = RandomCallGenerator()
+    print(RandomCallGenerator.generate_call_scp())
