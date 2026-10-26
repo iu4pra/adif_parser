@@ -230,6 +230,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
         self.assertIn("Failed to download SuperCheckPartial file", logs.output[0])
         self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
+    @patch.object(RandomCallGenerator, "scp_fail", False)
     @patch("qso.os.path.isfile", return_value=False)
     @patch("qso.requests.get", side_effect=RequestException("offline"))
     def test_download_request_exception_uses_random_generator(
@@ -239,13 +240,11 @@ class RandomCallGeneratorTest(unittest.TestCase):
             callgen = RandomCallGenerator()
 
         self.assertTrue(
-            any(
-                "HTTP Error while checking/downloading" in message
-                for message in logs.output
-            )
+            any("HTTP Error while downloading" in message for message in logs.output)
         )
         self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
+    @patch.object(RandomCallGenerator, "scp_fail", False)
     @patch("qso.os.path.isfile", return_value=False)
     @patch("qso.requests.get", side_effect=OSError("network failure"))
     def test_download_unexpected_exception_uses_random_generator(
@@ -254,7 +253,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
         with self.assertLogs(level="ERROR") as logs:
             callgen = RandomCallGenerator()
 
-        self.assertIn("Error while checking/downloading", logs.output[0])
+        self.assertIn("Error while downloading", logs.output[0])
         self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
     def test_exit_logs_context_exception(self):
