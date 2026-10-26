@@ -21,9 +21,74 @@ _ESSENTIAL_KEYS = frozenset(
     ]
 )
 
+# List of QSO keys that will be automatically converted to uppercase upon QSO creation
+_UPPERCASE_FIELDS = frozenset(
+    [
+        "STATION_CALLSIGN",
+        "CALL",
+        "MODE",
+    ]
+)
+
 
 class RandomCallGenerator:
     """Helper class to generate random callsigns"""
+
+    scp_fail = False  # Class-level flag to indicate if SCP file download failed
+    scp_calls = []  # SuperCheckPartial calls list
+
+    @classmethod
+    def fetch_scp(cls):
+        """Fetches the SuperCheckPartial file from the official source"""
+        if not cls.scp_fail:
+            try:
+                if not os.path.isfile("MASTER.SCP"):
+                    response = requests.get(
+                        "https://www.supercheckpartial.com/downloads/MASTER.SCP",
+                        allow_redirects=True,
+                        timeout=5,  # 5 seconds
+                    )
+                    if response.status_code != 200:
+                        logging.error("Failed to download SuperCheckPartial file")
+                        cls.scp_fail = True
+                        return False
+                    else:
+                        logging.info("SuperCheckPartial file downloaded successfully!")
+                        with open("MASTER.SCP", "wb") as f:
+                            f.write(response.content)
+                        # TODO: Add file validation (maybe checksum?)
+                else:
+                    logging.debug("SuperCheckPartial file present locally, no download needed")
+
+                if len(cls.scp_calls) == 0 and os.path.isfile("MASTER.SCP"):
+                        logging.info(f"""SCP file size: {os.path.getsize("MASTER.SCP")}""")
+                        with open("MASTER.SCP", "rt", encoding="utf-8") as f:
+                            cls.scp_calls = [
+                                _line.strip()
+                                for _line in f
+                                if not _line.startswith(("#", "!"))
+                            ]
+
+                if len(cls.scp_calls) > 0:
+                    cls.scp_fail = False
+                    return True
+                else:
+                    cls.scp_fail = True
+                    return False
+
+            except requests.exceptions.RequestException as e:
+                logging.warning(
+                    f"HTTP Error while downloading SuperCheckPartial file:\n\t{e}"
+                )
+                cls.scp_fail = True
+                return False
+            except Exception as e:
+                logging.error(f"Error while downloading SuperCheckPartial file:\n\t{e}")
+                cls.scp_fail = True
+                return False
+        else:
+            # Method already failed
+            return False
 
     def __init__(self):
         """Class constructor"""
@@ -33,72 +98,33 @@ class RandomCallGenerator:
 
     def load_generator(self):
         """Attempts to load a callsign generator"""
-        try:
-            # Check if SuperCheckPartial file exists locally
-            if os.path.isfile("MASTER.SCP"):
-                logging.info("SuperCheckPartial file found locally")
-            else:
-                logging.warning(
-                    "SuperCheckPartial file not found locally, attempting download..."
-                )
-                # Try to download it if not present
-                response = requests.get(
-                    "https://www.supercheckpartial.com/downloads/MASTER.SCP",
-                    allow_redirects=True,
-                    timeout=5,  # 5 seconds
-                )
-                if response.status_code != 200:
-                    logging.error("Failed to download SuperCheckPartial file")
-                    # Download failed, generate random callsigns instead
-                else:
-                    # Download successfull, save the file locally fot future use
-                    with open("MASTER.SCP", "wb") as f:
-                        f.write(response.content)
-                    logging.info("SuperCheckPartial file downloaded successfully!")
-        except requests.exceptions.RequestException as e:
+        # Check if SuperCheckPartial generation is possible
+        if not RandomCallGenerator.fetch_scp():
             logging.warning(
-                f"HTTP Error while checking/downloading SuperCheckPartial file:\n\t{e}"
+                "Failed to download SuperCheckPartial file, using random callsign generator"
             )
-        except Exception as e:
-            logging.error(
-                f"Error while checking/downloading SuperCheckPartial file:\n\t{e}"
-            )
-        finally:
-            if os.path.isfile("MASTER.SCP"):
-                self.generate_call = self.generate_call_scp
-            else:
-                self.generate_call = RandomCallGenerator.generate_call_random
+            self.generate_call = RandomCallGenerator.generate_call_random
+            return
+        else:
+            self.generate_call = self.generate_call_scp
 
     # To use the object in a with context
     def __enter__(self):
         if self.generate_call is None:
             self.load_generator()
-        return self  # This way
+        return self  # This way "with RandomCallGenerator as callgen:" works!
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type:
             logging.error(f"Error: {exc_type}: {exc_val}")
 
-    def generate_call_scp(self):
+    @classmethod
+    def generate_call_scp(cls):
         """Generates a call sign using SuperCheckPartial"""
         # Implementation for generating call signs using SuperCheckPartial file
-        logging.warning(f"""SCP file size: {os.path.getsize("MASTER.SCP")}""")
-
-        i = 1
-        with open("MASTER.SCP", "rt", encoding="utf-8") as f:
-            for _line in f:  # More memory-efficient than for _line in f.readlines()
-                if not _line.startswith(("#", "!")):
-                    if i == 1:
-                        retval = _line.strip()
-                    else:
-                        if randint(1, i) == 1:
-                            retval = _line.strip()
-                    i += 1
-                else:
-                    logging.info(f"Skipping line: {_line.strip()}")
-
-        logging.warning(f"Generated callsign {retval}")
-        return retval
+        if not cls.fetch_scp():
+            return None
+        return choice(cls.scp_calls)
 
     @staticmethod
     def generate_call_random():
@@ -125,7 +151,10 @@ class QSO:
                 logging.warning(f"Skipping key {key} with invalid value")
             else:
                 # All keys are put uppercase and values are converted to string
-                self._d[key.upper()] = str(value)
+                if key.upper() in _UPPERCASE_FIELDS:
+                    self._d[key.upper()] = str(value).upper()
+                else:
+                    self._d[key.upper()] = str(value)
 
     def __str__(self):
         """String representation of the object"""
@@ -157,6 +186,13 @@ class QSO:
             else:
                 if key not in self._d.keys() or not self._d.get(key):
                     logging.warning(f"Essential field {key} not found, invalid QSO")
+                    return False
+        for key in _UPPERCASE_FIELDS:
+            if self._d.get(key, None):
+                if self._d.get(key).upper() != self._d.get(key):
+                    logging.warning(
+                        f"Bad mandatory uppercase field {key}, invalid QSO: {self._d.get(key)}"
+                    )
                     return False
         return True
 
@@ -202,7 +238,7 @@ class QSO:
         start_date = datetime(2020, 1, 1)
         end_date = datetime.today()
         qso_date = start_date + timedelta(
-            days=randint(0, (end_date - start_date).days), minutes=randint(0, 1399)
+            days=randint(0, (end_date - start_date).days), minutes=randint(0, 1439)
         )
 
         _dict = {
@@ -215,3 +251,8 @@ class QSO:
         }
         _qso = QSO(_dict)
         return _qso
+
+if __name__ == "__main__":
+    logging.getLogger().setLevel(logging.INFO)
+    callgen = RandomCallGenerator()
+    print("CALLSIGN:",RandomCallGenerator.generate_call_scp())

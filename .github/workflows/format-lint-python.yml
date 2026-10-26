@@ -11,20 +11,20 @@ on:
       - reopened
       - ready_for_review
 
+# Read-only: this workflow no longer pushes commits (see the notes below).
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   format:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
+      # The default checkout (the PR merge commit) is enough now. The former
+      # `token`, `repository` and `ref` options existed only to check out the
+      # PR branch so that the workflow could push formatting commits to it.
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -34,28 +34,15 @@ jobs:
       - name: Install Ruff
         run: pip install ruff
 
-      - name: Check formatting for fork pull requests
-        if: github.event.pull_request.head.repo.full_name != github.repository
+      # Removed: "Run ruff formatter" and "Commit and push changes if needed".
+      # Commits pushed with GITHUB_TOKEN do not trigger new workflow runs, so
+      # the bot's formatting commit became the PR head without any test run on
+      # it, and the required checks stayed pending forever. It also rewrote
+      # PR branches behind the author's back. Formatting is now only verified
+      # (for every PR, forks included); fix a failure locally with
+      # `ruff format .` and push.
+      - name: Check formatting
         run: ruff format --check --diff .
 
-      - name: Run ruff formatter
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        run: ruff format .
-
-      - name: Commit and push changes if needed
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        env:
-          PR_HEAD_REF: ${{ github.head_ref }}
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          if [[ `git status --porcelain` ]]; then
-            git add .
-            git commit -m "ci: format Python code with Ruff"
-            git push origin "HEAD:$PR_HEAD_REF"
-          else
-            echo "No formatting changes to commit."
-          fi
-  
       - name: Run ruff linter
         run: ruff check --output-format=github .

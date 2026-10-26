@@ -100,7 +100,7 @@ def qso_list_generator(qso_list, every):
                 qso._d.get("CALL", "").upper()
                 for qso in qso_list
                 if isinstance(qso, QSO)
-                and qso._d.get("STATION_CALLSIGN") == _station
+                and qso._d.get("STATION_CALLSIGN", "").upper() == _station
                 and qso.is_valid()
             ]
         )
@@ -109,8 +109,8 @@ def qso_list_generator(qso_list, every):
                 qso
                 for qso in qso_list
                 if isinstance(qso, QSO)
-                and qso._d.get("STATION_CALLSIGN") == _station
-                and qso._d.get("CALL") == _recipient
+                and qso._d.get("STATION_CALLSIGN", "").upper() == _station
+                and qso._d.get("CALL", "").upper() == _recipient
                 and qso.is_valid()
             ]
             no_qsos = len(qso_grouped[_station][_recipient])

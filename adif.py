@@ -63,7 +63,7 @@ def check_field(t: dict):
     return True
 
 
-def is_type(f: dict, type: str):
+def field_is_type(f: dict, type: str):
     """Checks ADIF field type"""
     assert isinstance(f.get("field"), str)
     return f["field"].casefold() == type.casefold()
@@ -153,7 +153,9 @@ def parse_adif_string(_adif: str):
             field_list.append(field)
 
             # Field data check
-            logging.debug(f"{field} \t Check: {check_field(field)}")
+            logging.debug(
+                f"{field} \t Check: {check_field(field)}"
+            )  # TODO actually use check_field somewhere else
 
             # Update cursor position
             cursor = match.end() + field["len"]
@@ -183,7 +185,7 @@ def remove_header(_adif_fields: list):
     # Input type check
     assert isinstance(_adif_fields, list)
     # Look for EOH
-    eoh_index = index_of(_adif_fields, lambda x: is_type(x, "EOH"))
+    eoh_index = index_of(_adif_fields, lambda x: field_is_type(x, "EOH"))
     if eoh_index > 0:
         logging.debug(f"EOH found at index {eoh_index}")
     else:
@@ -217,7 +219,7 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=False):
         # Move one element a time on a smaller support list until EOR is reached
         field_list_temp.append(_adif_fields.pop(0))
 
-        if is_type(field_list_temp[-1], "EOR"):
+        if field_is_type(field_list_temp[-1], "EOR"):
             # EOR found, discard it and create QSO object
             del field_list_temp[-1]
 
@@ -235,8 +237,9 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=False):
 
             logging.debug(f"Creating a QSO object based on {_dict}")
             _new_qso = QSO(_dict)
-            logging.debug(f"Valid QSO: {_new_qso.is_valid()}")
-            if not _only_valid or _new_qso.is_valid():
+            _valid = _new_qso.is_valid()  # To avoid multiple calls to is_valid()
+            logging.debug(f"Valid QSO: {_valid}")
+            if not _only_valid or _valid:
                 _qso_list.append(_new_qso)
             else:
                 logging.warning(f"Invalid QSO object will be ignored: {_dict}")

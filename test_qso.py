@@ -3,11 +3,10 @@
 # This software under the MIT License
 # Unit test for QSO class
 
+import adif
 import datetime
 import unittest
 from unittest.mock import patch
-
-import adif
 from requests.exceptions import RequestException
 from qso import QSO, RandomCallGenerator
 
@@ -132,6 +131,16 @@ class QSOTest(unittest.TestCase):
         self.assertIn("CALL", q._d)
         self.assertEqual(q._d["CALL"], "K1ABC")
 
+    def test_call_value_is_normalized_to_uppercase(self):
+        q = QSO({"CALL": "dl1abc"})
+
+        self.assertEqual(q._d["CALL"], "DL1ABC")
+
+    def test_station_callsign_value_is_normalized_to_uppercase(self):
+        q = QSO({"STATION_CALLSIGN": "iu4pra"})
+
+        self.assertEqual(q._d["STATION_CALLSIGN"], "IU4PRA")
+
 
 class QSOTimestampTest(unittest.TestCase):
     def test_timestamp(self):
@@ -220,6 +229,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
         self.assertIn("Failed to download SuperCheckPartial file", logs.output[0])
         self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
+    @patch.object(RandomCallGenerator, "scp_fail", False)
     @patch("qso.os.path.isfile", return_value=False)
     @patch("qso.requests.get", side_effect=RequestException("offline"))
     def test_download_request_exception_uses_random_generator(
@@ -229,13 +239,11 @@ class RandomCallGeneratorTest(unittest.TestCase):
             callgen = RandomCallGenerator()
 
         self.assertTrue(
-            any(
-                "HTTP Error while checking/downloading" in message
-                for message in logs.output
-            )
+            any("HTTP Error while downloading" in message for message in logs.output)
         )
         self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
+    @patch.object(RandomCallGenerator, "scp_fail", False)
     @patch("qso.os.path.isfile", return_value=False)
     @patch("qso.requests.get", side_effect=OSError("network failure"))
     def test_download_unexpected_exception_uses_random_generator(
@@ -244,7 +252,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
         with self.assertLogs(level="ERROR") as logs:
             callgen = RandomCallGenerator()
 
-        self.assertIn("Error while checking/downloading", logs.output[0])
+        self.assertIn("Error while downloading", logs.output[0])
         self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
     def test_exit_logs_context_exception(self):
@@ -290,11 +298,13 @@ class RandomCallGeneratorTest(unittest.TestCase):
 
     @patch("qso.RandomCallGenerator.generate_call_random", wraps=None)
     @patch("qso.RandomCallGenerator.generate_call_scp", wraps=None)
+    @patch("qso.RandomCallGenerator.fetch_scp", wraps=None)
     @patch("qso.os.path.isfile")
-    def test_scp_file_found_1(self, mock_isfile, mock_gencall_scp, mock_gencall_random):
+    def test_scp_file_found_1(self, mock_isfile, mock_fetch, mock_gencall_scp, mock_gencall_random):
         mock_isfile.return_value = True
         callgen = RandomCallGenerator()
         callgen.generate_call()
+        mock_fetch.assert_called()
         mock_gencall_random.assert_not_called()
         mock_gencall_scp.assert_called()
 

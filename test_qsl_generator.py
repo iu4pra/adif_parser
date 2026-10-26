@@ -842,6 +842,63 @@ def test_cli_grouping_limit(options, expected_limit):
         assert all(len(group) == 1 for group in groups)
 
 
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "samples/lowercase_callsigns.adi",
+        "samples/mixed_case_callsigns.adi",
+    ],
+)
+def test_grouping_preserves_qsos_with_mixed_case_callsigns(filename):
+    qsos = qslgen.adif.qso_list_from_file(filename)
+    groups = list(qslgen.qso_list_generator(qsos, 10))
+
+    assert len(groups) == 2
+    assert sum(map(len, groups)) == len([qso for qso in qsos if qso.is_valid()])
+    assert {
+        group[0]._d["CALL"]: [qso._d["QSO_DATE"] for qso in group] for group in groups
+    } == {
+        "DL1ABC": ["20260912", "20260913"],
+        "K1XYZ": ["20260912"],
+    }
+
+
+def test_grouping_keeps_portable_callsign_separate():
+    qso_data = {
+        "STATION_CALLSIGN": "IU4PRA",
+        "QSO_DATE": "20260912",
+        "TIME_ON": "101500",
+        "BAND": "20M",
+        "MODE": "SSB",
+    }
+    qsos = [
+        QSO({**qso_data, "CALL": "DL1ABC"}),
+        QSO({**qso_data, "CALL": "DL1ABC/P"}),
+    ]
+
+    groups = list(qslgen.qso_list_generator(qsos, 10))
+
+    assert {group[0]._d["CALL"] for group in groups} == {"DL1ABC", "DL1ABC/P"}
+
+
+def test_grouping_ignores_invalid_qso_missing_callsign_fields():
+    valid_qso = QSO(
+        {
+            "STATION_CALLSIGN": "IU4PRA",
+            "CALL": "DL1ABC",
+            "QSO_DATE": "20260912",
+            "TIME_ON": "101500",
+            "BAND": "20M",
+            "MODE": "SSB",
+        }
+    )
+    invalid_qso = QSO({"STATION_CALLSIGN": "IU4PRA"})
+
+    groups = list(qslgen.qso_list_generator([valid_qso, invalid_qso], 10))
+
+    assert groups == [[valid_qso]]
+
+
 class TestSplitEvery(unittest.TestCase):
     def test_with_every_multiple(self):
         _split = [line for line in qslgen.split_every([i for i in range(15)], 5)]
