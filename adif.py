@@ -153,7 +153,9 @@ def parse_adif_string(_adif: str):
             field_list.append(field)
 
             # Field data check
-            logging.debug(f"{field} \t Check: {check_field(field)}") # TODO actually use check_field somewhere else
+            logging.debug(
+                f"{field} \t Check: {check_field(field)}"
+            )  # TODO actually use check_field somewhere else
 
             # Update cursor position
             cursor = match.end() + field["len"]
@@ -235,7 +237,7 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=False):
 
             logging.debug(f"Creating a QSO object based on {_dict}")
             _new_qso = QSO(_dict)
-            _valid = _new_qso.is_valid() # To avoid multiple calls to is_valid()
+            _valid = _new_qso.is_valid()  # To avoid multiple calls to is_valid()
             logging.debug(f"Valid QSO: {_valid}")
             if not _only_valid or _valid:
                 _qso_list.append(_new_qso)
