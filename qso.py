@@ -204,7 +204,6 @@ class QSO:
                     return False
         # TODO Add callsign validation (maybe regex?)
 
-
         # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
         if self._d.get("QSO_DATE"):
             try:
@@ -240,7 +239,9 @@ class QSO:
                 try:
                     datetime.strptime(self._d.get("TIME_OFF"), "%H%M%S")
                 except ValueError:
-                    logging.warning(f"Invalid TIME_OFF format: {self._d.get('TIME_OFF')}")
+                    logging.warning(
+                        f"Invalid TIME_OFF format: {self._d.get('TIME_OFF')}"
+                    )
                     return False
 
         # Check QSO end time is after QSO start time (if end time exists)
