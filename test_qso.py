@@ -298,15 +298,15 @@ class RandomCallGeneratorTest(unittest.TestCase):
 
     @patch("qso.RandomCallGenerator.generate_call_random", wraps=None)
     @patch("qso.RandomCallGenerator.generate_call_scp", wraps=None)
-    @patch("qso.RandomCallGenerator.fetch_scp", wraps=None)
+    @patch("qso.RandomCallGenerator.load_scp", wraps=None)
     @patch("qso.os.path.isfile")
     def test_scp_file_found_1(
-        self, mock_isfile, mock_fetch, mock_gencall_scp, mock_gencall_random
+        self, mock_isfile, mock_load_scp, mock_gencall_scp, mock_gencall_random
     ):
         mock_isfile.return_value = True
         callgen = RandomCallGenerator()
         callgen.generate_call()
-        mock_fetch.assert_called()
+        mock_load_scp.assert_called()
         mock_gencall_random.assert_not_called()
         mock_gencall_scp.assert_called()
 

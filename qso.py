@@ -38,7 +38,7 @@ class RandomCallGenerator:
     scp_calls = []  # SuperCheckPartial calls list
 
     @classmethod
-    def fetch_scp(cls):
+    def load_scp(cls):
         """Fetches the SuperCheckPartial file from the official source"""
         if not cls.scp_fail:
             try:
@@ -107,7 +107,7 @@ class RandomCallGenerator:
     def load_generator(self):
         """Attempts to load a callsign generator"""
         # Check if SuperCheckPartial generation is possible
-        if not RandomCallGenerator.fetch_scp():
+        if not RandomCallGenerator.load_scp():
             logging.warning(
                 "Failed to download SuperCheckPartial file, using random callsign generator"
             )
@@ -129,7 +129,7 @@ class RandomCallGenerator:
     def generate_call_scp(cls):
         """Generates a call sign using SuperCheckPartial"""
         # Implementation for generating call signs using SuperCheckPartial file
-        if not cls.fetch_scp():
+        if not cls.load_scp():
             logging.warning("Falling back to random callsign generator")
             return cls.generate_call_random()
         return choice(cls.scp_calls)
@@ -195,6 +195,8 @@ class QSO:
                 if key not in self._d.keys() or not self._d.get(key):
                     logging.warning(f"Essential field {key} not found, invalid QSO")
                     return False
+
+        # All mandatory uppercase fields must be uppercase
         for key in _UPPERCASE_FIELDS:
             if self._d.get(key, None):
                 if self._d.get(key).upper() != self._d.get(key):
