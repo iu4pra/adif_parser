@@ -202,6 +202,60 @@ class QSO:
                         f"Bad mandatory uppercase field {key}, invalid QSO: {self._d.get(key)}"
                     )
                     return False
+        # TODO Add callsign validation (maybe regex?)
+        # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
+        if self._d.get("QSO_DATE"):
+            try:
+                datetime.strptime(self._d.get("QSO_DATE"), "%Y%m%d")
+            except ValueError:
+                logging.warning(f"Invalid QSO_DATE format: {self._d.get('QSO_DATE')}")
+                return False
+
+        if self._d.get("QSO_DATE_OFF"):
+            try:
+                datetime.strptime(self._d.get("QSO_DATE_OFF"), "%Y%m%d")
+            except ValueError:
+                logging.warning(
+                    f"Invalid QSO_DATE_OFF format: {self._d.get('QSO_DATE_OFF')}"
+                )
+                return False
+
+        # TIME_ON validation (must be in HHMM or HHMMSS format)
+        try:
+            datetime.strptime(self._d.get("TIME_ON"), "%H%M")
+        except ValueError:
+            try:
+                datetime.strptime(self._d.get("TIME_ON"), "%H%M%S")
+            except ValueError:
+                logging.warning(f"Invalid TIME_ON format: {self._d.get('TIME_ON')}")
+                return False
+
+        # TIME_OFF validation (must be in HHMM or HHMMSS format)
+        try:
+            datetime.strptime(self._d.get("TIME_OFF"), "%H%M")
+        except ValueError:
+            try:
+                datetime.strptime(self._d.get("TIME_OFF"), "%H%M%S")
+            except ValueError:
+                logging.warning(f"Invalid TIME_OFF format: {self._d.get('TIME_OFF')}")
+                return False
+
+        # Check QSO end time is after QSO start time (if end time exists)
+        if self._d.get("TIME_OFF") and self._d.get("QSO_DATE_OFF"):
+            try:
+                dt_on = QSO.timestamp(self._d.get("QSO_DATE"), self._d.get("TIME_ON"))
+                dt_off = QSO.timestamp(
+                    self._d.get("QSO_DATE_OFF"), self._d.get("TIME_OFF")
+                )
+                if dt_off < dt_on:
+                    logging.warning(
+                        f"QSO end time {dt_off} is before start time {dt_on}, invalid QSO"
+                    )
+                    return False
+            except Exception as e:
+                logging.warning(f"Error while checking QSO timestamps: {e}")
+                return False
+
         return True
 
     @staticmethod
