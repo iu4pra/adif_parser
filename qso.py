@@ -38,25 +38,42 @@ class RandomCallGenerator:
     scp_calls = []  # SuperCheckPartial calls list
 
     @classmethod
-    def load_scp(cls):
+    def download_scp(cls):
         """Fetches the SuperCheckPartial file from the official source"""
+        try:
+            response = requests.get(
+                "https://www.supercheckpartial.com/downloads/MASTER.SCP",
+                allow_redirects=True,
+                timeout=5,  # 5 seconds
+            )
+            if response.status_code != 200:
+                logging.error("Failed to download SuperCheckPartial file")
+                cls.scp_fail = True
+                return False
+            else:
+                logging.info("SuperCheckPartial file downloaded successfully!")
+                with open("MASTER.SCP", "wb") as f:
+                    f.write(response.content)
+                return True
+        except requests.exceptions.RequestException as e:
+            logging.warning(
+                f"HTTP Error while downloading SuperCheckPartial file:\n\t{e}"
+            )
+            cls.scp_fail = True
+            return False
+
+    @classmethod
+    def load_scp(cls):
+        """Loads the SuperCheckPartial file from the local copy or downloads it if not present"""
         if not cls.scp_fail:
             try:
                 if not os.path.isfile("MASTER.SCP"):
-                    response = requests.get(
-                        "https://www.supercheckpartial.com/downloads/MASTER.SCP",
-                        allow_redirects=True,
-                        timeout=5,  # 5 seconds
-                    )
-                    if response.status_code != 200:
+                    if not cls.download_scp():
                         logging.error("Failed to download SuperCheckPartial file")
                         cls.scp_fail = True
                         return False
                     else:
                         logging.info("SuperCheckPartial file downloaded successfully!")
-                        with open("MASTER.SCP", "wb") as f:
-                            f.write(response.content)
-                        # TODO: Add file validation (maybe checksum?)
                 else:
                     logging.debug(
                         "SuperCheckPartial file present locally, no download needed"
@@ -77,15 +94,8 @@ class RandomCallGenerator:
                 else:
                     cls.scp_fail = True
                     return False
-
-            except requests.exceptions.RequestException as e:
-                logging.warning(
-                    f"HTTP Error while downloading SuperCheckPartial file:\n\t{e}"
-                )
-                cls.scp_fail = True
-                return False
             except Exception as e:
-                logging.error(f"Error while downloading SuperCheckPartial file:\n\t{e}")
+                logging.error(f"Error while loading SuperCheckPartial file:\n\t{e}")
                 cls.scp_fail = True
                 return False
         else:

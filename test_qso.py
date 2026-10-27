@@ -252,7 +252,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
         with self.assertLogs(level="ERROR") as logs:
             callgen = RandomCallGenerator()
 
-        self.assertIn("Error while downloading", logs.output[0])
+        self.assertIn("Error while loading", logs.output[0])
         self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
     def test_exit_logs_context_exception(self):
