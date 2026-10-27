@@ -123,7 +123,7 @@ class RandomCallGenerator:
             )
             self.generate_call = RandomCallGenerator.generate_call_random
         else:
-            self.generate_call = self.generate_call_scp
+            self.generate_call = RandomCallGenerator.generate_call_scp
 
     # To use the object in a with context
     def __enter__(self):
