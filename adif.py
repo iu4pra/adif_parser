@@ -76,7 +76,7 @@ def index_of(item_list: list, cond, cond_value: bool = True):
 
     Example usage:
 
-        index_of(field_list, lambda x: is_type(x, 'EOR'))"""
+        index_of(field_list, lambda x: field_is_type(x, 'EOR'))"""
     for index, item in enumerate(item_list):
         if cond(item) == cond_value:
             return index

@@ -5,6 +5,7 @@
 
 import adif
 import unittest
+from unittest.mock import patch
 from qso import QSO
 
 
@@ -75,6 +76,19 @@ class TestAdifParser(unittest.TestCase):
         field["len"] = 7
         with self.assertRaises(adif.AdifError):
             adif.check_field(field)
+
+    def test_check_field_case_7(self):
+        with self.assertRaises(adif.AdifError):
+            adif.parse_adif_string("<CALL:-1>IK4XYZ")[0]
+
+    def test_parse_field_integrity_check_failure(self):
+        with patch("adif.check_field", return_value=False) as check_field:
+            with self.assertRaisesRegex(adif.AdifError, "Field integrity check failed"):
+                adif.parse_adif_string("<CALL:6>IK4XYZ")
+
+        check_field.assert_called_once_with(
+            {"field": "CALL", "len": 6, "type": None, "value": "IK4XYZ"}
+        )
 
     def test_single_field_with_blanks(self):
         """Parse a single, well formatted field with extra whitespaces"""
