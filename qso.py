@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from random import choice, choices, randint
 import logging
 import os.path
+import re
 import requests
 import string
 
@@ -29,6 +30,9 @@ _UPPERCASE_FIELDS = frozenset(
         "MODE",
     ]
 )
+
+# Regular expression for (basic) callsign validation
+_CALLSIGN_SIMPLE_RE = re.compile(r"[A-Z0-9/]{3,}")
 
 
 class RandomCallGenerator:
@@ -214,7 +218,21 @@ class QSO:
                         f"Bad mandatory uppercase field {key}, invalid QSO: {self._d.get(key)}"
                     )
                     return False
-        # TODO Add callsign validation (maybe regex?)
+
+        # Callsign validation (maybe regex?)
+        match_station_callsign = _CALLSIGN_SIMPLE_RE.fullmatch(
+            self._d.get("STATION_CALLSIGN")
+        )
+        if not match_station_callsign:
+            logging.warning(
+                f"""Bad STATION_CALLSIGN, invalid QSO: {self._d.get("STATION_CALLSIGN")}"""
+            )
+            return False
+
+        match_call = _CALLSIGN_SIMPLE_RE.fullmatch(self._d.get("CALL"))
+        if not match_call:
+            logging.warning(f"""Bad CALL, invalid QSO: {self._d.get("CALL")}""")
+            return False
 
         # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
         if self._d.get("QSO_DATE"):

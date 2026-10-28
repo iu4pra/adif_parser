@@ -162,7 +162,16 @@ class QSOValidationTest(unittest.TestCase):
     def test_lowercase_uppercase_field_is_invalid(self):
         qso = self.make_qso()
         qso._d["CALL"] = "w1aw"
+        self.assertFalse(qso.is_valid())
 
+    def test_invalid_station_callsign_regex(self):
+        qso = self.make_qso()
+        qso._d["STATION_CALLSIGN"] = "W 1AW"
+        self.assertFalse(qso.is_valid())
+
+    def test_invalid_call_regex(self):
+        qso = self.make_qso()
+        qso._d["CALL"] = "W 1AW"
         self.assertFalse(qso.is_valid())
 
     def test_invalid_qso_date_is_rejected(self):
