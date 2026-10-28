@@ -76,7 +76,7 @@ def index_of(item_list: list, cond, cond_value: bool = True):
 
     Example usage:
 
-        index_of(field_list, lambda x: is_type(x, 'EOR'))"""
+        index_of(field_list, lambda x: field_is_type(x, 'EOR'))"""
     for index, item in enumerate(item_list):
         if cond(item) == cond_value:
             return index
@@ -153,9 +153,8 @@ def parse_adif_string(_adif: str):
             field_list.append(field)
 
             # Field data check
-            logging.debug(
-                f"{field} \t Check: {check_field(field)}"
-            )  # TODO actually use check_field somewhere else
+            if not check_field(field):
+                raise AdifError(f"Field integrity check failed for {field}")
 
             # Update cursor position
             cursor = match.end() + field["len"]

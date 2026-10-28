@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from random import choice, choices, randint
 import logging
 import os.path
+import re
 import requests
 import string
 
@@ -30,6 +31,9 @@ _UPPERCASE_FIELDS = frozenset(
     ]
 )
 
+# Regular expression for (basic) callsign validation
+_CALLSIGN_SIMPLE_RE = re.compile(r"[A-Z0-9/]{3,}")
+
 
 class RandomCallGenerator:
     """Helper class to generate random callsigns"""
@@ -38,36 +42,55 @@ class RandomCallGenerator:
     scp_calls = []  # SuperCheckPartial calls list
 
     @classmethod
-    def fetch_scp(cls):
+    def download_scp(cls):
         """Fetches the SuperCheckPartial file from the official source"""
+        try:
+            response = requests.get(
+                "https://www.supercheckpartial.com/downloads/MASTER.SCP",
+                allow_redirects=True,
+                timeout=5,  # 5 seconds
+            )
+            if response.status_code != 200:
+                logging.error("Failed to download SuperCheckPartial file")
+                cls.scp_fail = True
+                return False
+            else:
+                logging.info("SuperCheckPartial file downloaded successfully!")
+                with open("MASTER.SCP", "wb") as f:
+                    f.write(response.content)
+                return True
+        except requests.exceptions.RequestException as e:
+            logging.warning(
+                f"HTTP Error while downloading SuperCheckPartial file:\n\t{e}"
+            )
+            cls.scp_fail = True
+            return False
+
+    @classmethod
+    def load_scp(cls):
+        """Loads the SuperCheckPartial file from the local copy or downloads it if not present"""
         if not cls.scp_fail:
             try:
                 if not os.path.isfile("MASTER.SCP"):
-                    response = requests.get(
-                        "https://www.supercheckpartial.com/downloads/MASTER.SCP",
-                        allow_redirects=True,
-                        timeout=5,  # 5 seconds
-                    )
-                    if response.status_code != 200:
+                    if not cls.download_scp():
                         logging.error("Failed to download SuperCheckPartial file")
                         cls.scp_fail = True
                         return False
                     else:
                         logging.info("SuperCheckPartial file downloaded successfully!")
-                        with open("MASTER.SCP", "wb") as f:
-                            f.write(response.content)
-                        # TODO: Add file validation (maybe checksum?)
                 else:
-                    logging.debug("SuperCheckPartial file present locally, no download needed")
+                    logging.debug(
+                        "SuperCheckPartial file present locally, no download needed"
+                    )
 
                 if len(cls.scp_calls) == 0 and os.path.isfile("MASTER.SCP"):
-                        logging.info(f"""SCP file size: {os.path.getsize("MASTER.SCP")}""")
-                        with open("MASTER.SCP", "rt", encoding="utf-8") as f:
-                            cls.scp_calls = [
-                                _line.strip()
-                                for _line in f
-                                if not _line.startswith(("#", "!"))
-                            ]
+                    logging.info(f"""SCP file size: {os.path.getsize("MASTER.SCP")}""")
+                    with open("MASTER.SCP", "rt", encoding="utf-8") as f:
+                        cls.scp_calls = [
+                            _line.strip()
+                            for _line in f
+                            if not _line.startswith(("#", "!"))
+                        ]  # TODO: Add callsign validation (maybe regex?)
 
                 if len(cls.scp_calls) > 0:
                     cls.scp_fail = False
@@ -75,20 +98,19 @@ class RandomCallGenerator:
                 else:
                     cls.scp_fail = True
                     return False
-
-            except requests.exceptions.RequestException as e:
-                logging.warning(
-                    f"HTTP Error while downloading SuperCheckPartial file:\n\t{e}"
-                )
-                cls.scp_fail = True
-                return False
             except Exception as e:
-                logging.error(f"Error while downloading SuperCheckPartial file:\n\t{e}")
+                logging.error(f"Error while loading SuperCheckPartial file:\n\t{e}")
                 cls.scp_fail = True
                 return False
         else:
             # Method already failed
             return False
+
+    @classmethod
+    def reset_scp(cls):
+        """Clears the SuperCheckPartial calls list"""
+        cls.scp_calls = []
+        cls.scp_fail = False
 
     def __init__(self):
         """Class constructor"""
@@ -99,14 +121,13 @@ class RandomCallGenerator:
     def load_generator(self):
         """Attempts to load a callsign generator"""
         # Check if SuperCheckPartial generation is possible
-        if not RandomCallGenerator.fetch_scp():
+        if not RandomCallGenerator.load_scp():
             logging.warning(
                 "Failed to download SuperCheckPartial file, using random callsign generator"
             )
             self.generate_call = RandomCallGenerator.generate_call_random
-            return
         else:
-            self.generate_call = self.generate_call_scp
+            self.generate_call = RandomCallGenerator.generate_call_scp
 
     # To use the object in a with context
     def __enter__(self):
@@ -122,8 +143,9 @@ class RandomCallGenerator:
     def generate_call_scp(cls):
         """Generates a call sign using SuperCheckPartial"""
         # Implementation for generating call signs using SuperCheckPartial file
-        if not cls.fetch_scp():
-            return None
+        if not cls.load_scp():
+            logging.warning("Falling back to random callsign generator")
+            return cls.generate_call_random()
         return choice(cls.scp_calls)
 
     @staticmethod
@@ -187,6 +209,8 @@ class QSO:
                 if key not in self._d.keys() or not self._d.get(key):
                     logging.warning(f"Essential field {key} not found, invalid QSO")
                     return False
+
+        # All mandatory uppercase fields must be uppercase
         for key in _UPPERCASE_FIELDS:
             if self._d.get(key, None):
                 if self._d.get(key).upper() != self._d.get(key):
@@ -194,6 +218,78 @@ class QSO:
                         f"Bad mandatory uppercase field {key}, invalid QSO: {self._d.get(key)}"
                     )
                     return False
+
+        # Callsign validation (maybe regex?)
+        match_station_callsign = _CALLSIGN_SIMPLE_RE.fullmatch(
+            self._d.get("STATION_CALLSIGN")
+        )
+        if not match_station_callsign:
+            logging.warning(
+                f"""Bad STATION_CALLSIGN, invalid QSO: {self._d.get("STATION_CALLSIGN")}"""
+            )
+            return False
+
+        match_call = _CALLSIGN_SIMPLE_RE.fullmatch(self._d.get("CALL"))
+        if not match_call:
+            logging.warning(f"""Bad CALL, invalid QSO: {self._d.get("CALL")}""")
+            return False
+
+        # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
+        if self._d.get("QSO_DATE"):
+            try:
+                datetime.strptime(self._d.get("QSO_DATE"), "%Y%m%d")
+            except ValueError:
+                logging.warning(f"Invalid QSO_DATE format: {self._d.get('QSO_DATE')}")
+                return False
+
+        if self._d.get("QSO_DATE_OFF"):
+            try:
+                datetime.strptime(self._d.get("QSO_DATE_OFF"), "%Y%m%d")
+            except ValueError:
+                logging.warning(
+                    f"Invalid QSO_DATE_OFF format: {self._d.get('QSO_DATE_OFF')}"
+                )
+                return False
+
+        # TIME_ON validation (must be in HHMM or HHMMSS format)
+        try:
+            datetime.strptime(self._d.get("TIME_ON"), "%H%M")
+        except ValueError:
+            try:
+                datetime.strptime(self._d.get("TIME_ON"), "%H%M%S")
+            except ValueError:
+                logging.warning(f"Invalid TIME_ON format: {self._d.get('TIME_ON')}")
+                return False
+
+        # TIME_OFF validation (must be in HHMM or HHMMSS format)
+        if self._d.get("TIME_OFF"):
+            try:
+                datetime.strptime(self._d.get("TIME_OFF"), "%H%M")
+            except ValueError:
+                try:
+                    datetime.strptime(self._d.get("TIME_OFF"), "%H%M%S")
+                except ValueError:
+                    logging.warning(
+                        f"Invalid TIME_OFF format: {self._d.get('TIME_OFF')}"
+                    )
+                    return False
+
+        # Check QSO end time is after QSO start time (if end time exists)
+        if self._d.get("TIME_OFF") and self._d.get("QSO_DATE_OFF"):
+            try:
+                dt_on = QSO.timestamp(self._d.get("QSO_DATE"), self._d.get("TIME_ON"))
+                dt_off = QSO.timestamp(
+                    self._d.get("QSO_DATE_OFF"), self._d.get("TIME_OFF")
+                )
+                if dt_off < dt_on:
+                    logging.warning(
+                        f"QSO end time {dt_off} is before start time {dt_on}, invalid QSO"
+                    )
+                    return False
+            except Exception as e:
+                logging.warning(f"Error while checking QSO timestamps: {e}")
+                return False
+
         return True
 
     @staticmethod
@@ -252,7 +348,8 @@ class QSO:
         _qso = QSO(_dict)
         return _qso
 
+
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     callgen = RandomCallGenerator()
-    print("CALLSIGN:",RandomCallGenerator.generate_call_scp())
+    print("CALLSIGN:", RandomCallGenerator.generate_call_scp())

@@ -6,7 +6,7 @@
 import adif
 import datetime
 import unittest
-from unittest.mock import patch
+from unittest.mock import mock_open, patch
 from requests.exceptions import RequestException
 from qso import QSO, RandomCallGenerator
 
@@ -141,6 +141,67 @@ class QSOTest(unittest.TestCase):
 
         self.assertEqual(q._d["STATION_CALLSIGN"], "IU4PRA")
 
+    def test_non_dictionary_data_is_rejected(self):
+        with self.assertRaises(AssertionError):
+            QSO([])
+
+
+class QSOValidationTest(unittest.TestCase):
+    def make_qso(self, **overrides):
+        data = {
+            "STATION_CALLSIGN": "K1ABC",
+            "CALL": "W1AW",
+            "QSO_DATE": "20230101",
+            "TIME_ON": "120000",
+            "BAND": "20m",
+            "MODE": "CW",
+        }
+        data.update(overrides)
+        return QSO(data)
+
+    def test_lowercase_uppercase_field_is_invalid(self):
+        qso = self.make_qso()
+        qso._d["CALL"] = "w1aw"
+        self.assertFalse(qso.is_valid())
+
+    def test_invalid_station_callsign_regex(self):
+        qso = self.make_qso()
+        qso._d["STATION_CALLSIGN"] = "W 1AW"
+        self.assertFalse(qso.is_valid())
+
+    def test_invalid_call_regex(self):
+        qso = self.make_qso()
+        qso._d["CALL"] = "W 1AW"
+        self.assertFalse(qso.is_valid())
+
+    def test_invalid_qso_date_is_rejected(self):
+        self.assertFalse(self.make_qso(QSO_DATE="20230230").is_valid())
+
+    def test_invalid_qso_date_off_is_rejected(self):
+        self.assertFalse(
+            self.make_qso(QSO_DATE_OFF="20230230", TIME_OFF="130000").is_valid()
+        )
+
+    def test_invalid_time_on_is_rejected(self):
+        self.assertFalse(self.make_qso(TIME_ON="246000").is_valid())
+
+    def test_invalid_time_off_is_rejected(self):
+        self.assertFalse(
+            self.make_qso(QSO_DATE_OFF="20230101", TIME_OFF="246000").is_valid()
+        )
+
+    def test_qso_ending_before_start_is_rejected(self):
+        self.assertFalse(
+            self.make_qso(QSO_DATE_OFF="20221231", TIME_OFF="230000").is_valid()
+        )
+
+    @patch.object(QSO, "timestamp", side_effect=ValueError("invalid timestamp"))
+    def test_timestamp_error_during_validation_is_rejected(self, mock_timestamp):
+        qso = self.make_qso(QSO_DATE_OFF="20230101", TIME_OFF="130000")
+
+        self.assertFalse(qso.is_valid())
+        mock_timestamp.assert_called_once_with("20230101", "120000")
+
 
 class QSOTimestampTest(unittest.TestCase):
     def test_timestamp(self):
@@ -252,7 +313,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
         with self.assertLogs(level="ERROR") as logs:
             callgen = RandomCallGenerator()
 
-        self.assertIn("Error while downloading", logs.output[0])
+        self.assertIn("Error while loading", logs.output[0])
         self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
     def test_exit_logs_context_exception(self):
@@ -298,13 +359,15 @@ class RandomCallGeneratorTest(unittest.TestCase):
 
     @patch("qso.RandomCallGenerator.generate_call_random", wraps=None)
     @patch("qso.RandomCallGenerator.generate_call_scp", wraps=None)
-    @patch("qso.RandomCallGenerator.fetch_scp", wraps=None)
+    @patch("qso.RandomCallGenerator.load_scp", wraps=None)
     @patch("qso.os.path.isfile")
-    def test_scp_file_found_1(self, mock_isfile, mock_fetch, mock_gencall_scp, mock_gencall_random):
+    def test_scp_file_found_1(
+        self, mock_isfile, mock_load_scp, mock_gencall_scp, mock_gencall_random
+    ):
         mock_isfile.return_value = True
         callgen = RandomCallGenerator()
         callgen.generate_call()
-        mock_fetch.assert_called()
+        mock_load_scp.assert_called()
         mock_gencall_random.assert_not_called()
         mock_gencall_scp.assert_called()
 
@@ -327,6 +390,149 @@ class RandomCallGeneratorTest(unittest.TestCase):
         callgen = RandomCallGenerator()
         with callgen:
             mock_load_generator.assert_called()
+
+    @patch.object(RandomCallGenerator, "load_scp", return_value=False)
+    def test_with_scope_keeps_existing_generator(self, mock_load_scp):
+        callgen = RandomCallGenerator()
+
+        with patch.object(RandomCallGenerator, "load_generator") as mock_load_generator:
+            with callgen as active_callgen:
+                self.assertIs(active_callgen, callgen)
+
+        mock_load_generator.assert_not_called()
+        mock_load_scp.assert_called_once_with()
+
+    @patch.object(RandomCallGenerator, "generate_call_random", return_value="K1ABC")
+    @patch.object(RandomCallGenerator, "load_scp", return_value=False)
+    def test_generate_call_scp_falls_back_to_random(
+        self, mock_load_scp, mock_generate_call_random
+    ):
+        with self.assertLogs(level="WARNING") as logs:
+            result = RandomCallGenerator.generate_call_scp()
+
+        self.assertEqual(result, "K1ABC")
+        mock_load_scp.assert_called_once_with()
+        mock_generate_call_random.assert_called_once_with()
+        self.assertIn("Falling back to random callsign generator", logs.output[0])
+
+    @patch("qso.choice", return_value="W1AW")
+    @patch.object(RandomCallGenerator, "load_scp", return_value=True)
+    def test_generate_call_scp_chooses_from_loaded_calls(
+        self, mock_load_scp, mock_choice
+    ):
+        RandomCallGenerator.scp_calls = ["K1ABC", "W1AW"]
+
+        self.assertEqual(RandomCallGenerator.generate_call_scp(), "W1AW")
+
+        mock_load_scp.assert_called_once_with()
+        mock_choice.assert_called_once_with(["K1ABC", "W1AW"])
+
+    @patch("qso.choices", return_value=["A", "B"])
+    @patch("qso.choice", return_value="K")
+    @patch("qso.randint", side_effect=[1, 4, 2])
+    def test_random_callsign_uses_short_prefix_format(
+        self, mock_randint, mock_choice, mock_choices
+    ):
+        self.assertEqual(RandomCallGenerator.generate_call_random(), "K4AB")
+
+        self.assertEqual(mock_randint.call_count, 3)
+        mock_choice.assert_called_once_with("KNW")
+        mock_choices.assert_called_once_with("ABCDEFGHIJKLMNOPQRSTUVWXYZ", k=2)
+
+    @patch("qso.choices", return_value=["A", "B", "C"])
+    @patch("qso.choice", return_value="U")
+    @patch("qso.randint", side_effect=[51, 5])
+    def test_random_callsign_uses_i_prefix_format(
+        self, mock_randint, mock_choice, mock_choices
+    ):
+        self.assertEqual(RandomCallGenerator.generate_call_random(), "IU5ABC")
+
+        self.assertEqual(mock_randint.call_count, 2)
+        mock_choice.assert_called_once_with("KUWZ")
+        mock_choices.assert_called_once_with("ABCDEFGHIJKLMNOPQRSTUVWXYZ", k=3)
+
+
+class RandomCallGeneratorSCPTest(unittest.TestCase):
+    def setUp(self):
+        RandomCallGenerator.reset_scp()
+
+    def tearDown(self):
+        RandomCallGenerator.reset_scp()
+
+    @patch("qso.requests.get")
+    def test_download_scp_success_writes_file(self, mock_get):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.content = b"K1ABC\n"
+        file_mock = mock_open()
+
+        with patch("builtins.open", file_mock):
+            self.assertTrue(RandomCallGenerator.download_scp())
+
+        mock_get.assert_called_once_with(
+            "https://www.supercheckpartial.com/downloads/MASTER.SCP",
+            allow_redirects=True,
+            timeout=5,
+        )
+        file_mock.assert_called_once_with("MASTER.SCP", "wb")
+        file_mock().write.assert_called_once_with(b"K1ABC\n")
+        self.assertFalse(RandomCallGenerator.scp_fail)
+
+    @patch("qso.requests.get")
+    def test_download_scp_http_failure(self, mock_get):
+        mock_get.return_value.status_code = 404
+
+        with patch("builtins.open", mock_open()) as file_mock:
+            self.assertFalse(RandomCallGenerator.download_scp())
+
+        file_mock.assert_not_called()
+        self.assertTrue(RandomCallGenerator.scp_fail)
+
+    @patch("qso.requests.get", side_effect=RequestException("offline"))
+    def test_download_scp_request_exception(self, mock_get):
+        with self.assertLogs(level="WARNING") as logs:
+            self.assertFalse(RandomCallGenerator.download_scp())
+
+        mock_get.assert_called_once()
+        self.assertIn("HTTP Error while downloading", logs.output[0])
+        self.assertTrue(RandomCallGenerator.scp_fail)
+
+    def test_load_scp_reads_and_filters_local_file(self):
+        file_mock = mock_open(read_data="# comment\n! ignored\nK1ABC\n W1AW \n")
+
+        with patch("qso.os.path.isfile", return_value=True):
+            with patch("builtins.open", file_mock):
+                self.assertTrue(RandomCallGenerator.load_scp())
+
+        self.assertEqual(RandomCallGenerator.scp_calls, ["K1ABC", "W1AW"])
+        self.assertFalse(RandomCallGenerator.scp_fail)
+
+    def test_load_scp_downloads_missing_file(self):
+        file_mock = mock_open(read_data="K1ABC\nW1AW\n")
+
+        with patch("qso.os.path.isfile", side_effect=[False, True]):
+            with patch.object(
+                RandomCallGenerator, "download_scp", return_value=True
+            ) as download:
+                with patch("builtins.open", file_mock):
+                    self.assertTrue(RandomCallGenerator.load_scp())
+
+        download.assert_called_once_with()
+        self.assertEqual(RandomCallGenerator.scp_calls, ["K1ABC", "W1AW"])
+
+    def test_load_scp_empty_file_fails(self):
+        with patch("qso.os.path.isfile", return_value=True):
+            with patch("builtins.open", mock_open(read_data="")):
+                self.assertFalse(RandomCallGenerator.load_scp())
+
+        self.assertTrue(RandomCallGenerator.scp_fail)
+
+    def test_load_scp_does_not_retry_after_failure(self):
+        RandomCallGenerator.scp_fail = True
+
+        with patch.object(RandomCallGenerator, "download_scp") as download:
+            self.assertFalse(RandomCallGenerator.load_scp())
+
+        download.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -271,15 +271,18 @@ def generate_qsl_image_pdf(
 
     assert isinstance(qso_list, list)
 
-    # NOTE the most Pythonic way would be a list comprehension: [ qso for qso in qso_list if qso.is_valid() ]
-    removed_qsos = 0  # Counter for debugging
-    for qso in qso_list[:]:
-        if not qso.is_valid():
-            logging.warning(
-                f"Invalid QSO found: {qso._d.get('CALL', '<no_call>')} on {qso._d.get('QSO_DATE', '<no_date>')}"
-            )
-            qso_list.remove(qso)
-            removed_qsos += 1
+    # Removed QSOs counter initialized to list length before pruning
+    removed_qsos = len(qso_list)  # Counter for debugging
+
+    # Build a list with only valid QSOs
+    qso_list = [qso for qso in qso_list if qso.is_valid()]
+
+    # The list lenght after pruning is subtraced to get how many QSOs were removed
+    removed_qsos -= len(qso_list)
+
+    for qso in qso_list:
+        assert qso.is_valid()
+
     if removed_qsos > 0:
         logging.warning(
             f"Removed {removed_qsos} invalid QSOs from the list, which now contains {len(qso_list)} QSOs"
