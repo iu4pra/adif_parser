@@ -251,9 +251,11 @@ What to expect:
   (SSB, CW, or FT8).
 * Callsigns are picked from the [SuperCheckPartial](https://www.supercheckpartial.com/)
   list (`MASTER.SCP`) when the file is in the current folder. If it is missing,
-  the generator tries to download it (5-second timeout) and keeps it for next
-  time; if that fails, it invents plausible US- and Italian-style callsigns
-  instead. The downloaded file is ignored by Git.
+  the generator tries to download it (5-second timeout), checks its length when
+  the response provides an uncompressed `Content-Length`, and verifies the SCP
+  file format before replacing the local copy. If the download or validation
+  fails, it invents plausible US- and Italian-style callsigns instead. The
+  downloaded file is ignored by Git.
 * Sender and recipient are drawn independently, so almost every contact ends up
   on its own card. This suits volume tests but does not exercise grouped cards;
   use `samples/multi_qso_same_station.adi` for that.
