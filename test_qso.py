@@ -399,9 +399,11 @@ class RandomCallGeneratorTest(unittest.TestCase):
     def test_with_scope_keeps_existing_generator(self, mock_load_scp):
         callgen = RandomCallGenerator()
 
-        with patch.object(RandomCallGenerator, "load_generator") as mock_load_generator:
-            with callgen as active_callgen:
-                self.assertIs(active_callgen, callgen)
+        with (
+            patch.object(RandomCallGenerator, "load_generator") as mock_load_generator,
+            callgen as active_callgen,
+        ):
+            self.assertIs(active_callgen, callgen)
 
         mock_load_generator.assert_not_called()
         mock_load_scp.assert_called_once_with()
@@ -560,9 +562,11 @@ class RandomCallGeneratorSCPTest(unittest.TestCase):
     def test_load_scp_reads_and_filters_local_file(self):
         file_mock = mock_open(read_data="# comment\n! ignored\nK1ABC\n W1AW \n")
 
-        with patch("qso.os.path.isfile", return_value=True):
-            with patch("builtins.open", file_mock):
-                self.assertTrue(RandomCallGenerator.load_scp())
+        with (
+            patch("qso.os.path.isfile", return_value=True),
+            patch("builtins.open", file_mock),
+        ):
+            self.assertTrue(RandomCallGenerator.load_scp())
 
         self.assertEqual(RandomCallGenerator.scp_calls, ["K1ABC", "W1AW"])
         self.assertFalse(RandomCallGenerator.scp_fail)
@@ -570,20 +574,24 @@ class RandomCallGeneratorSCPTest(unittest.TestCase):
     def test_load_scp_downloads_missing_file(self):
         file_mock = mock_open(read_data="K1ABC\nW1AW\n")
 
-        with patch("qso.os.path.isfile", side_effect=[False, True]):
-            with patch.object(
+        with (
+            patch("qso.os.path.isfile", side_effect=[False, True]),
+            patch.object(
                 RandomCallGenerator, "download_scp", return_value=True
-            ) as download:
-                with patch("builtins.open", file_mock):
-                    self.assertTrue(RandomCallGenerator.load_scp())
+            ) as download,
+            patch("builtins.open", file_mock),
+        ):
+            self.assertTrue(RandomCallGenerator.load_scp())
 
         download.assert_called_once_with()
         self.assertEqual(RandomCallGenerator.scp_calls, ["K1ABC", "W1AW"])
 
     def test_load_scp_empty_file_fails(self):
-        with patch("qso.os.path.isfile", return_value=True):
-            with patch("builtins.open", mock_open(read_data="")):
-                self.assertFalse(RandomCallGenerator.load_scp())
+        with (
+            patch("qso.os.path.isfile", return_value=True),
+            patch("builtins.open", mock_open(read_data="")),
+        ):
+            self.assertFalse(RandomCallGenerator.load_scp())
 
         self.assertTrue(RandomCallGenerator.scp_fail)
 

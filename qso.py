@@ -298,14 +298,16 @@ class QSO:
 
         # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
         try:
-            datetime.strptime(self._d.get("QSO_DATE"), "%Y%m%d")
+            datetime.strptime(
+                self._d.get("QSO_DATE") + "+0000", "%Y%m%d%z"
+            )  # "+0000" explicitly sets the timezone to UTC
         except ValueError:
             logging.warning(f"Invalid QSO_DATE format: {self._d.get('QSO_DATE')}")
             return False
 
         if self._d.get("QSO_DATE_OFF"):
             try:
-                datetime.strptime(self._d.get("QSO_DATE_OFF"), "%Y%m%d")
+                datetime.strptime(self._d.get("QSO_DATE_OFF") + "+0000", "%Y%m%d%z")
             except ValueError:
                 logging.warning(
                     f"Invalid QSO_DATE_OFF format: {self._d.get('QSO_DATE_OFF')}"
@@ -314,10 +316,10 @@ class QSO:
 
         # TIME_ON validation (must be in HHMM or HHMMSS format)
         try:
-            datetime.strptime(self._d.get("TIME_ON"), "%H%M")
+            datetime.strptime(self._d.get("TIME_ON") + "+0000", "%H%M%z")
         except ValueError:
             try:
-                datetime.strptime(self._d.get("TIME_ON"), "%H%M%S")
+                datetime.strptime(self._d.get("TIME_ON") + "+0000", "%H%M%S%z")
             except ValueError:
                 logging.warning(f"Invalid TIME_ON format: {self._d.get('TIME_ON')}")
                 return False
@@ -325,10 +327,10 @@ class QSO:
         # TIME_OFF validation (must be in HHMM or HHMMSS format)
         if self._d.get("TIME_OFF"):
             try:
-                datetime.strptime(self._d.get("TIME_OFF"), "%H%M")
+                datetime.strptime(self._d.get("TIME_OFF") + "+0000", "%H%M%z")
             except ValueError:
                 try:
-                    datetime.strptime(self._d.get("TIME_OFF"), "%H%M%S")
+                    datetime.strptime(self._d.get("TIME_OFF") + "+0000", "%H%M%S%z")
                 except ValueError:
                     logging.warning(
                         f"Invalid TIME_OFF format: {self._d.get('TIME_OFF')}"
@@ -366,8 +368,7 @@ class QSO:
             )  # Pad with zeros so everything is in HHMMSS format
 
         # Parse date and time
-        dt = datetime.strptime(qso_date + time_on, "%Y%m%d%H%M%S")
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = datetime.strptime(qso_date + time_on + "+0000", "%Y%m%d%H%M%S%z")
 
         return dt
 
@@ -392,8 +393,8 @@ class QSO:
         valid: bool = True, _call_generator=RandomCallGenerator.generate_call_random
     ):
         """Generate a random QSO object"""
-        start_date = datetime(2020, 1, 1)
-        end_date = datetime.today()
+        start_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        end_date = datetime.now(timezone.utc)
         qso_date = start_date + timedelta(
             days=randint(0, (end_date - start_date).days), minutes=randint(0, 1439)
         )

@@ -11,7 +11,7 @@ import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from queue import Empty, Queue
 from typing import Optional
 
@@ -224,7 +224,9 @@ def rmtree_if_exists(path):
 
 def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
     try:
-        dt = datetime.strptime(value, "%Y%m%d")
+        if len(value) != 8:
+            raise ValueError("Date must use YYYYMMDD format")
+        dt = date.fromisoformat(f"{value[:4]}-{value[4:6]}-{value[6:8]}")
         return dt.strftime(fmt)
     except (ValueError, TypeError) as e:
         logging.exception(f"qsl_filter_format_date(value={value}): {e}")
