@@ -5,6 +5,8 @@
 
 import adif
 import datetime
+import os
+import tempfile
 import unittest
 from unittest.mock import mock_open, patch
 from requests.exceptions import RequestException
@@ -461,21 +463,78 @@ class RandomCallGeneratorSCPTest(unittest.TestCase):
 
     @patch("qso.requests.get")
     def test_download_scp_success_writes_file(self, mock_get):
+        content = b"!!Order,1,1\n#\nK1ABC\n"
         mock_get.return_value.status_code = 200
-        mock_get.return_value.content = b"K1ABC\n"
-        file_mock = mock_open()
+        mock_get.return_value.content = content
+        mock_get.return_value.headers = {"Content-Length": str(len(content))}
 
-        with patch("builtins.open", file_mock):
-            self.assertTrue(RandomCallGenerator.download_scp())
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as directory:
+            try:
+                os.chdir(directory)
+                self.assertTrue(RandomCallGenerator.download_scp())
+                with open("MASTER.SCP", "rb") as downloaded_file:
+                    self.assertEqual(downloaded_file.read(), content)
+            finally:
+                os.chdir(original_cwd)
 
         mock_get.assert_called_once_with(
             "https://www.supercheckpartial.com/downloads/MASTER.SCP",
             allow_redirects=True,
             timeout=5,
         )
-        file_mock.assert_called_once_with("MASTER.SCP", "wb")
-        file_mock().write.assert_called_once_with(b"K1ABC\n")
         self.assertFalse(RandomCallGenerator.scp_fail)
+
+    @patch("qso.requests.get")
+    def test_download_scp_incomplete_response_preserves_existing_file(self, mock_get):
+        content = b"!!Order,1,1\n#\nK1ABC\n"
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.content = content
+        mock_get.return_value.headers = {"Content-Length": str(len(content) + 10)}
+
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as directory:
+            try:
+                os.chdir(directory)
+                with open("MASTER.SCP", "wb") as existing_file:
+                    existing_file.write(b"previous SCP data")
+
+                with self.assertLogs(level="ERROR") as logs:
+                    self.assertFalse(RandomCallGenerator.download_scp())
+
+                with open("MASTER.SCP", "rb") as existing_file:
+                    self.assertEqual(existing_file.read(), b"previous SCP data")
+                self.assertEqual(os.listdir(directory), ["MASTER.SCP"])
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn("Incomplete SuperCheckPartial download", logs.output[0])
+        self.assertTrue(RandomCallGenerator.scp_fail)
+
+    @patch("qso.requests.get")
+    def test_download_scp_invalid_format_preserves_existing_file(self, mock_get):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.content = b"<html>not an SCP file</html>"
+        mock_get.return_value.headers = {}
+
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as directory:
+            try:
+                os.chdir(directory)
+                with open("MASTER.SCP", "wb") as existing_file:
+                    existing_file.write(b"previous SCP data")
+
+                with self.assertLogs(level="ERROR") as logs:
+                    self.assertFalse(RandomCallGenerator.download_scp())
+
+                with open("MASTER.SCP", "rb") as existing_file:
+                    self.assertEqual(existing_file.read(), b"previous SCP data")
+                self.assertEqual(os.listdir(directory), ["MASTER.SCP"])
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn("invalid file format", logs.output[0])
+        self.assertTrue(RandomCallGenerator.scp_fail)
 
     @patch("qso.requests.get")
     def test_download_scp_http_failure(self, mock_get):
