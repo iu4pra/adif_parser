@@ -81,9 +81,8 @@ class QSLRendererContextManagerTest(unittest.TestCase):
     def test_renderer_handles_exception_in_context(self):
         """Test that renderer handles exceptions gracefully"""
         # Mocking is handled by conftest.py fixture
-        with self.assertRaises(ValueError):
-            with playwright_wrapper.QSLRenderer():
-                raise ValueError("Test exception")
+        with self.assertRaises(ValueError), playwright_wrapper.QSLRenderer():
+            raise ValueError("Test exception")
 
 
 class QSLRendererRenderTest(unittest.TestCase):

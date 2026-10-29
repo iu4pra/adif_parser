@@ -3,16 +3,15 @@
 # This software under the MIT License
 # GUI for QSL generator written in Tkinter
 
-from concurrent.futures import ThreadPoolExecutor
-
-import adif
-import qsl_generator
-
 import logging
 import os.path
 import tkinter as tk
 import tkinter.filedialog as tkfile
 import tkinter.scrolledtext as tkscroll
+from concurrent.futures import ThreadPoolExecutor
+
+import adif
+import qsl_generator
 
 # --- Helper Classes ---
 

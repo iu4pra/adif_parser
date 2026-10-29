@@ -2,14 +2,15 @@
 
 # This software under the MIT License
 
-from datetime import datetime, timedelta, timezone
-from random import choice, choices, randint
 import logging
 import os.path
 import re
-import requests
 import string
 import tempfile
+from datetime import datetime, timedelta, timezone
+from random import choice, choices, randint
+
+import requests
 
 # List of essential QSO keys
 _ESSENTIAL_KEYS = frozenset(
@@ -66,7 +67,9 @@ class RandomCallGenerator:
                 try:
                     expected_length = int(content_length)
                 except (TypeError, ValueError):
-                    logging.error("Invalid Content-Length for SuperCheckPartial file")
+                    logging.exception(
+                        "Invalid Content-Length for SuperCheckPartial file"
+                    )
                     cls.scp_fail = True
                     return False
                 if len(content) != expected_length:
@@ -81,7 +84,7 @@ class RandomCallGenerator:
             try:
                 text = content.decode("utf-8")
             except UnicodeDecodeError:
-                logging.error("SuperCheckPartial download is not valid UTF-8")
+                logging.exception("SuperCheckPartial download is not valid UTF-8")
                 cls.scp_fail = True
                 return False
 
@@ -117,7 +120,7 @@ class RandomCallGenerator:
                 os.replace(temp_path, "MASTER.SCP")
                 temp_path = None
             except OSError as e:
-                logging.error(f"Error while saving SuperCheckPartial file:\n\t{e}")
+                logging.exception(f"Error while saving SuperCheckPartial file:\n\t{e}")
                 cls.scp_fail = True
                 return False
 
@@ -158,7 +161,7 @@ class RandomCallGenerator:
 
                 if len(cls.scp_calls) == 0 and os.path.isfile("MASTER.SCP"):
                     logging.info(f"""SCP file size: {os.path.getsize("MASTER.SCP")}""")
-                    with open("MASTER.SCP", "rt", encoding="utf-8") as f:
+                    with open("MASTER.SCP", encoding="utf-8") as f:
                         cls.scp_calls = [
                             _line.strip()
                             for _line in f
@@ -171,7 +174,7 @@ class RandomCallGenerator:
                 cls.scp_fail = True
                 return False
             except Exception as e:
-                logging.error(f"Error while loading SuperCheckPartial file:\n\t{e}")
+                logging.exception(f"Error while loading SuperCheckPartial file:\n\t{e}")
                 cls.scp_fail = True
                 return False
         else:
@@ -243,12 +246,11 @@ class QSO:
             # Only non-null fields are reported
             if value is None or value == "":
                 logging.warning(f"Skipping key {key} with invalid value")
+            # All keys are put uppercase and values are converted to string
+            elif key.upper() in _UPPERCASE_FIELDS:
+                self._d[key.upper()] = str(value).upper()
             else:
-                # All keys are put uppercase and values are converted to string
-                if key.upper() in _UPPERCASE_FIELDS:
-                    self._d[key.upper()] = str(value).upper()
-                else:
-                    self._d[key.upper()] = str(value)
+                self._d[key.upper()] = str(value)
 
     def __str__(self):
         """String representation of the object"""
@@ -266,10 +268,9 @@ class QSO:
                 if not any(self._d.get(field) for field in key):
                     logging.warning(f"No fields among {key} found, invalid QSO")
                     return False
-            else:
-                if not self._d.get(key):
-                    logging.warning(f"Essential field {key} not found, invalid QSO")
-                    return False
+            elif not self._d.get(key):
+                logging.warning(f"Essential field {key} not found, invalid QSO")
+                return False
 
         # All mandatory uppercase fields must be uppercase
         for key in _UPPERCASE_FIELDS:
