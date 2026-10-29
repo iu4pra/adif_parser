@@ -151,8 +151,6 @@ class RandomCallGenerator:
                         logging.error("Failed to download SuperCheckPartial file")
                         cls.scp_fail = True
                         return False
-                    else:
-                        logging.info("SuperCheckPartial file downloaded successfully!")
                 else:
                     logging.debug(
                         "SuperCheckPartial file present locally, no download needed"
@@ -167,12 +165,11 @@ class RandomCallGenerator:
                             if not _line.startswith(("#", "!"))
                         ]  # TODO: Add callsign validation (maybe regex?)
 
-                if len(cls.scp_calls) > 0:
+                if cls.scp_calls:
                     cls.scp_fail = False
                     return True
-                else:
-                    cls.scp_fail = True
-                    return False
+                cls.scp_fail = True
+                return False
             except Exception as e:
                 logging.error(f"Error while loading SuperCheckPartial file:\n\t{e}")
                 cls.scp_fail = True
@@ -241,7 +238,7 @@ class QSO:
         # Internal data storage
         self._d: dict = {}
 
-        for key in data.keys():
+        for key in data:
             value = data[key]
             # Only non-null fields are reported
             if value is None or value == "":
@@ -266,33 +263,22 @@ class QSO:
         for key in _ESSENTIAL_KEYS:
             # If the element itself is a frozenset, then check at least one of the elements is present
             if isinstance(key, frozenset):
-                if (
-                    len(
-                        [
-                            self._d.get(tuple_key)
-                            for tuple_key in key
-                            if self._d.get(tuple_key)
-                        ]
-                    )
-                    == 0
-                ):
-                    logging.warning(
-                        f"No fields among {key} ({len([self._d.get(tuple_key) for tuple_key in key if self._d.get(tuple_key)])}) found, invalid QSO"
-                    )
+                if not any(self._d.get(field) for field in key):
+                    logging.warning(f"No fields among {key} found, invalid QSO")
                     return False
             else:
-                if key not in self._d.keys() or not self._d.get(key):
+                if not self._d.get(key):
                     logging.warning(f"Essential field {key} not found, invalid QSO")
                     return False
 
         # All mandatory uppercase fields must be uppercase
         for key in _UPPERCASE_FIELDS:
-            if self._d.get(key, None):
-                if self._d.get(key).upper() != self._d.get(key):
-                    logging.warning(
-                        f"Bad mandatory uppercase field {key}, invalid QSO: {self._d.get(key)}"
-                    )
-                    return False
+            value = self._d.get(key)
+            if value and value.upper() != value:
+                logging.warning(
+                    f"Bad mandatory uppercase field {key}, invalid QSO: {value}"
+                )
+                return False
 
         # Callsign validation (maybe regex?)
         match_station_callsign = _CALLSIGN_SIMPLE_RE.fullmatch(
@@ -310,12 +296,11 @@ class QSO:
             return False
 
         # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
-        if self._d.get("QSO_DATE"):
-            try:
-                datetime.strptime(self._d.get("QSO_DATE"), "%Y%m%d")
-            except ValueError:
-                logging.warning(f"Invalid QSO_DATE format: {self._d.get('QSO_DATE')}")
-                return False
+        try:
+            datetime.strptime(self._d.get("QSO_DATE"), "%Y%m%d")
+        except ValueError:
+            logging.warning(f"Invalid QSO_DATE format: {self._d.get('QSO_DATE')}")
+            return False
 
         if self._d.get("QSO_DATE_OFF"):
             try:
