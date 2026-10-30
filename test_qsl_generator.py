@@ -3,7 +3,6 @@
 # This software under the MIT License
 # Unit test for the qsl_generator module
 
-import os
 import shutil
 import tempfile
 import unittest
