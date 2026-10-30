@@ -227,15 +227,16 @@ class RandomCallGenerator:
         if not cls.load_scp():
             logging.warning("Falling back to random callsign generator")
             return cls.generate_call_random()
-        return choice(cls.scp_calls)
+        return choice(cls.scp_calls) # noqa: S311
 
     @staticmethod
     def generate_call_random():
+        # ruff: disable [S311]
         """Generates a random call sign without using SuperCheckPartial"""
         if randint(1, 100) <= 50:
             return f"{choice('KNW')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=randint(1, 3)))}"
         return f"I{choice('KUWZ')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=3))}"
-
+        # ruff: enable [S311]
 
 class QSO:
     """Class representing a single QSO record"""
@@ -399,16 +400,17 @@ class QSO:
         valid: bool = True, _call_generator=RandomCallGenerator.generate_call_random
     ):
         """Generate a random QSO object"""
+        # ruff: disable [S311]
         start_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
         end_date = datetime.now(timezone.utc)
         qso_date = start_date + timedelta(
             days=randint(0, (end_date - start_date).days), minutes=randint(0, 1439)
         )
 
-        # Check qso_date is not in the future
-        if qso_date > datetime.now():
+        # Check qso_date is not in the future (UTC-wise)
+        if qso_date > datetime.now(tz=timezone.utc):
             # Go back by a random number of minutes to make sure it's in the past
-            qso_date = datetime.now() - timedelta(minutes=randint(0, 1439))
+            qso_date = datetime.now(tz=timezone.utc) - timedelta(minutes=randint(0, 1439))
 
         _dict = {
             "STATION_CALLSIGN": _call_generator(),
@@ -420,6 +422,7 @@ class QSO:
         }
         _qso = QSO(_dict)
         return _qso
+        # ruff: enable [S311]
 
 
 if __name__ == "__main__":
