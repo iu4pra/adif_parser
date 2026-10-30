@@ -19,8 +19,8 @@ It is responsible for:
 """
 
 import logging
-import os.path
 import re
+from pathlib import Path
 
 from qso import QSO, RandomCallGenerator
 
@@ -172,8 +172,8 @@ def parse_adif_file(filename: str):
     """Parse an ADIF file and returns the ordered list of its fields"""
     # Input type check
     assert isinstance(filename, str)
-    assert os.path.isfile(filename)
-    with open(filename, encoding="utf-8") as f:
+    assert Path(filename).is_file()
+    with Path(filename).open(encoding="utf-8") as f:
         field_list = parse_adif_string(f.read())
     return field_list
 

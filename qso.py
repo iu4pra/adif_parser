@@ -3,11 +3,11 @@
 # This software under the MIT License
 
 import logging
-import os.path
 import re
 import string
 import tempfile
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from random import choice, choices, randint
 
 import requests
@@ -117,7 +117,7 @@ class RandomCallGenerator:
                     cls.scp_fail = True
                     return False
 
-                os.replace(temp_path, "MASTER.SCP")
+                Path(temp_path).replace("MASTER.SCP")
                 temp_path = None
             except OSError as e:
                 logging.exception(f"Error while saving SuperCheckPartial file:\n\t{e}")
@@ -136,7 +136,7 @@ class RandomCallGenerator:
         finally:
             if temp_path is not None:
                 try:
-                    os.unlink(temp_path)
+                    Path(temp_path).unlink()
                 except FileNotFoundError:
                     pass
                 except OSError as e:
@@ -159,7 +159,7 @@ class RandomCallGenerator:
         """Loads the SuperCheckPartial file from the local copy or downloads it if not present"""
         if not cls.scp_fail:
             try:
-                if not os.path.isfile("MASTER.SCP"):
+                if not Path("MASTER.SCP").is_file():
                     if not cls.download_scp():
                         logging.error("Failed to download SuperCheckPartial file")
                         cls.scp_fail = True
@@ -169,9 +169,11 @@ class RandomCallGenerator:
                         "SuperCheckPartial file present locally, no download needed"
                     )
 
-                if len(cls.scp_calls) == 0 and os.path.isfile("MASTER.SCP"):
-                    logging.info(f"""SCP file size: {os.path.getsize("MASTER.SCP")}""")
-                    with open("MASTER.SCP", encoding="utf-8") as f:
+                if len(cls.scp_calls) == 0 and Path("MASTER.SCP").is_file():
+                    logging.info(
+                        f"""SCP file size: {Path("MASTER.SCP").stat().st_size}"""
+                    )
+                    with Path("MASTER.SCP").open(encoding="utf-8") as f:
                         cls.scp_calls = cls._parse_scp(f.readlines())
                         logging.info(f"Loaded {len(cls.scp_calls)} callsigns")
                 if cls.scp_calls:
@@ -227,7 +229,7 @@ class RandomCallGenerator:
         if not cls.load_scp():
             logging.warning("Falling back to random callsign generator")
             return cls.generate_call_random()
-        return choice(cls.scp_calls) # noqa: S311
+        return choice(cls.scp_calls)  # noqa: S311
 
     @staticmethod
     def generate_call_random():
@@ -237,6 +239,7 @@ class RandomCallGenerator:
             return f"{choice('KNW')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=randint(1, 3)))}"
         return f"I{choice('KUWZ')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=3))}"
         # ruff: enable [S311]
+
 
 class QSO:
     """Class representing a single QSO record"""
@@ -410,7 +413,9 @@ class QSO:
         # Check qso_date is not in the future (UTC-wise)
         if qso_date > datetime.now(tz=timezone.utc):
             # Go back by a random number of minutes to make sure it's in the past
-            qso_date = datetime.now(tz=timezone.utc) - timedelta(minutes=randint(0, 1439))
+            qso_date = datetime.now(tz=timezone.utc) - timedelta(
+                minutes=randint(0, 1439)
+            )
 
         _dict = {
             "STATION_CALLSIGN": _call_generator(),

@@ -4,11 +4,11 @@
 # GUI for QSL generator written in Tkinter
 
 import logging
-import os.path
 import tkinter as tk
 import tkinter.filedialog as tkfile
 import tkinter.scrolledtext as tkscroll
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import adif
 import qsl_generator
@@ -156,10 +156,10 @@ class App:
             or self.template_file
         )
         if self.template_file:
-            self.template_file = os.path.basename(self.template_file)
+            self.template_file = Path(self.template_file).name
             self.logger.info(f"Template chosen: {self.template_file}")
         else:
-            self.template_file = os.path.basename(qsl_generator.TEMPLATE_DEFAULT_FILE)
+            self.template_file = Path(qsl_generator.TEMPLATE_DEFAULT_FILE).name
             self.logger.info(
                 "No template chosen, default %s selected" % self.template_file
             )
@@ -178,7 +178,7 @@ class App:
             or self.logfile
         )
         if self.logfile:
-            self.logger.info(f"Log file chosen: {os.path.basename(self.logfile)}")
+            self.logger.info(f"Log file chosen: {Path(self.logfile).name}")
             self.validate_file_button.config(state=tk.NORMAL)
         else:
             self.logger.info("No log file chosen")
@@ -193,7 +193,7 @@ class App:
             - Logs 'Validation passed' if successful.
             - Logs specific error messages if the parser fails.
         """
-        if hasattr(self, "logfile") and os.path.isfile(self.logfile):
+        if hasattr(self, "logfile") and Path(self.logfile).is_file():
             try:
                 _result = True  # Validation result
                 adif.parse_adif_file(self.logfile)
@@ -217,7 +217,7 @@ class App:
             2. Checks the state of PDF and Image checkboxes.
             3. Calls qsl_generator.generate_qsl_image_pdf
         """
-        if hasattr(self, "logfile") and os.path.isfile(self.logfile):
+        if hasattr(self, "logfile") and Path(self.logfile).is_file():
             qso_list = adif.qso_list_from_file(self.logfile)
 
             with ThreadPoolExecutor() as executor:

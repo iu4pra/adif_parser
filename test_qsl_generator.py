@@ -7,6 +7,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 from queue import Queue
 from unittest.mock import MagicMock, call, patch
 
@@ -95,7 +96,7 @@ class QSLGeneratorBasicTest(unittest.TestCase):
         ],
     )
     def test_nonexistent_template_file(self):
-        self.assertTrue(os.path.exists("samples/minimal_1qso.adi"))
+        self.assertTrue(Path("samples/minimal_1qso.adi").exists())
         with self.assertRaises(FileNotFoundError):
             qslgen.main()
 
@@ -371,28 +372,28 @@ class TestUnlinkIfExists(unittest.TestCase):
 
     def tearDown(self):
         """Clean up temporary directory"""
-        if os.path.exists(self.test_dir):
+        if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_delete_existing_file(self):
         """Test deleting an existing file"""
         # Create a test file
-        test_file = os.path.join(self.test_dir, "test_file.txt")
-        with open(test_file, "w") as f:
+        test_file = str(Path(self.test_dir) / "test_file.txt")
+        with Path(test_file).open("w") as f:
             f.write("test content")
 
         # Verify file exists
-        self.assertTrue(os.path.exists(test_file))
+        self.assertTrue(Path(test_file).exists())
 
         # Delete the file
         qslgen.unlink_if_exists(test_file)
 
         # Verify file is deleted
-        self.assertFalse(os.path.exists(test_file))
+        self.assertFalse(Path(test_file).exists())
 
     def test_delete_non_existing_file(self):
         """Test deleting a non-existing file - should not raise exception"""
-        non_existing_file = os.path.join(self.test_dir, "non_existing.txt")
+        non_existing_file = str(Path(self.test_dir) / "non_existing.txt")
 
         # Should not raise an exception
         try:
@@ -402,27 +403,27 @@ class TestUnlinkIfExists(unittest.TestCase):
 
     def test_delete_file_with_special_characters(self):
         """Test deleting a file with special characters in name"""
-        test_file = os.path.join(self.test_dir, "test file (special).txt")
-        with open(test_file, "w") as f:
+        test_file = str(Path(self.test_dir) / "test file (special).txt")
+        with Path(test_file).open("w") as f:
             f.write("test content")
 
-        self.assertTrue(os.path.exists(test_file))
+        self.assertTrue(Path(test_file).exists())
         qslgen.unlink_if_exists(test_file)
-        self.assertFalse(os.path.exists(test_file))
+        self.assertFalse(Path(test_file).exists())
 
     def test_delete_file_with_long_path(self):
         """Test deleting a file with a long path"""
         # Create nested directories
-        nested_dir = os.path.join(self.test_dir, "level1", "level2", "level3")
-        os.makedirs(nested_dir, exist_ok=True)
+        nested_dir = Path(self.test_dir) / "level1" / "level2" / "level3"
+        nested_dir.mkdir(parents=True, exist_ok=True)
 
-        test_file = os.path.join(nested_dir, "deep_file.txt")
-        with open(test_file, "w") as f:
+        test_file = nested_dir / "deep_file.txt"
+        with test_file.open("w") as f:
             f.write("test content")
 
-        self.assertTrue(os.path.exists(test_file))
+        self.assertTrue(test_file.exists())
         qslgen.unlink_if_exists(test_file)
-        self.assertFalse(os.path.exists(test_file))
+        self.assertFalse(test_file.exists())
 
     def test_unlink_empty_string_path(self):
         """Test unlink_if_exists with empty string path"""
@@ -441,75 +442,73 @@ class TestRmtreeIfExists(unittest.TestCase):
 
     def tearDown(self):
         """Clean up temporary directory"""
-        if os.path.exists(self.test_dir):
+        if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_delete_existing_directory(self):
         """Test deleting an existing directory"""
         # Create a test directory
-        test_dir_path = os.path.join(self.test_dir, "test_dir")
-        os.makedirs(test_dir_path)
+        test_dir_path = Path(self.test_dir) / "test_dir"
+        test_dir_path.mkdir()
 
         # Verify directory exists
-        self.assertTrue(os.path.exists(test_dir_path))
+        self.assertTrue(test_dir_path.exists())
 
         # Delete the directory
         qslgen.rmtree_if_exists(test_dir_path)
 
         # Verify directory is deleted
-        self.assertFalse(os.path.exists(test_dir_path))
+        self.assertFalse(test_dir_path.exists())
 
     def test_delete_directory_with_files(self):
         """Test deleting a directory containing files"""
         # Create a test directory with files
-        test_dir_path = os.path.join(self.test_dir, "test_dir_with_files")
-        os.makedirs(test_dir_path)
+        test_dir_path = Path(self.test_dir) / "test_dir_with_files"
+        test_dir_path.mkdir()
 
         # Add files to the directory
         for i in range(3):
-            test_file = os.path.join(test_dir_path, f"file_{i}.txt")
-            with open(test_file, "w") as f:
+            test_file = test_dir_path / f"file_{i}.txt"
+            with test_file.open("w") as f:
                 f.write(f"content {i}")
 
         # Verify directory and files exist
-        self.assertTrue(os.path.exists(test_dir_path))
-        self.assertEqual(len(os.listdir(test_dir_path)), 3)
+        self.assertTrue(test_dir_path.exists())
+        self.assertEqual(len(list(test_dir_path.iterdir())), 3)
 
         # Delete the directory
         qslgen.rmtree_if_exists(test_dir_path)
 
         # Verify directory and files are deleted
-        self.assertFalse(os.path.exists(test_dir_path))
+        self.assertFalse(test_dir_path.exists())
 
     def test_delete_nested_directories(self):
         """Test deleting nested directories with files"""
         # Create nested directories
-        test_dir_path = os.path.join(self.test_dir, "parent")
-        os.makedirs(os.path.join(test_dir_path, "child1", "grandchild"), exist_ok=True)
-        os.makedirs(os.path.join(test_dir_path, "child2"), exist_ok=True)
+        test_dir_path = Path(self.test_dir) / "parent"
+        (test_dir_path / "child1" / "grandchild").mkdir(parents=True, exist_ok=True)
+        (test_dir_path / "child2").mkdir(parents=True, exist_ok=True)
 
         # Add files at different levels
-        with open(os.path.join(test_dir_path, "root_file.txt"), "w") as f:
+        with (test_dir_path / "root_file.txt").open("w") as f:
             f.write("root")
-        with open(os.path.join(test_dir_path, "child1", "child_file.txt"), "w") as f:
+        with (test_dir_path / "child1" / "child_file.txt").open("w") as f:
             f.write("child")
-        with open(
-            os.path.join(test_dir_path, "child1", "grandchild", "deep_file.txt"), "w"
-        ) as f:
+        with (test_dir_path / "child1" / "grandchild" / "deep_file.txt").open("w") as f:
             f.write("deep")
 
         # Verify directory structure exists
-        self.assertTrue(os.path.exists(test_dir_path))
+        self.assertTrue(test_dir_path.exists())
 
         # Delete the directory
         qslgen.rmtree_if_exists(test_dir_path)
 
         # Verify directory and all contents are deleted
-        self.assertFalse(os.path.exists(test_dir_path))
+        self.assertFalse(test_dir_path.exists())
 
     def test_delete_non_existing_directory(self):
         """Test deleting a non-existing directory - should not raise exception"""
-        non_existing_dir = os.path.join(self.test_dir, "non_existing_dir")
+        non_existing_dir = Path(self.test_dir) / "non_existing_dir"
 
         # Should not raise an exception
         try:
@@ -519,24 +518,24 @@ class TestRmtreeIfExists(unittest.TestCase):
 
     def test_delete_directory_with_special_characters(self):
         """Test deleting a directory with special characters in name"""
-        test_dir_path = os.path.join(self.test_dir, "dir (special) [test]")
-        os.makedirs(test_dir_path)
+        test_dir_path = Path(self.test_dir) / "dir (special) [test]"
+        test_dir_path.mkdir()
 
-        with open(os.path.join(test_dir_path, "file.txt"), "w") as f:
+        with (test_dir_path / "file.txt").open("w") as f:
             f.write("test")
 
-        self.assertTrue(os.path.exists(test_dir_path))
+        self.assertTrue(test_dir_path.exists())
         qslgen.rmtree_if_exists(test_dir_path)
-        self.assertFalse(os.path.exists(test_dir_path))
+        self.assertFalse(test_dir_path.exists())
 
     def test_delete_empty_directory(self):
         """Test deleting an empty directory"""
-        test_dir_path = os.path.join(self.test_dir, "empty_dir")
-        os.makedirs(test_dir_path)
+        test_dir_path = Path(self.test_dir) / "empty_dir"
+        test_dir_path.mkdir()
 
-        self.assertTrue(os.path.exists(test_dir_path))
+        self.assertTrue(test_dir_path.exists())
         qslgen.rmtree_if_exists(test_dir_path)
-        self.assertFalse(os.path.exists(test_dir_path))
+        self.assertFalse(test_dir_path.exists())
 
     def test_rmtree_empty_string_path(self):
         """Test rmtree_if_exists with empty string path"""
@@ -658,7 +657,7 @@ class TestGenerateQslImagePdf(unittest.TestCase):
             [self.qso],
             _image=True,
             _pdf=True,
-            _out_filename=os.path.join(self.tempdir, "cards.pdf"),
+            _out_filename=str(Path(self.tempdir) / "cards.pdf"),
             _out_folder=self.tempdir,
             progress_queue=progress_queue,
         )

@@ -12,6 +12,7 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import date
+from pathlib import Path
 from queue import Empty, Queue
 from typing import Optional
 
@@ -43,11 +44,11 @@ TEMPLATE_FOLDER = "./templates"
 # Temporary folder
 TEMP_FOLDER = "./tmp/"
 # Compiled template temporary filename
-TEMPLATE_TEMP_FILENAME = os.path.join(TEMP_FOLDER, "template_out.html")
+TEMPLATE_TEMP_FILENAME = Path(TEMP_FOLDER) / "template_out.html"
 
 # Temporary PDF base name
 # Usage: filename = PDF_TEMP_BASE_NAME % index
-PDF_TEMP_BASE_NAME = os.path.join(TEMP_FOLDER, "./qsl_%04d.pdf")
+PDF_TEMP_BASE_NAME = Path(TEMP_FOLDER) / "qsl_%04d.pdf"
 
 # Output folder
 OUT_FOLDER = "./out/"
@@ -168,39 +169,38 @@ def render_qsl(
 
     if _dry_run is False:
         # Write compiled template to file
-        with open(TEMPLATE_TEMP_FILENAME, "w", encoding="utf-8") as f:
+        with TEMPLATE_TEMP_FILENAME.open("w", encoding="utf-8") as f:
             f.write(output)
 
     # Convert template page to image
     if _image:
-        out_name = os.path.join(
-            _out_folder,
-            (out_base_name + "_%04d." % (_i + 1) + _format),
+        out_name = str(
+            Path(_out_folder) / (out_base_name + "_%04d." % (_i + 1) + _format)
         )
         if _dry_run is False:
             renderer.render(
-                TEMPLATE_TEMP_FILENAME,
+                str(TEMPLATE_TEMP_FILENAME),
                 out_name,
                 _width,
                 _height,
             )
         else:
             logging.info(
-                f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, out_name, str(_width), str(_height)])}"
+                f"Would call: renderer.render {' '.join([str(TEMPLATE_TEMP_FILENAME), out_name, str(_width), str(_height)])}"
             )
 
     # Convert template page to PDF
     if _pdf:
         if _dry_run is False:
             renderer.render(
-                TEMPLATE_TEMP_FILENAME,
-                (PDF_TEMP_BASE_NAME % _i),
+                str(TEMPLATE_TEMP_FILENAME),
+                str(PDF_TEMP_BASE_NAME) % _i,
                 _width,
                 _height,
             )
         else:
             logging.info(
-                f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % _i), str(_width), str(_height)])}"
+                f"Would call: renderer.render {' '.join([str(TEMPLATE_TEMP_FILENAME), str(PDF_TEMP_BASE_NAME) % _i, str(_width), str(_height)])}"
             )
 
     return True
@@ -209,7 +209,7 @@ def render_qsl(
 def unlink_if_exists(path):
     """Utility function to delete a file without throwing an exception if it doesn't exist"""
     try:
-        os.unlink(path)
+        Path(path).unlink()
     except FileNotFoundError:
         pass
 
@@ -306,8 +306,8 @@ def generate_qsl_image_pdf(
     )
 
     # Template file full path
-    template_path = os.path.join(TEMPLATE_FOLDER, _template)
-    if not os.path.isfile(template_path):
+    template_path = Path(TEMPLATE_FOLDER) / _template
+    if not template_path.is_file():
         raise FileNotFoundError(f"Template file {template_path} not found")
 
     if _dry_run is False:
@@ -315,22 +315,22 @@ def generate_qsl_image_pdf(
         rmtree_if_exists(TEMP_FOLDER)
 
         # Re-create temporary folder
-        if not os.path.exists(TEMP_FOLDER):
-            os.makedirs(TEMP_FOLDER)
-        elif not os.path.isdir(TEMP_FOLDER):
-            os.unlink(TEMP_FOLDER)
-            os.makedirs(TEMP_FOLDER)
+        if not Path(TEMP_FOLDER).exists():
+            Path(TEMP_FOLDER).mkdir(parents=True)
+        elif not Path(TEMP_FOLDER).is_dir():
+            Path(TEMP_FOLDER).unlink()
+            Path(TEMP_FOLDER).mkdir(parents=True)
 
         if _pdf:
             # Delete previous output file(s)
             unlink_if_exists(_out_filename)
 
         # Create output folder
-        if not os.path.exists(_out_folder):
-            os.makedirs(_out_folder)
-        elif not os.path.isdir(_out_folder):
-            os.unlink(_out_folder)
-            os.makedirs(_out_folder)
+        if not Path(_out_folder).exists():
+            Path(_out_folder).mkdir(parents=True)
+        elif not Path(_out_folder).is_dir():
+            Path(_out_folder).unlink()
+            Path(_out_folder).mkdir(parents=True)
 
     # Loading Jinja environment
     env = Environment(
@@ -380,11 +380,11 @@ def generate_qsl_image_pdf(
     if _pdf:
         report_progress("assembling_pdf", 0, 1)
         # Concatenate all files to create a single PDF to print
-        out_name = os.path.join(_out_folder, out_base_name + ".pdf")
+        out_name = str(Path(_out_folder) / (out_base_name + ".pdf"))
         if not _dry_run:
             writer = pypdf.PdfWriter()
-            for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(_i)]:
-                if os.path.isfile(pdf):
+            for pdf in [str(PDF_TEMP_BASE_NAME) % i for i in range(_i)]:
+                if Path(pdf).is_file():
                     writer.append(pdf)
                 else:
                     logging.error(
@@ -543,7 +543,7 @@ def main():
     filename = os.path.relpath(args.filename)
 
     # Arguments check
-    if not os.path.isfile(filename):
+    if not Path(filename).is_file():
         raise FileNotFoundError(f"File {filename} doesn't exist")
 
     # If no output is specified fallback to PDF
