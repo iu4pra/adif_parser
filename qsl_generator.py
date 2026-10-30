@@ -11,7 +11,7 @@ import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date
 from queue import Empty, Queue
 from typing import Optional
 

@@ -145,6 +145,16 @@ class RandomCallGenerator:
                     )
 
     @classmethod
+    def _parse_scp(cls, _f):
+        """Parses the SuperCheckPartial file and returns a list of valid callsigns"""
+        return [
+            _line.strip()
+            for _line in _f
+            if not _line.startswith(("#", "!"))
+            and _CALLSIGN_SIMPLE_RE.fullmatch(_line.strip())
+        ]
+
+    @classmethod
     def load_scp(cls):
         """Loads the SuperCheckPartial file from the local copy or downloads it if not present"""
         if not cls.scp_fail:
@@ -162,12 +172,8 @@ class RandomCallGenerator:
                 if len(cls.scp_calls) == 0 and os.path.isfile("MASTER.SCP"):
                     logging.info(f"""SCP file size: {os.path.getsize("MASTER.SCP")}""")
                     with open("MASTER.SCP", encoding="utf-8") as f:
-                        cls.scp_calls = [
-                            _line.strip()
-                            for _line in f
-                            if not _line.startswith(("#", "!"))
-                        ]  # TODO: Add callsign validation (maybe regex?)
-
+                        cls.scp_calls = cls._parse_scp(f.readlines())
+                        logging.info(f"Loaded {len(cls.scp_calls)} callsigns")
                 if cls.scp_calls:
                     cls.scp_fail = False
                     return True
