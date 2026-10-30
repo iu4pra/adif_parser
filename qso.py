@@ -4,6 +4,7 @@
 
 from datetime import datetime, timedelta, timezone
 from random import choice, choices, randint
+from pathlib import Path
 import logging
 import os.path
 import re
@@ -166,9 +167,11 @@ class RandomCallGenerator:
                         "SuperCheckPartial file present locally, no download needed"
                     )
 
-                if len(cls.scp_calls) == 0 and os.path.isfile("MASTER.SCP"):
-                    logging.info(f"""SCP file size: {os.path.getsize("MASTER.SCP")}""")
-                    with open("MASTER.SCP", "rt", encoding="utf-8") as f:
+                if len(cls.scp_calls) == 0 and Path("MASTER.SCP").is_file():
+                    logging.info(
+                        f"""SCP file size: {Path("MASTER.SCP").stat().st_size}"""
+                    )
+                    with Path("MASTER.SCP").open(encoding="utf-8") as f:
                         cls.scp_calls = cls._parse_scp(f.readlines())
                         logging.info(f"Loaded {len(cls.scp_calls)} callsigns")
                 if cls.scp_calls:
