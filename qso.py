@@ -4,6 +4,7 @@
 
 from datetime import datetime, timedelta, timezone
 from random import choice, choices, randint
+from pathlib import Path
 import logging
 import os.path
 import re
@@ -142,6 +143,16 @@ class RandomCallGenerator:
                     )
 
     @classmethod
+    def _parse_scp(cls, _f):
+        """Parses the SuperCheckPartial file and returns a list of valid callsigns"""
+        return [
+            _line.strip()
+            for _line in _f
+            if not _line.startswith(("#", "!"))
+            and _CALLSIGN_SIMPLE_RE.fullmatch(_line.strip())
+        ]
+
+    @classmethod
     def load_scp(cls):
         """Loads the SuperCheckPartial file from the local copy or downloads it if not present"""
         if not cls.scp_fail:
@@ -156,15 +167,13 @@ class RandomCallGenerator:
                         "SuperCheckPartial file present locally, no download needed"
                     )
 
-                if len(cls.scp_calls) == 0 and os.path.isfile("MASTER.SCP"):
-                    logging.info(f"""SCP file size: {os.path.getsize("MASTER.SCP")}""")
-                    with open("MASTER.SCP", "rt", encoding="utf-8") as f:
-                        cls.scp_calls = [
-                            _line.strip()
-                            for _line in f
-                            if not _line.startswith(("#", "!"))
-                        ]  # TODO: Add callsign validation (maybe regex?)
-
+                if len(cls.scp_calls) == 0 and Path("MASTER.SCP").is_file():
+                    logging.info(
+                        f"""SCP file size: {Path("MASTER.SCP").stat().st_size}"""
+                    )
+                    with Path("MASTER.SCP").open(encoding="utf-8") as f:
+                        cls.scp_calls = cls._parse_scp(f.readlines())
+                        logging.info(f"Loaded {len(cls.scp_calls)} callsigns")
                 if cls.scp_calls:
                     cls.scp_fail = False
                     return True
@@ -396,6 +405,11 @@ class QSO:
         qso_date = start_date + timedelta(
             days=randint(0, (end_date - start_date).days), minutes=randint(0, 1439)
         )
+
+        # Check qso_date is not in the future
+        if qso_date > datetime.now():
+            # Go back by a random number of minutes to make sure it's in the past
+            qso_date = datetime.now() - timedelta(minutes=randint(0, 1439))
 
         _dict = {
             "STATION_CALLSIGN": _call_generator(),
