@@ -13,8 +13,8 @@ skip-magic-trailing-comma = false
 docstring-code-format = false
 
 [tool.ruff.lint]
-# NOTE: This rule set was created by Claude AI (AI-generated, may contain
-# mistakes): review every rule before relying on it.
+# NOTE: This rule set was created and modified by Claude AI (AI-generated,
+# may contain mistakes): review every rule before relying on it.
 #
 # Base: pycodestyle errors (E) and warnings (W), plus pyflakes (F).
 # Extra rules, grouped by the NASA "Power of 10" principle they approximate:
@@ -40,6 +40,13 @@ ignore = [
     "TRY003",
     # Argument count is handled by splitting functions, not by a hard cap.
     "PLR0913",
+    # S101 (assert) conflicts with NASA Power of 10 rule 5, which asks for
+    # more assertions. Do NOT use assert to validate external input: asserts
+    # are stripped by `python -O`; raise an explicit exception instead.
+    "S101",
+    # Stylistic try/except structure rules, low value for this codebase.
+    "TRY300",
+    "TRY301",
 ]
 
 [tool.ruff.lint.mccabe]
@@ -54,9 +61,9 @@ max-returns = 6
 max-args = 7
 
 [tool.ruff.lint.per-file-ignores]
-# Tests legitimately use assert, magic values, private members and fake data.
+# Tests legitimately use magic values, private members and fake data.
 "test_*.py" = [
-    "S101", "PLR2004", "SLF001", "ARG", "FBT", "S311",
+    "PLR2004", "SLF001", "ARG", "FBT", "S311",
     "PLR0915", "PLR0913", "ANN",
 ]
-"conftest.py" = ["S101", "ARG", "ANN"]
+"conftest.py" = ["ARG", "ANN"]
