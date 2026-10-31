@@ -73,7 +73,7 @@ class QSLGeneratorBasicTest(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             qslgen.main()
 
-    @patch("os.path.isfile")
+    @patch("pathlib.Path.is_file")
     @patch("qsl_generator.adif.qso_list_from_file")
     @patch(
         "sys.argv",
@@ -759,7 +759,7 @@ class TestGenerateQslImagePdf(unittest.TestCase):
         self.assertIn("call", kwargs["qsos"][0])
         self.assertNotIn("CALL", kwargs["qsos"][0])
 
-    @patch("qsl_generator.os.path.isfile")
+    @patch("qsl_generator.Path.is_file")
     @patch("qsl_generator.pypdf.PdfWriter")
     @patch("qsl_generator.playwright_wrapper.QSLRenderer")
     def test_pdf_merge_called(
