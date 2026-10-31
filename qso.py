@@ -406,10 +406,12 @@ class QSO:
             days=randint(0, (end_date - start_date).days), minutes=randint(0, 1439)
         )
 
-        # Check qso_date is not in the future
-        if qso_date > datetime.now():
+        # Check qso_date is not in the future (UTC-wise)
+        if qso_date > datetime.now(tz=timezone.utc):
             # Go back by a random number of minutes to make sure it's in the past
-            qso_date = datetime.now() - timedelta(minutes=randint(0, 1439))
+            qso_date = datetime.now(tz=timezone.utc) - timedelta(
+                minutes=randint(0, 1439)
+            )
 
         _dict = {
             "STATION_CALLSIGN": _call_generator(),
