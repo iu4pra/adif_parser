@@ -433,4 +433,4 @@ class QSO:
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     callgen = RandomCallGenerator()
-    print("CALLSIGN:", RandomCallGenerator.generate_call_scp())
+    logging.warning(f"CALLSIGN: {RandomCallGenerator.generate_call_scp()}")

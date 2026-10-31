@@ -173,6 +173,7 @@ class TestAdifParser(unittest.TestCase):
         # After stripping, only CALL and EOR should remain
         self.assertEqual(clean_fields[0]["field"], "CALL")
         self.assertEqual(clean_fields[1]["field"], "EOR")
+        self.assertEqual(eoh_index, 0)
 
     def test_qso_list_creation(self):
         # Test converting raw fields into a list of QSO objects

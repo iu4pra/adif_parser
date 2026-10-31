@@ -117,8 +117,7 @@ def qso_list_generator(qso_list, every):
             ]
             no_qsos = len(qso_grouped[_station][_recipient])
             logging.info(f"Detected {no_qsos} QSOs from {_station} to {_recipient}")
-            for _qso_list in split_every(qso_grouped[_station][_recipient], every):
-                yield _qso_list
+            yield from split_every(qso_grouped[_station][_recipient], every)
 
 
 def render_qsl(
