@@ -35,6 +35,11 @@ _UPPERCASE_FIELDS = frozenset(
     ]
 )
 
+# Date and time fields length:
+_YYYYMMDD_LENGTH = 8
+_HHMMSS_LENGTH = 6
+_HHMM_LENGTH = 4
+
 # Regular expression for (basic) callsign validation
 _CALLSIGN_SIMPLE_RE = re.compile(r"[A-Z0-9/]{3,}")
 
@@ -122,7 +127,7 @@ class RandomCallGenerator:
                 Path(temp_path).replace("MASTER.SCP")
                 temp_path = None
             except OSError as e:
-                logger.exception(f"Error while saving SuperCheckPartial file:\n\t{e}")
+                logger.exception(f"Error while saving SuperCheckPartial file:")
                 cls.scp_fail = True
                 return False
 
@@ -131,7 +136,7 @@ class RandomCallGenerator:
             return True
         except requests.exceptions.RequestException as e:
             logger.warning(
-                f"HTTP Error while downloading SuperCheckPartial file:\n\t{e}"
+                f"HTTP Error while downloading SuperCheckPartial file:"
             )
             cls.scp_fail = True
             return False
@@ -370,13 +375,12 @@ class QSO:
     @staticmethod
     def timestamp(qso_date: str, time_on: str):
         """Returns the timestamp of the QSO in UTC"""
-
         # Get date and time
-        qso_date = qso_date[:8]  # Discard extra characters if present
-        time_on = time_on[:6]  # Discard extra characters if present
-        if len(time_on) < 6:  # HHMMSS
+        qso_date = qso_date[:_YYYYMMDD_LENGTH]  # Discard extra characters if present
+        time_on = time_on[:_HHMMSS_LENGTH]  # Discard extra characters if present
+        if len(time_on) < _HHMMSS_LENGTH:  # HHMMSS
             time_on = time_on.ljust(
-                6, "0"
+                _HHMMSS_LENGTH, "0"
             )  # Pad with zeros so everything is in HHMMSS format
 
         # Parse date and time
@@ -402,7 +406,7 @@ class QSO:
 
     @staticmethod
     def random(
-        valid: bool = True, _call_generator=RandomCallGenerator.generate_call_random
+        valid: bool = True, _call_generator = RandomCallGenerator.generate_call_random
     ):
         """Generate a random QSO object"""
         # ruff: disable [S311]
@@ -427,8 +431,7 @@ class QSO:
             "BAND": choice(["80m", "40m", "20m", "15m", "10m"]),
             "MODE": choice(["SSB", "CW", "FT8"]),
         }
-        _qso = QSO(_dict)
-        return _qso
+        return QSO(_dict)
         # ruff: enable [S311]
 
 

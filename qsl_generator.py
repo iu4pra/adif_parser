@@ -22,7 +22,7 @@ from tqdm import tqdm
 
 import adif
 import playwright_wrapper
-from qso import QSO
+from qso import _HHMM_LENGTH, _HHMMSS_LENGTH, _YYYYMMDD_LENGTH, QSO
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ TEMP_FOLDER = "./tmp/"
 TEMPLATE_TEMP_FILENAME = Path(TEMP_FOLDER) / "template_out.html"
 
 # Temporary PDF base name
-# Usage: filename = PDF_TEMP_BASE_NAME % index
+# Usage: filename = PDF_TEMP_BASE_NAME % index noqa
 PDF_TEMP_BASE_NAME = Path(TEMP_FOLDER) / "qsl_%04d.pdf"
 
 # Output folder
@@ -213,7 +213,7 @@ def unlink_if_exists(path):
         try:
             Path(path).unlink()
         except FileNotFoundError:
-            pass
+            logger.debug(f"unlink_if_exists: {path} not found")
     else:
         raise FileNotFoundError("Invalid empty path")
 
@@ -224,14 +224,14 @@ def rmtree_if_exists(path):
         try:
             shutil.rmtree(path)
         except FileNotFoundError:
-            pass
+            logger.debug(f"rmtree_if_exists: {path} not found")
     else:
         raise FileNotFoundError("Invalid empty path")
 
 
 def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
     try:
-        if len(value) != 8:
+        if len(value) != _YYYYMMDD_LENGTH:
             raise ValueError("Date must use YYYYMMDD format")
         dt = date.fromisoformat(f"{value[:4]}-{value[4:6]}-{value[6:8]}")
         return dt.strftime(fmt)
@@ -241,13 +241,13 @@ def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
 
 
 def qsl_filter_format_time(value, include_seconds=False, separator=":"):
-    if not value or len(value) < 4:
+    if not value or len(value) < _HHMM_LENGTH:
         return value
 
-    parts = [value[:2], value[2:4]]
+    parts = [value[:2], value[2:_HHMM_LENGTH]]
 
-    if include_seconds and len(value) >= 6:
-        parts.append(value[4:6])
+    if include_seconds and len(value) >= _HHMMSS_LENGTH:
+        parts.append(value[_HHMM_LENGTH:_HHMMSS_LENGTH])
 
     return separator.join(parts)
 

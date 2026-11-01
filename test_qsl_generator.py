@@ -3,7 +3,6 @@
 # This software under the MIT License
 # Unit test for the qsl_generator module
 
-import contextlib
 import shutil
 import tempfile
 import unittest
@@ -58,7 +57,7 @@ class QSLGeneratorBasicTest(unittest.TestCase):
 
     @patch("sys.argv", ["qsl_generator.py", ""])
     def test_no_args(self):
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValueError):
             qslgen.main()
 
     @patch(
