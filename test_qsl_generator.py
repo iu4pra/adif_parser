@@ -562,7 +562,7 @@ class TestGenerateQslImagePdf(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir, ignore_errors=True)
 
-    @patch("qsl_generator.logging.error")
+    @patch("qsl_generator.logger.error")
     def test_no_output_selected(self, mock_error):
 
         qslgen.generate_qsl_image_pdf(

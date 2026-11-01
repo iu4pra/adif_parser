@@ -24,6 +24,8 @@ import adif
 import playwright_wrapper
 from qso import QSO
 
+logger = logging.getLogger(__name__)
+
 # QSL standard size in centimeters
 QSL_WIDTH = 14.0
 QSL_HEIGHT = 9.0
@@ -90,7 +92,7 @@ def qso_list_generator(qso_list, every):
         ]
     )
     if len(unique_send_stations) > 1:
-        logging.warning(
+        logger.warning(
             f"Found {len(unique_send_stations)} unique sending stations, everything should work as expected anyway"
         )
 
@@ -116,7 +118,7 @@ def qso_list_generator(qso_list, every):
                 and qso.is_valid()
             ]
             no_qsos = len(qso_grouped[_station][_recipient])
-            logging.info(f"Detected {no_qsos} QSOs from {_station} to {_recipient}")
+            logger.info(f"Detected {no_qsos} QSOs from {_station} to {_recipient}")
             yield from split_every(qso_grouped[_station][_recipient], every)
 
 
@@ -135,7 +137,7 @@ def render_qsl(
     renderer: playwright_wrapper.QSLRenderer,
 ):
 
-    logging.debug(f"\trender_qsl(_i={_i})")
+    logger.debug(f"\trender_qsl(_i={_i})")
 
     # Converting all keys into lowercase
     qsos_data_lowercase = [
@@ -145,7 +147,7 @@ def render_qsl(
     ]
 
     if len(qsos_data_lowercase) == 0:
-        logging.warning("Empty QSO list, nothing to do")
+        logger.warning("Empty QSO list, nothing to do")
         return False
     if len(qsos_data_lowercase) == 1:
         # Render template in single QSO mode
@@ -164,7 +166,7 @@ def render_qsl(
     #    or {{ qso.band }}.
     # ---------------------------------------------------------------------
 
-    logging.info(f"\tCompiling QSL {_i + 1} to {qsos_data_lowercase[0]['call']} ")
+    logger.info(f"\tCompiling QSL {_i + 1} to {qsos_data_lowercase[0]['call']} ")
 
     if _dry_run is False:
         # Write compiled template to file
@@ -184,7 +186,7 @@ def render_qsl(
                 _height,
             )
         else:
-            logging.info(
+            logger.info(
                 f"Would call: renderer.render {' '.join([str(TEMPLATE_TEMP_FILENAME), out_name, str(_width), str(_height)])}"
             )
 
@@ -198,7 +200,7 @@ def render_qsl(
                 _height,
             )
         else:
-            logging.info(
+            logger.info(
                 f"Would call: renderer.render {' '.join([str(TEMPLATE_TEMP_FILENAME), str(PDF_TEMP_BASE_NAME) % _i, str(_width), str(_height)])}"
             )
 
@@ -228,7 +230,7 @@ def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
         dt = date.fromisoformat(f"{value[:4]}-{value[4:6]}-{value[6:8]}")
         return dt.strftime(fmt)
     except (ValueError, TypeError) as e:
-        logging.exception(f"qsl_filter_format_date(value={value}): {e}")
+        logger.exception(f"qsl_filter_format_date(value={value}): {e}")
         return value
 
 
@@ -265,10 +267,10 @@ def generate_qsl_image_pdf(
             progress_queue.put(ProgressUpdate(stage, completed, total))
 
     if _dry_run:
-        logging.warning("Running app in dry-run mode")
+        logger.warning("Running app in dry-run mode")
 
     if not _image and not _pdf:
-        logging.error("No output specified!")
+        logger.error("No output specified!")
         return
 
     assert isinstance(qso_list, list)
@@ -286,12 +288,12 @@ def generate_qsl_image_pdf(
         assert qso.is_valid()
 
     if removed_qsos > 0:
-        logging.warning(
+        logger.warning(
             f"Removed {removed_qsos} invalid QSOs from the list, which now contains {len(qso_list)} QSOs"
         )
 
     if len(qso_list) == 0:
-        logging.warning("No QSO found")
+        logger.warning("No QSO found")
         report_progress("done", 0, 0)
         return
 
@@ -300,7 +302,7 @@ def generate_qsl_image_pdf(
 
     # Remove any extension in the passed out filename, will be added later
     out_base_name = _out_filename.rsplit(".", 1)[0]
-    logging.debug(
+    logger.debug(
         f"Passed output filename : {_out_filename}\nBase name without extension: {out_base_name}"
     )
 
@@ -354,7 +356,7 @@ def generate_qsl_image_pdf(
         # Generate each QSL
         for _qso_list in qso_batches:
             if len(_qso_list) == 0:
-                logging.warning("Empty QSO list! Skipping to next one")
+                logger.warning("Empty QSO list! Skipping to next one")
                 continue
 
             if render_qsl(
@@ -373,7 +375,7 @@ def generate_qsl_image_pdf(
             ):
                 _i += 1
             else:
-                logging.warning("Didn't render anything")
+                logger.warning("Didn't render anything")
             report_progress("rendering", _i, total_batches)
 
     if _pdf:
@@ -386,13 +388,13 @@ def generate_qsl_image_pdf(
                 if Path(pdf).is_file():
                     writer.append(pdf)
                 else:
-                    logging.error(
+                    logger.error(
                         f"Error: file {pdf} not found! Check Playwright output!"
                     )
             writer.write(out_name)
             writer.close()
         else:
-            logging.info(f"Would create output file {out_name}")
+            logger.info(f"Would create output file {out_name}")
         report_progress("assembling_pdf", 1, 1)
 
     if _dry_run is False:
@@ -560,7 +562,7 @@ def main():
     ext = filename.split(".")[-1]
 
     if ext.casefold() in ["adi", "adif"]:
-        logging.info(
+        logger.info(
             f"Proceeding to parse ADIF file {args.filename}, only valid QSO: {args.only_valid}"
         )
         qso_list = adif.qso_list_from_file(filename, args.only_valid)
