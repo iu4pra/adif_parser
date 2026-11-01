@@ -4,9 +4,9 @@
 # Unit tests for the Playwright wrapper module
 
 import logging
-import os
 import tempfile
 import unittest
+from pathlib import Path
 
 import playwright_wrapper
 from playwright_wrapper import PLAYWRIGHT_SCREENSHOT_DPI
@@ -94,8 +94,8 @@ class QSLRendererRenderTest(unittest.TestCase):
         self.temp_path = self.temp_dir.name
 
         # Create a simple HTML file for testing
-        self.test_html_file = os.path.join(self.temp_path, "test_qsl.html")
-        with open(self.test_html_file, "w") as f:
+        self.test_html_file = str(Path(self.temp_path) / "test_qsl.html")
+        with Path(self.test_html_file).open("w") as f:
             f.write(
                 "<html><head><title>Test QSL Card</title></head><body><div><p>Test QSL Card</p></div></body></html>"
             )
@@ -107,7 +107,7 @@ class QSLRendererRenderTest(unittest.TestCase):
     def test_render_pdf_output(self):
         """Test rendering to PDF format"""
         # Mocking is handled by conftest.py fixture
-        output_pdf = os.path.join(self.temp_path, "output.pdf")
+        output_pdf = str(Path(self.temp_path) / "output.pdf")
 
         with playwright_wrapper.QSLRenderer() as renderer:
             renderer.render(self.test_html_file, output_pdf, 10.0, 15.0)
@@ -118,7 +118,7 @@ class QSLRendererRenderTest(unittest.TestCase):
     def test_render_image_output(self):
         """Test rendering to image format"""
         # Mocking is handled by conftest.py fixture
-        output_png = os.path.join(self.temp_path, "output.png")
+        output_png = str(Path(self.temp_path) / "output.png")
 
         with playwright_wrapper.QSLRenderer() as renderer:
             renderer.render(self.test_html_file, output_png, 10.0, 15.0)
@@ -126,7 +126,7 @@ class QSLRendererRenderTest(unittest.TestCase):
     def test_render_jpg_output(self):
         """Test rendering to JPG format"""
         # Mocking is handled by conftest.py fixture
-        output_jpg = os.path.join(self.temp_path, "output.jpg")
+        output_jpg = str(Path(self.temp_path) / "output.jpg")
 
         with playwright_wrapper.QSLRenderer() as renderer:
             renderer.render(self.test_html_file, output_jpg, 10.0, 15.0)
@@ -134,7 +134,7 @@ class QSLRendererRenderTest(unittest.TestCase):
     def test_render_page_closure(self):
         """Test that pages are properly closed"""
         # Mocking is handled by conftest.py fixture
-        output_file = os.path.join(self.temp_path, "output.pdf")
+        output_file = str(Path(self.temp_path) / "output.pdf")
 
         with playwright_wrapper.QSLRenderer() as renderer:
             renderer.render(self.test_html_file, output_file, 10.0, 15.0)
@@ -150,7 +150,7 @@ class QSLRendererRenderTest(unittest.TestCase):
         ]
 
         for width, height in test_cases:
-            output_file = os.path.join(self.temp_path, f"output_{width}x{height}.pdf")
+            output_file = str(Path(self.temp_path) / f"output_{width}x{height}.pdf")
 
             with playwright_wrapper.QSLRenderer() as renderer:
                 renderer.render(self.test_html_file, output_file, width, height)
@@ -164,8 +164,8 @@ class GenerateQslImageTest(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.temp_path = self.temp_dir.name
 
-        self.test_html_file = os.path.join(self.temp_path, "test_qsl.html")
-        with open(self.test_html_file, "w") as f:
+        self.test_html_file = str(Path(self.temp_path) / "test_qsl.html")
+        with Path(self.test_html_file).open("w") as f:
             f.write("<html><body><p>Test</p></body></html>")
 
     def tearDown(self):
@@ -175,14 +175,14 @@ class GenerateQslImageTest(unittest.TestCase):
     def test_generate_qsl_image_basic(self):
         """Test basic image generation"""
         # Mocking is handled by conftest.py fixture
-        output_file = os.path.join(self.temp_path, "output.png")
+        output_file = str(Path(self.temp_path) / "output.png")
 
         playwright_wrapper.generate_qsl_image(self.test_html_file, output_file, 10, 15)
 
     def test_generate_qsl_image_browser_cleanup(self):
         """Test that browser is cleaned up after image generation"""
         # Mocking is handled by conftest.py fixture
-        output_file = os.path.join(self.temp_path, "output.png")
+        output_file = str(Path(self.temp_path) / "output.png")
 
         playwright_wrapper.generate_qsl_image(self.test_html_file, output_file, 10, 15)
 
@@ -195,8 +195,8 @@ class GenerateQslPdfTest(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.temp_path = self.temp_dir.name
 
-        self.test_html_file = os.path.join(self.temp_path, "test_qsl.html")
-        with open(self.test_html_file, "w") as f:
+        self.test_html_file = str(Path(self.temp_path) / "test_qsl.html")
+        with Path(self.test_html_file).open("w") as f:
             f.write("<html><body><p>Test</p></body></html>")
 
     def tearDown(self):
@@ -206,14 +206,14 @@ class GenerateQslPdfTest(unittest.TestCase):
     def test_generate_qsl_pdf_basic(self):
         """Test basic PDF generation"""
         # Mocking is handled by conftest.py fixture
-        output_file = os.path.join(self.temp_path, "output.pdf")
+        output_file = str(Path(self.temp_path) / "output.pdf")
 
         playwright_wrapper.generate_qsl_pdf(self.test_html_file, output_file, 10, 15)
 
     def test_generate_qsl_pdf_parameters(self):
         """Test that PDF is generated with correct parameters"""
         # Mocking is handled by conftest.py fixture
-        output_file = os.path.join(self.temp_path, "output.pdf")
+        output_file = str(Path(self.temp_path) / "output.pdf")
 
         playwright_wrapper.generate_qsl_pdf(
             self.test_html_file, output_file, 10.5, 15.3

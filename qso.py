@@ -2,16 +2,17 @@
 
 # This software under the MIT License
 
-from pathlib import Path
 import logging
-import os.path
 import re
 import string
 import tempfile
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from random import choice, choices, randint
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 # List of essential QSO keys
 _ESSENTIAL_KEYS = frozenset(
@@ -34,6 +35,11 @@ _UPPERCASE_FIELDS = frozenset(
     ]
 )
 
+# Date and time fields length:
+_YYYYMMDD_LENGTH = 8
+_HHMMSS_LENGTH = 6
+_HHMM_LENGTH = 4
+
 # Regular expression for (basic) callsign validation
 _CALLSIGN_SIMPLE_RE = re.compile(r"[A-Z0-9/]{3,}")
 
@@ -55,7 +61,7 @@ class RandomCallGenerator:
                 timeout=5,  # 5 seconds
             )
             if response.status_code != 200:
-                logging.error("Failed to download SuperCheckPartial file")
+                logger.error("Failed to download SuperCheckPartial file")
                 cls.scp_fail = True
                 return False
 
@@ -68,13 +74,13 @@ class RandomCallGenerator:
                 try:
                     expected_length = int(content_length)
                 except (TypeError, ValueError):
-                    logging.exception(
+                    logger.exception(
                         "Invalid Content-Length for SuperCheckPartial file"
                     )
                     cls.scp_fail = True
                     return False
                 if len(content) != expected_length:
-                    logging.error(
+                    logger.error(
                         "Incomplete SuperCheckPartial download: expected %d bytes, "
                         "received %d",
                         expected_length,
@@ -85,7 +91,7 @@ class RandomCallGenerator:
             try:
                 text = content.decode("utf-8")
             except UnicodeDecodeError:
-                logging.exception("SuperCheckPartial download is not valid UTF-8")
+                logger.exception("SuperCheckPartial download is not valid UTF-8")
                 cls.scp_fail = True
                 return False
 
@@ -98,7 +104,7 @@ class RandomCallGenerator:
                     for line in lines[1:]
                 )
             ):
-                logging.error("SuperCheckPartial download has an invalid file format")
+                logger.error("SuperCheckPartial download has an invalid file format")
                 cls.scp_fail = True
                 return False
 
@@ -109,7 +115,7 @@ class RandomCallGenerator:
                     temp_path = temp_file.name
                     bytes_written = temp_file.write(content)
                 if bytes_written != len(content):
-                    logging.error(
+                    logger.error(
                         "Incomplete write of SuperCheckPartial file: expected %d "
                         "bytes, wrote %d",
                         len(content),
@@ -118,30 +124,30 @@ class RandomCallGenerator:
                     cls.scp_fail = True
                     return False
 
-                os.replace(temp_path, "MASTER.SCP")
+                Path(temp_path).replace("MASTER.SCP")
                 temp_path = None
             except OSError as e:
-                logging.exception(f"Error while saving SuperCheckPartial file:\n\t{e}")
+                logger.exception(f"Error while saving SuperCheckPartial file:")
                 cls.scp_fail = True
                 return False
 
-            logging.info("SuperCheckPartial file downloaded successfully!")
+            logger.info("SuperCheckPartial file downloaded successfully!")
             cls.scp_fail = False
             return True
         except requests.exceptions.RequestException as e:
-            logging.warning(
-                f"HTTP Error while downloading SuperCheckPartial file:\n\t{e}"
+            logger.warning(
+                f"HTTP Error while downloading SuperCheckPartial file:"
             )
             cls.scp_fail = True
             return False
         finally:
             if temp_path is not None:
                 try:
-                    os.unlink(temp_path)
+                    Path(temp_path).unlink()
                 except FileNotFoundError:
                     pass
                 except OSError as e:
-                    logging.warning(
+                    logger.warning(
                         f"Could not remove temporary SuperCheckPartial file:\n\t{e}"
                     )
 
@@ -160,30 +166,30 @@ class RandomCallGenerator:
         """Loads the SuperCheckPartial file from the local copy or downloads it if not present"""
         if not cls.scp_fail:
             try:
-                if not os.path.isfile("MASTER.SCP"):
+                if not Path("MASTER.SCP").is_file():
                     if not cls.download_scp():
-                        logging.error("Failed to download SuperCheckPartial file")
+                        logger.error("Failed to download SuperCheckPartial file")
                         cls.scp_fail = True
                         return False
                 else:
-                    logging.debug(
+                    logger.debug(
                         "SuperCheckPartial file present locally, no download needed"
                     )
 
                 if len(cls.scp_calls) == 0 and Path("MASTER.SCP").is_file():
-                    logging.info(
+                    logger.info(
                         f"""SCP file size: {Path("MASTER.SCP").stat().st_size}"""
                     )
                     with Path("MASTER.SCP").open(encoding="utf-8") as f:
                         cls.scp_calls = cls._parse_scp(f.readlines())
-                        logging.info(f"Loaded {len(cls.scp_calls)} callsigns")
+                        logger.info(f"Loaded {len(cls.scp_calls)} callsigns")
                 if cls.scp_calls:
                     cls.scp_fail = False
                     return True
                 cls.scp_fail = True
                 return False
             except Exception as e:
-                logging.exception(f"Error while loading SuperCheckPartial file:\n\t{e}")
+                logger.exception(f"Error while loading SuperCheckPartial file:\n\t{e}")
                 cls.scp_fail = True
                 return False
         else:
@@ -206,7 +212,7 @@ class RandomCallGenerator:
         """Attempts to load a callsign generator"""
         # Check if SuperCheckPartial generation is possible
         if not RandomCallGenerator.load_scp():
-            logging.warning(
+            logger.warning(
                 "Failed to download SuperCheckPartial file, using random callsign generator"
             )
             self.generate_call = RandomCallGenerator.generate_call_random
@@ -221,23 +227,25 @@ class RandomCallGenerator:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type:
-            logging.error(f"Error: {exc_type}: {exc_val}")
+            logger.error(f"Error: {exc_type}: {exc_val}")
 
     @classmethod
     def generate_call_scp(cls):
         """Generates a call sign using SuperCheckPartial"""
         # Implementation for generating call signs using SuperCheckPartial file
         if not cls.load_scp():
-            logging.warning("Falling back to random callsign generator")
+            logger.warning("Falling back to random callsign generator")
             return cls.generate_call_random()
-        return choice(cls.scp_calls)
+        return choice(cls.scp_calls)  # noqa: S311
 
     @staticmethod
     def generate_call_random():
+        # ruff: disable [S311]
         """Generates a random call sign without using SuperCheckPartial"""
         if randint(1, 100) <= 50:
             return f"{choice('KNW')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=randint(1, 3)))}"
         return f"I{choice('KUWZ')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=3))}"
+        # ruff: enable [S311]
 
 
 class QSO:
@@ -254,7 +262,7 @@ class QSO:
             value = data[key]
             # Only non-null fields are reported
             if value is None or value == "":
-                logging.warning(f"Skipping key {key} with invalid value")
+                logger.warning(f"Skipping key {key} with invalid value")
             # All keys are put uppercase and values are converted to string
             elif key.upper() in _UPPERCASE_FIELDS:
                 self._d[key.upper()] = str(value).upper()
@@ -275,17 +283,17 @@ class QSO:
             # If the element itself is a frozenset, then check at least one of the elements is present
             if isinstance(key, frozenset):
                 if not any(self._d.get(field) for field in key):
-                    logging.warning(f"No fields among {key} found, invalid QSO")
+                    logger.warning(f"No fields among {key} found, invalid QSO")
                     return False
             elif not self._d.get(key):
-                logging.warning(f"Essential field {key} not found, invalid QSO")
+                logger.warning(f"Essential field {key} not found, invalid QSO")
                 return False
 
         # All mandatory uppercase fields must be uppercase
         for key in _UPPERCASE_FIELDS:
             value = self._d.get(key)
             if value and value.upper() != value:
-                logging.warning(
+                logger.warning(
                     f"Bad mandatory uppercase field {key}, invalid QSO: {value}"
                 )
                 return False
@@ -295,51 +303,53 @@ class QSO:
             self._d.get("STATION_CALLSIGN")
         )
         if not match_station_callsign:
-            logging.warning(
+            logger.warning(
                 f"""Bad STATION_CALLSIGN, invalid QSO: {self._d.get("STATION_CALLSIGN")}"""
             )
             return False
 
         match_call = _CALLSIGN_SIMPLE_RE.fullmatch(self._d.get("CALL"))
         if not match_call:
-            logging.warning(f"""Bad CALL, invalid QSO: {self._d.get("CALL")}""")
+            logger.warning(f"""Bad CALL, invalid QSO: {self._d.get("CALL")}""")
             return False
 
         # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
         try:
-            datetime.strptime(self._d.get("QSO_DATE"), "%Y%m%d")
+            datetime.strptime(
+                self._d.get("QSO_DATE") + "+0000", "%Y%m%d%z"
+            )  # "+0000" explicitly sets the timezone to UTC
         except ValueError:
-            logging.warning(f"Invalid QSO_DATE format: {self._d.get('QSO_DATE')}")
+            logger.warning(f"Invalid QSO_DATE format: {self._d.get('QSO_DATE')}")
             return False
 
         if self._d.get("QSO_DATE_OFF"):
             try:
-                datetime.strptime(self._d.get("QSO_DATE_OFF"), "%Y%m%d")
+                datetime.strptime(self._d.get("QSO_DATE_OFF") + "+0000", "%Y%m%d%z")
             except ValueError:
-                logging.warning(
+                logger.warning(
                     f"Invalid QSO_DATE_OFF format: {self._d.get('QSO_DATE_OFF')}"
                 )
                 return False
 
         # TIME_ON validation (must be in HHMM or HHMMSS format)
         try:
-            datetime.strptime(self._d.get("TIME_ON"), "%H%M")
+            datetime.strptime(self._d.get("TIME_ON") + "+0000", "%H%M%z")
         except ValueError:
             try:
-                datetime.strptime(self._d.get("TIME_ON"), "%H%M%S")
+                datetime.strptime(self._d.get("TIME_ON") + "+0000", "%H%M%S%z")
             except ValueError:
-                logging.warning(f"Invalid TIME_ON format: {self._d.get('TIME_ON')}")
+                logger.warning(f"Invalid TIME_ON format: {self._d.get('TIME_ON')}")
                 return False
 
         # TIME_OFF validation (must be in HHMM or HHMMSS format)
         if self._d.get("TIME_OFF"):
             try:
-                datetime.strptime(self._d.get("TIME_OFF"), "%H%M")
+                datetime.strptime(self._d.get("TIME_OFF") + "+0000", "%H%M%z")
             except ValueError:
                 try:
-                    datetime.strptime(self._d.get("TIME_OFF"), "%H%M%S")
+                    datetime.strptime(self._d.get("TIME_OFF") + "+0000", "%H%M%S%z")
                 except ValueError:
-                    logging.warning(
+                    logger.warning(
                         f"Invalid TIME_OFF format: {self._d.get('TIME_OFF')}"
                     )
                     return False
@@ -352,12 +362,12 @@ class QSO:
                     self._d.get("QSO_DATE_OFF"), self._d.get("TIME_OFF")
                 )
                 if dt_off < dt_on:
-                    logging.warning(
+                    logger.warning(
                         f"QSO end time {dt_off} is before start time {dt_on}, invalid QSO"
                     )
                     return False
             except Exception as e:
-                logging.warning(f"Error while checking QSO timestamps: {e}")
+                logger.warning(f"Error while checking QSO timestamps: {e}")
                 return False
 
         return True
@@ -365,18 +375,16 @@ class QSO:
     @staticmethod
     def timestamp(qso_date: str, time_on: str):
         """Returns the timestamp of the QSO in UTC"""
-
         # Get date and time
-        qso_date = qso_date[:8]  # Discard extra characters if present
-        time_on = time_on[:6]  # Discard extra characters if present
-        if len(time_on) < 6:  # HHMMSS
+        qso_date = qso_date[:_YYYYMMDD_LENGTH]  # Discard extra characters if present
+        time_on = time_on[:_HHMMSS_LENGTH]  # Discard extra characters if present
+        if len(time_on) < _HHMMSS_LENGTH:  # HHMMSS
             time_on = time_on.ljust(
-                6, "0"
+                _HHMMSS_LENGTH, "0"
             )  # Pad with zeros so everything is in HHMMSS format
 
         # Parse date and time
-        dt = datetime.strptime(qso_date + time_on, "%Y%m%d%H%M%S")
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = datetime.strptime(qso_date + time_on + "+0000", "%Y%m%d%H%M%S%z")
 
         return dt
 
@@ -398,11 +406,12 @@ class QSO:
 
     @staticmethod
     def random(
-        valid: bool = True, _call_generator=RandomCallGenerator.generate_call_random
+        valid: bool = True, _call_generator = RandomCallGenerator.generate_call_random
     ):
         """Generate a random QSO object"""
-        start_date = datetime(2020, 1, 1)
-        end_date = datetime.today()
+        # ruff: disable [S311]
+        start_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        end_date = datetime.now(timezone.utc)
         qso_date = start_date + timedelta(
             days=randint(0, (end_date - start_date).days), minutes=randint(0, 1439)
         )
@@ -422,11 +431,11 @@ class QSO:
             "BAND": choice(["80m", "40m", "20m", "15m", "10m"]),
             "MODE": choice(["SSB", "CW", "FT8"]),
         }
-        _qso = QSO(_dict)
-        return _qso
+        return QSO(_dict)
+        # ruff: enable [S311]
 
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     callgen = RandomCallGenerator()
-    print("CALLSIGN:", RandomCallGenerator.generate_call_scp())
+    logger.warning(f"CALLSIGN: {RandomCallGenerator.generate_call_scp()}")

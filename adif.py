@@ -19,10 +19,12 @@ It is responsible for:
 """
 
 import logging
-import os.path
 import re
+from pathlib import Path
 
 from qso import QSO, RandomCallGenerator
+
+logger = logging.getLogger(__name__)
 
 
 class AdifError(Exception):
@@ -115,11 +117,11 @@ def parse_adif_string(_adif: str):
         match = _FIELD_GENERIC_RE_NO_VALUE.search(_adif, cursor)
         if match:
             # Match found
-            logging.debug(f"Match found at position {match.start()} to {match.end()}")
+            logger.debug(f"Match found at position {match.start()} to {match.end()}")
 
             # Log discared data
             discared_string_pretty = _adif[cursor : match.start()].replace("\n", "\\n")
-            logging.debug(
+            logger.debug(
                 f"Discarded {match.start() - cursor} byte(s) ({discared_string_pretty})"
             )
 
@@ -145,7 +147,7 @@ def parse_adif_string(_adif: str):
                 )
 
             if field["value"] is not None and field["value"].find("<") >= 0:
-                logging.warning(
+                logger.warning(
                     f"Possible len value too long for field {field['field']} ({field['value']}), < detected"
                 )
 
@@ -158,12 +160,12 @@ def parse_adif_string(_adif: str):
             # Update cursor position
             cursor = match.end() + field["len"]
 
-            logging.debug(
+            logger.debug(
                 f"Next match search will go from position {cursor} to {len(_adif) - 1}"
             )
         else:
-            logging.debug(f"No match found starting from {cursor} to {len(_adif) - 1}")
-            logging.info("No more matches, exiting")
+            logger.debug(f"No match found starting from {cursor} to {len(_adif) - 1}")
+            logger.info("No more matches, exiting")
             break
     return field_list
 
@@ -172,8 +174,8 @@ def parse_adif_file(filename: str):
     """Parse an ADIF file and returns the ordered list of its fields"""
     # Input type check
     assert isinstance(filename, str)
-    assert os.path.isfile(filename)
-    with open(filename, encoding="utf-8") as f:
+    assert Path(filename).is_file()
+    with Path(filename).open(encoding="utf-8") as f:
         field_list = parse_adif_string(f.read())
     return field_list
 
@@ -185,13 +187,13 @@ def remove_header(_adif_fields: list):
     # Look for EOH
     eoh_index = index_of(_adif_fields, lambda x: field_is_type(x, "EOH"))
     if eoh_index > 0:
-        logging.debug(f"EOH found at index {eoh_index}")
+        logger.debug(f"EOH found at index {eoh_index}")
     else:
-        logging.debug("EOH field not found during header stripping")
+        logger.debug("EOH field not found during header stripping")
 
     # Remove header data
     del _adif_fields[0 : eoh_index + 1]
-    logging.debug(
+    logger.debug(
         f"ADIF field list has {len(_adif_fields)} entries after stripping {eoh_index + 1} header entries"
     )
     return _adif_fields, eoh_index
@@ -207,7 +209,7 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=False):
     # Strip header
     _adif_fields, eoh_index = remove_header(_adif_fields)
 
-    logging.debug(f"Automatic header stripping: eoh_index = {eoh_index}")
+    logger.debug(f"Automatic header stripping: eoh_index = {eoh_index}")
 
     _qso_list: list[QSO] = []
 
@@ -232,14 +234,14 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=False):
 
             field_list_temp.clear()
 
-            logging.debug(f"Creating a QSO object based on {_dict}")
+            logger.debug(f"Creating a QSO object based on {_dict}")
             _new_qso = QSO(_dict)
             _valid = _new_qso.is_valid()  # To avoid multiple calls to is_valid()
-            logging.debug(f"Valid QSO: {_valid}")
+            logger.debug(f"Valid QSO: {_valid}")
             if not _only_valid or _valid:
                 _qso_list.append(_new_qso)
             else:
-                logging.warning(f"Invalid QSO object will be ignored: {_dict}")
+                logger.warning(f"Invalid QSO object will be ignored: {_dict}")
         elif len(_adif_fields) == 0:
             # End of list found before EOR, raise error
             raise AdifError("End of list found before EOR")

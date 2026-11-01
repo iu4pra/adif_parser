@@ -8,6 +8,8 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
+logger = logging.getLogger(__name__)
+
 # DPI used by page.screenshot()
 # Found empyrically to match page.pdf() output
 PLAYWRIGHT_SCREENSHOT_DPI = 96
@@ -80,7 +82,7 @@ class QSLRenderer:
     # To use the object in a with context, guaranteed to run even if exceptions are raised
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type:
-            logging.error(f"Error: {exc_type}: {exc_val}")
+            logger.error(f"Error: {exc_type}: {exc_val}")
         try:
             if self._browser:
                 self._browser.close()
@@ -92,16 +94,16 @@ class QSLRenderer:
         self, _input_html: str, _output_name: str, _width: float, _height: float
     ):
         """Generate QSL card as image or PDF"""
-        logging.debug("QSLRenderer.render() start")
+        logger.debug("QSLRenderer.render() start")
         file_url = Path(_input_html).resolve().as_uri()
         page = self._browser.new_page()
 
         try:
-            logging.debug("QSLRenderer.render() goto")
+            logger.debug("QSLRenderer.render() goto")
             page.goto(file_url, wait_until="load")
 
             # Check if PDF output is requested
-            logging.debug("QSLRenderer.render() generate")
+            logger.debug("QSLRenderer.render() generate")
             if Path(_output_name).suffix.lower() == ".pdf":
                 page.pdf(
                     path=_output_name,
@@ -128,4 +130,4 @@ class QSLRenderer:
                 )
         finally:
             page.close()
-        logging.debug("QSLRenderer.render() end")
+        logger.debug("QSLRenderer.render() end")
