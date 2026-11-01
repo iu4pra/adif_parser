@@ -51,6 +51,9 @@ ignore = [
     # (boolean-typed positional argument) is intentionally kept enabled.
     "FBT002",
     "FBT003",
+    # f-strings in log calls are accepted for readability; lazy "%s" arguments
+    # are only needed in hot loops or when the arguments are expensive to compute.
+    "G004",
 ]
 
 [tool.ruff.lint.mccabe]
