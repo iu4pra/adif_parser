@@ -3,6 +3,7 @@
 # This software under the MIT License
 # Unit test for the qsl_generator module
 
+import contextlib
 import shutil
 import tempfile
 import unittest
@@ -426,10 +427,8 @@ class TestUnlinkIfExists(unittest.TestCase):
 
     def test_unlink_empty_string_path(self):
         """Test unlink_if_exists with empty string path"""
-        try:
+        with self.assertRaises(FileNotFoundError):
             qslgen.unlink_if_exists("")
-        except (FileNotFoundError, OSError):
-            pass  # Both exceptions are acceptable
 
 
 class TestRmtreeIfExists(unittest.TestCase):
@@ -538,10 +537,8 @@ class TestRmtreeIfExists(unittest.TestCase):
 
     def test_rmtree_empty_string_path(self):
         """Test rmtree_if_exists with empty string path"""
-        try:
+        with self.assertRaises(FileNotFoundError):
             qslgen.rmtree_if_exists("")
-        except (FileNotFoundError, OSError):
-            pass  # Both exceptions are acceptabl
 
 
 class TestGenerateQslImagePdf(unittest.TestCase):

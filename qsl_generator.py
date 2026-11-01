@@ -209,18 +209,24 @@ def render_qsl(
 
 def unlink_if_exists(path):
     """Utility function to delete a file without throwing an exception if it doesn't exist"""
-    try:
-        Path(path).unlink()
-    except FileNotFoundError:
-        pass
+    if path != "":
+        try:
+            Path(path).unlink()
+        except FileNotFoundError:
+            pass
+    else:
+        raise FileNotFoundError("Invalid empty path")
 
 
 def rmtree_if_exists(path):
     """Utility function to delete a folder and its subfolders and contents without throwing an exception if it doesn't exist"""
-    try:
-        shutil.rmtree(path)
-    except FileNotFoundError:
-        pass
+    if path != "":
+        try:
+            shutil.rmtree(path)
+        except FileNotFoundError:
+            pass
+    else:
+        raise FileNotFoundError("Invalid empty path")
 
 
 def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
