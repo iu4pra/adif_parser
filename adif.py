@@ -24,8 +24,6 @@ import re
 
 from qso import QSO, RandomCallGenerator
 
-logger = logging.getLogger(__name__)
-
 
 class AdifError(Exception):
     """Base error."""
@@ -117,11 +115,11 @@ def parse_adif_string(_adif: str):
         match = _FIELD_GENERIC_RE_NO_VALUE.search(_adif, cursor)
         if match:
             # Match found
-            logger.debug(f"Match found at position {match.start()} to {match.end()}")
+            logging.debug(f"Match found at position {match.start()} to {match.end()}")
 
             # Log discared data
             discared_string_pretty = _adif[cursor : match.start()].replace("\n", "\\n")
-            logger.debug(
+            logging.debug(
                 f"Discarded {match.start() - cursor} byte(s) ({discared_string_pretty})"
             )
 
@@ -147,7 +145,7 @@ def parse_adif_string(_adif: str):
                 )
 
             if field["value"] is not None and field["value"].find("<") >= 0:
-                logger.warning(
+                logging.warning(
                     f"Possible len value too long for field {field['field']} ({field['value']}), < detected"
                 )
 
@@ -160,12 +158,12 @@ def parse_adif_string(_adif: str):
             # Update cursor position
             cursor = match.end() + field["len"]
 
-            logger.debug(
+            logging.debug(
                 f"Next match search will go from position {cursor} to {len(_adif) - 1}"
             )
         else:
-            logger.debug(f"No match found starting from {cursor} to {len(_adif) - 1}")
-            logger.info("No more matches, exiting")
+            logging.debug(f"No match found starting from {cursor} to {len(_adif) - 1}")
+            logging.info("No more matches, exiting")
             break
     return field_list
 
@@ -187,13 +185,13 @@ def remove_header(_adif_fields: list):
     # Look for EOH
     eoh_index = index_of(_adif_fields, lambda x: field_is_type(x, "EOH"))
     if eoh_index > 0:
-        logger.debug(f"EOH found at index {eoh_index}")
+        logging.debug(f"EOH found at index {eoh_index}")
     else:
-        logger.debug("EOH field not found during header stripping")
+        logging.debug("EOH field not found during header stripping")
 
     # Remove header data
     del _adif_fields[0 : eoh_index + 1]
-    logger.debug(
+    logging.debug(
         f"ADIF field list has {len(_adif_fields)} entries after stripping {eoh_index + 1} header entries"
     )
     return _adif_fields, eoh_index
@@ -209,7 +207,7 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=False):
     # Strip header
     _adif_fields, eoh_index = remove_header(_adif_fields)
 
-    logger.debug(f"Automatic header stripping: eoh_index = {eoh_index}")
+    logging.debug(f"Automatic header stripping: eoh_index = {eoh_index}")
 
     _qso_list: list[QSO] = []
 
@@ -234,14 +232,14 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=False):
 
             field_list_temp.clear()
 
-            logger.debug(f"Creating a QSO object based on {_dict}")
+            logging.debug(f"Creating a QSO object based on {_dict}")
             _new_qso = QSO(_dict)
             _valid = _new_qso.is_valid()  # To avoid multiple calls to is_valid()
-            logger.debug(f"Valid QSO: {_valid}")
+            logging.debug(f"Valid QSO: {_valid}")
             if not _only_valid or _valid:
                 _qso_list.append(_new_qso)
             else:
-                logger.warning(f"Invalid QSO object will be ignored: {_dict}")
+                logging.warning(f"Invalid QSO object will be ignored: {_dict}")
         elif len(_adif_fields) == 0:
             # End of list found before EOR, raise error
             raise AdifError("End of list found before EOR")

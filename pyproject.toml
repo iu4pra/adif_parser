@@ -40,20 +40,6 @@ ignore = [
     "TRY003",
     # Argument count is handled by splitting functions, not by a hard cap.
     "PLR0913",
-    # S101 (assert) conflicts with NASA Power of 10 rule 5, which asks for
-    # more assertions. Do NOT use assert to validate external input: asserts
-    # are stripped by `python -O`; raise an explicit exception instead.
-    "S101",
-    # Stylistic try/except structure rules, low value for this codebase.
-    "TRY300",
-    "TRY301",
-    # Boolean default / positional call values: low criticality. FBT001
-    # (boolean-typed positional argument) is intentionally kept enabled.
-    "FBT002",
-    "FBT003",
-    # f-strings in log calls are accepted for readability; lazy "%s" arguments
-    # are only needed in hot loops or when the arguments are expensive to compute.
-    "G004",
 ]
 
 [tool.ruff.lint.mccabe]
