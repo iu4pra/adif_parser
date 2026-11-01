@@ -4,14 +4,16 @@
 # Unit test for the qsl_generator module
 
 import os
-import pytest
-import qsl_generator as qslgen
-import unittest
-import tempfile
 import shutil
+import tempfile
+import unittest
 from queue import Queue
+from unittest.mock import MagicMock, call, patch
+
+import pytest
+
+import qsl_generator as qslgen
 from qso import QSO
-from unittest.mock import call, patch, MagicMock
 
 
 class QSLGeneratorBasicTest(unittest.TestCase):

@@ -4,23 +4,24 @@
 # QSL generator
 # Generates a printable QSL starting from an HTML template with Jinja2
 
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
-from datetime import datetime
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-from qso import QSO
-from queue import Empty, Queue
-from tqdm import tqdm
-from typing import Optional
-
-import adif
 import argparse
 import logging
 import math
 import os
-import playwright_wrapper
-import pypdf
 import shutil
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from datetime import datetime
+from queue import Empty, Queue
+from typing import Optional
+
+import pypdf
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from tqdm import tqdm
+
+import adif
+import playwright_wrapper
+from qso import QSO
 
 # QSL standard size in centimeters
 QSL_WIDTH = 14.0
@@ -146,7 +147,7 @@ def render_qsl(
     if len(qsos_data_lowercase) == 0:
         logging.warning("Empty QSO list, nothing to do")
         return False
-    elif len(qsos_data_lowercase) == 1:
+    if len(qsos_data_lowercase) == 1:
         # Render template in single QSO mode
         output = template.render(qso=qsos_data_lowercase[0])
     else:
@@ -167,7 +168,7 @@ def render_qsl(
 
     if _dry_run is False:
         # Write compiled template to file
-        with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
+        with open(TEMPLATE_TEMP_FILENAME, "w", encoding="utf-8") as f:
             f.write(output)
 
     # Convert template page to image
@@ -226,7 +227,7 @@ def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
         dt = datetime.strptime(value, "%Y%m%d")
         return dt.strftime(fmt)
     except (ValueError, TypeError) as e:
-        logging.error(f"qsl_filter_format_date(value={value}): {e}")
+        logging.exception(f"qsl_filter_format_date(value={value}): {e}")
         return value
 
 
@@ -314,10 +315,9 @@ def generate_qsl_image_pdf(
         # Re-create temporary folder
         if not os.path.exists(TEMP_FOLDER):
             os.makedirs(TEMP_FOLDER)
-        else:
-            if not os.path.isdir(TEMP_FOLDER):
-                os.unlink(TEMP_FOLDER)
-                os.makedirs(TEMP_FOLDER)
+        elif not os.path.isdir(TEMP_FOLDER):
+            os.unlink(TEMP_FOLDER)
+            os.makedirs(TEMP_FOLDER)
 
         if _pdf:
             # Delete previous output file(s)
@@ -326,10 +326,9 @@ def generate_qsl_image_pdf(
         # Create output folder
         if not os.path.exists(_out_folder):
             os.makedirs(_out_folder)
-        else:
-            if not os.path.isdir(_out_folder):
-                os.unlink(_out_folder)
-                os.makedirs(_out_folder)
+        elif not os.path.isdir(_out_folder):
+            os.unlink(_out_folder)
+            os.makedirs(_out_folder)
 
     # Loading Jinja environment
     env = Environment(
@@ -571,12 +570,12 @@ def main():
     # Optional parameters validation
     if args.width <= 0:
         raise ValueError("--width must be positive")
-    elif args.width > QSL_WIDTH_MAX:
+    if args.width > QSL_WIDTH_MAX:
         raise ValueError(f"--width must be <= {QSL_WIDTH_MAX}")
 
     if args.height <= 0:
         raise ValueError("--height must be positive")
-    elif args.height > QSL_HEIGHT_MAX:
+    if args.height > QSL_HEIGHT_MAX:
         raise ValueError(f"--height must be <= {QSL_HEIGHT_MAX}")
 
     if args.max_qso <= 0:

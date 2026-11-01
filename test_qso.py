@@ -3,13 +3,15 @@
 # This software under the MIT License
 # Unit test for QSO class
 
-import adif
 import datetime
 import os
 import tempfile
 import unittest
 from unittest.mock import mock_open, patch
+
 from requests.exceptions import RequestException
+
+import adif
 from qso import QSO, RandomCallGenerator
 
 

@@ -2,8 +2,9 @@
 # This software under the MIT License
 # Pytest configuration - Global mocks for Playwright tests
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 @pytest.fixture(autouse=True)

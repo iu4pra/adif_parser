@@ -3,9 +3,10 @@
 # This software under the MIT License
 # Unit test for ADIF parser
 
-import adif
 import unittest
 from unittest.mock import patch
+
+import adif
 from qso import QSO
 
 

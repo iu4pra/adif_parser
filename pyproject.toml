@@ -13,8 +13,50 @@ skip-magic-trailing-comma = false
 docstring-code-format = false
 
 [tool.ruff.lint]
-# PEP 8 checks: pycodestyle errors (E) and warnings (W), plus pyflakes (F).
-# Further rule sets (B, I, UP, N) can be enabled gradually.
-select = ["E", "W", "F"]
-# E501 (line too long) is left to the formatter, as with Black.
-ignore = ["E501"]
+# NOTE: This rule set was created by Claude AI (AI-generated, may contain
+# mistakes): review every rule before relying on it.
+#
+# Base: pycodestyle errors (E) and warnings (W), plus pyflakes (F).
+# Extra rules, grouped by the NASA "Power of 10" principle they approximate:
+#   C90, PL        -> simple control flow, short functions (rules 1, 4)
+#   B, BLE, TRY    -> explicit error handling, no swallowed errors (rule 7)
+#   SIM, RET, PIE, PERF, ARG, A, FBT -> smaller scope, fewer code paths (rule 6)
+#   DTZ            -> no ambiguous naive datetimes
+#   T20, T10, ERA  -> no leftover prints, debuggers or commented-out code
+#   G, LOG         -> structured, lazy and per-module logging (debugging)
+#   S              -> no eval/exec, no weak randomness for security (rule 8)
+#   ANN401         -> no explicit Any (rules 9, 10)
+#   PTH, UP, I, N, RUF -> modern, consistent and sorted code
+select = [
+    "E", "W", "F",
+    "B", "C90", "PL", "SIM", "RET", "BLE", "T20", "T10", "ERA",
+    "G", "LOG", "DTZ", "S", "ARG", "A", "PTH", "UP", "I", "N", "RUF",
+    "PERF", "FBT", "ANN401", "TRY", "PIE",
+]
+ignore = [
+    # E501 (line too long) is left to the formatter, as with Black.
+    "E501",
+    # Long messages inside exceptions are acceptable in this project.
+    "TRY003",
+    # Argument count is handled by splitting functions, not by a hard cap.
+    "PLR0913",
+]
+
+[tool.ruff.lint.mccabe]
+# Bounded cyclomatic complexity per function.
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+# Keep functions short (NASA limit is 60 lines; 50 statements stays below it).
+max-statements = 50
+max-branches = 12
+max-returns = 6
+max-args = 7
+
+[tool.ruff.lint.per-file-ignores]
+# Tests legitimately use assert, magic values, private members and fake data.
+"test_*.py" = [
+    "S101", "PLR2004", "SLF001", "ARG", "FBT", "S311",
+    "PLR0915", "PLR0913", "ANN",
+]
+"conftest.py" = ["S101", "ARG", "ANN"]

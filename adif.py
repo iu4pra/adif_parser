@@ -21,13 +21,12 @@ It is responsible for:
 import logging
 import os.path
 import re
+
 from qso import QSO, RandomCallGenerator
 
 
 class AdifError(Exception):
     """Base error."""
-
-    pass
 
 
 def check_field(t: dict):
@@ -174,7 +173,7 @@ def parse_adif_file(filename: str):
     # Input type check
     assert isinstance(filename, str)
     assert os.path.isfile(filename)
-    with open(filename, "rt", encoding="utf-8") as f:
+    with open(filename, encoding="utf-8") as f:
         field_list = parse_adif_string(f.read())
     return field_list
 
@@ -229,8 +228,7 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=False):
                     raise AdifError(
                         f"Duplicate field {f['field']} ({_dict.get(f['field'])})"
                     )
-                else:
-                    _dict.update(adif_field_to_qso_field(f))
+                _dict.update(adif_field_to_qso_field(f))
 
             field_list_temp.clear()
 
@@ -242,10 +240,9 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=False):
                 _qso_list.append(_new_qso)
             else:
                 logging.warning(f"Invalid QSO object will be ignored: {_dict}")
-        else:
-            if len(_adif_fields) == 0:
-                # End of list found before EOR, raise error
-                raise AdifError("End of list found before EOR")
+        elif len(_adif_fields) == 0:
+            # End of list found before EOR, raise error
+            raise AdifError("End of list found before EOR")
 
     return _qso_list
 
@@ -261,7 +258,7 @@ def qso_list_random(n: int, _only_valid=True):
     """Generate a random QSO list of a given size"""
     if n < 0:
         raise ValueError(f"n must be positive, but n={n}")
-    elif n == 0:
+    if n == 0:
         return []
 
     with RandomCallGenerator() as callgen:
