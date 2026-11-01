@@ -2,13 +2,13 @@
 
 # This software under the MIT License
 
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
-from random import choice, choices, randint
 import logging
 import re
 import string
 import tempfile
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from random import choice, choices, randint
 
 import requests
 
