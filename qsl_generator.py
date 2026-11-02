@@ -22,7 +22,7 @@ from tqdm import tqdm
 
 import adif
 import playwright_wrapper
-from qso import _HHMM_LENGTH, _HHMMSS_LENGTH, _YYYYMMDD_LENGTH, QSO
+from qso import HHMM_LENGTH, HHMMSS_LENGTH, QSO, YYYYMMDD_LENGTH
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ TEMP_FOLDER = "./tmp/"
 TEMPLATE_TEMP_FILENAME = Path(TEMP_FOLDER) / "template_out.html"
 
 # Temporary PDF base name
-# Usage: filename = PDF_TEMP_BASE_NAME % index noqa
+# Usage: the page index is applied with the % operator
 PDF_TEMP_BASE_NAME = Path(TEMP_FOLDER) / "qsl_%04d.pdf"
 
 # Output folder
@@ -231,7 +231,7 @@ def rmtree_if_exists(path):
 
 def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
     try:
-        if len(value) != _YYYYMMDD_LENGTH:
+        if len(value) != YYYYMMDD_LENGTH:
             raise ValueError("Date must use YYYYMMDD format")
         dt = date.fromisoformat(f"{value[:4]}-{value[4:6]}-{value[6:8]}")
         return dt.strftime(fmt)
@@ -241,13 +241,13 @@ def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
 
 
 def qsl_filter_format_time(value, include_seconds=False, separator=":"):
-    if not value or len(value) < _HHMM_LENGTH:
+    if not value or len(value) < HHMM_LENGTH:
         return value
 
-    parts = [value[:2], value[2:_HHMM_LENGTH]]
+    parts = [value[:2], value[2:HHMM_LENGTH]]
 
-    if include_seconds and len(value) >= _HHMMSS_LENGTH:
-        parts.append(value[_HHMM_LENGTH:_HHMMSS_LENGTH])
+    if include_seconds and len(value) >= HHMMSS_LENGTH:
+        parts.append(value[HHMM_LENGTH:HHMMSS_LENGTH])
 
     return separator.join(parts)
 
