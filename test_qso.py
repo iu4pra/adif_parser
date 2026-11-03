@@ -8,7 +8,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import mock_open, patch
+from unittest.mock import Mock, mock_open, patch
 
 from requests.exceptions import RequestException
 
@@ -284,7 +284,8 @@ class RandomQSOTest(unittest.TestCase):
 
 
 class RandomCallGeneratorTest(unittest.TestCase):
-    @patch("pathlib.Path.is_file", return_value=False)
+    @patch.object(RandomCallGenerator, "scp_fail", False)
+    @patch("qso.Path.is_file", return_value=False)
     @patch("qso.requests.get")
     def test_download_failure_uses_random_generator(self, mock_get, mock_isfile):
         mock_get.return_value.status_code = 404  # Fake a failed connection
@@ -296,7 +297,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
         self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
     @patch.object(RandomCallGenerator, "scp_fail", False)
-    @patch("pathlib.Path.is_file", return_value=False)
+    @patch("qso.Path.is_file", return_value=False)
     @patch("qso.requests.get", side_effect=RequestException("offline"))
     def test_download_request_exception_uses_random_generator(
         self, mock_get, mock_isfile
@@ -310,7 +311,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
         self.assertIs(callgen.generate_call, RandomCallGenerator.generate_call_random)
 
     @patch.object(RandomCallGenerator, "scp_fail", False)
-    @patch("pathlib.Path.is_file", return_value=False)
+    @patch("qso.Path.is_file", return_value=False)
     @patch("qso.requests.get", side_effect=OSError("network failure"))
     def test_download_unexpected_exception_uses_random_generator(
         self, mock_get, mock_isfile
@@ -365,7 +366,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
     @patch("qso.RandomCallGenerator.generate_call_random", wraps=None)
     @patch("qso.RandomCallGenerator.generate_call_scp", wraps=None)
     @patch("qso.RandomCallGenerator.load_scp", wraps=None)
-    @patch("pathlib.Path.is_file")
+    @patch("qso.Path.is_file")
     def test_scp_file_found_1(
         self, mock_isfile, mock_load_scp, mock_gencall_scp, mock_gencall_random
     ):
@@ -378,7 +379,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
 
     @patch("qso.RandomCallGenerator.generate_call_random", wraps=None)
     @patch("qso.RandomCallGenerator.generate_call_scp", wraps=None)
-    @patch("pathlib.Path.is_file")
+    @patch("qso.Path.is_file")
     def test_scp_file_not_found_1(
         self, mock_isfile, mock_gencall_scp, mock_gencall_random
     ):
@@ -389,7 +390,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
         mock_gencall_random.assert_called()
 
     @patch("qso.RandomCallGenerator.load_generator", wraps=None)
-    @patch("pathlib.Path.is_file")
+    @patch("qso.Path.is_file")
     def test_with_scope(self, mock_isfile, mock_load_generator):
         mock_isfile.return_value = False
         callgen = RandomCallGenerator()
@@ -549,7 +550,7 @@ class RandomCallGeneratorSCPTest(unittest.TestCase):
     def test_download_scp_http_failure(self, mock_get):
         mock_get.return_value.status_code = 404
 
-        with patch("pathlib.Path.open", mock_open()) as file_mock:
+        with patch("qso.Path.open", mock_open()) as file_mock:
             self.assertFalse(RandomCallGenerator.download_scp())
 
         file_mock.assert_not_called()
@@ -568,8 +569,9 @@ class RandomCallGeneratorSCPTest(unittest.TestCase):
         file_mock = mock_open(read_data="# comment\n! ignored\nK1ABC\n W1AW \n")
 
         with (
-            patch("pathlib.Path.is_file", return_value=True),
-            patch("pathlib.Path.open", file_mock),
+            patch("qso.Path.is_file", return_value=True),
+            patch("qso.Path.stat", return_value=Mock(st_size=24)),
+            patch("qso.Path.open", file_mock),
         ):
             self.assertTrue(RandomCallGenerator.load_scp())
 
@@ -580,11 +582,12 @@ class RandomCallGeneratorSCPTest(unittest.TestCase):
         file_mock = mock_open(read_data="K1ABC\nW1AW\n")
 
         with (
-            patch("pathlib.Path.is_file", side_effect=[False, True]),
+            patch("qso.Path.is_file", side_effect=[False, True]),
             patch.object(
                 RandomCallGenerator, "download_scp", return_value=True
             ) as download,
-            patch("pathlib.Path.open", file_mock),
+            patch("qso.Path.stat", return_value=Mock(st_size=24)),
+            patch("qso.Path.open", file_mock),
         ):
             self.assertTrue(RandomCallGenerator.load_scp())
 
@@ -593,8 +596,8 @@ class RandomCallGeneratorSCPTest(unittest.TestCase):
 
     def test_load_scp_empty_file_fails(self):
         with (
-            patch("pathlib.Path.is_file", return_value=True),
-            patch("pathlib.Path.open", mock_open(read_data="")),
+            patch("qso.Path.is_file", return_value=True),
+            patch("qso.Path.open", mock_open(read_data="")),
         ):
             self.assertFalse(RandomCallGenerator.load_scp())
 
