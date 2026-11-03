@@ -161,7 +161,7 @@ class App:
         else:
             self.template_file = Path(qsl_generator.TEMPLATE_DEFAULT_FILE).name
             self.logger.info(
-                "No template chosen, default %s selected" % self.template_file
+                f"No template chosen, default {self.template_file} selected"
             )
 
     def logfile_chooser(self):
