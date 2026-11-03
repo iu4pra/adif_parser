@@ -60,7 +60,7 @@ class RandomCallGenerator:
                 allow_redirects=True,
                 timeout=5,  # 5 seconds
             )
-            if response.status_code != 200:
+            if response.status_code != 200:  # noqa
                 logger.error("Failed to download SuperCheckPartial file")
                 cls.scp_fail = True
                 return False
@@ -186,8 +186,8 @@ class RandomCallGenerator:
                     return True
                 cls.scp_fail = True
                 return False
-            except Exception as e:
-                logger.exception(f"Error while loading SuperCheckPartial file:\n\t{e}")
+            except Exception:
+                logger.exception("Error while loading SuperCheckPartial file")
                 cls.scp_fail = True
                 return False
         else:
@@ -240,7 +240,7 @@ class RandomCallGenerator:
     def generate_call_random():
         # ruff: disable [S311]
         """Generates a random call sign without using SuperCheckPartial"""
-        if randint(1, 100) <= 50:
+        if randint(1, 100) <= 50:  # noqa
             return f"{choice('KNW')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=randint(1, 3)))}"
         return f"I{choice('KUWZ')}{randint(0, 9)}{''.join(choices(string.ascii_uppercase, k=3))}"
         # ruff: enable [S311]
