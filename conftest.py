@@ -29,7 +29,7 @@ def mock_playwright_globally():
         mock_sync_playwright.return_value.__exit__.return_value = None
 
         # Covers pattern:
-        # sync_playwright ().start()
+        # sync_playwright.start
         mock_sync_playwright.return_value.start.return_value = mock_pw
 
         mock_pw.chromium.launch.return_value = mock_browser

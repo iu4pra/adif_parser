@@ -64,10 +64,10 @@ def check_field(t: dict):
     return True
 
 
-def field_is_type(f: dict, type: str):
+def field_is_type(f: dict, _type: str):
     """Checks ADIF field type"""
     assert isinstance(f.get("field"), str)
-    return f["field"].casefold() == type.casefold()
+    return f["field"].casefold() == _type.casefold()
 
 
 def index_of(item_list: list, cond, cond_value: bool = True):
@@ -176,8 +176,7 @@ def parse_adif_file(filename: str):
     assert isinstance(filename, str)
     assert Path(filename).is_file()
     with Path(filename).open(encoding="utf-8") as f:
-        field_list = parse_adif_string(f.read())
-    return field_list
+        return parse_adif_string(f.read())
 
 
 def remove_header(_adif_fields: list):
@@ -264,5 +263,4 @@ def qso_list_random(n: int, _only_valid=True):
         return []
 
     with RandomCallGenerator() as callgen:
-        qso_list = [QSO.random(_only_valid, callgen.generate_call) for i in range(n)]
-    return qso_list
+        return [QSO.random(_only_valid, callgen.generate_call) for i in range(n)]
