@@ -175,9 +175,7 @@ def render_qsl(
 
     # Convert template page to image
     if _image:
-        out_name = str(
-            Path(_out_folder) / (out_base_name + "_{i+1:04}." + _format)
-        )
+        out_name = str(Path(_out_folder) / f"{out_base_name}_{_i + 1:04}.{_format}")
         if _dry_run is False:
             renderer.render(
                 str(TEMPLATE_TEMP_FILENAME),

@@ -1,7 +1,7 @@
 [tool.ruff]
 # Same line length as Black's default, so existing wrapping is preserved.
 line-length = 88
-# Matches the oldest Python version in the CI matrix.
+# Matches the oldest supported Python version.
 target-version = "py39"
 
 [tool.ruff.format]

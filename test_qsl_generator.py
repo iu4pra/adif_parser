@@ -597,6 +597,28 @@ class TestGenerateQslImagePdf(unittest.TestCase):
         renderer_instance.render.assert_called()
 
     @patch("qsl_generator.playwright_wrapper.QSLRenderer")
+    def test_generate_image_output_names_are_numbered(self, mock_renderer):
+        """Each image gets its own zero-padded, 1-based index in the file name."""
+        renderer_instance = MagicMock()
+        mock_renderer.return_value.__enter__.return_value = renderer_instance
+
+        qso_other = QSO({**self.qso._d, "CALL": "IK4XYZ"})
+
+        qslgen.generate_qsl_image_pdf(
+            [self.qso, qso_other],
+            _image=True,
+            _pdf=False,
+            _out_filename="cards.pdf",
+            _out_folder=self.tempdir,
+            _format="png",
+        )
+
+        out_names = [
+            Path(c.args[1]).name for c in renderer_instance.render.call_args_list
+        ]
+        self.assertEqual(out_names, ["cards_0001.png", "cards_0002.png"])
+
+    @patch("qsl_generator.playwright_wrapper.QSLRenderer")
     @patch("qsl_generator.pypdf.PdfWriter")
     def test_generate_pdf(self, mock_writer, mock_renderer):
 

@@ -382,7 +382,7 @@ class RandomCallGeneratorTest(unittest.TestCase):
     @patch("qso.RandomCallGenerator.load_scp", wraps=None)
     @patch("qso.Path.is_file")
     def test_scp_file_not_found_1(
-        self, mock_isfile,mock_loadscp, mock_gencall_scp, mock_gencall_random
+        self, mock_isfile, mock_loadscp, mock_gencall_scp, mock_gencall_random
     ):
         mock_isfile.return_value = False
         mock_loadscp.return_value = False
