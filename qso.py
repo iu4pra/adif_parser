@@ -270,7 +270,7 @@ class QSO:
     def __str__(self):
         """String representation of the object"""
         _str = ""
-        for key in self._d.keys():
+        for key in self._d:
             _str += f"{key} = {self._d[key]}\n"
         return _str
 
@@ -364,8 +364,8 @@ class QSO:
                         f"QSO end time {dt_off} is before start time {dt_on}, invalid QSO"
                     )
                     return False
-            except Exception as e:
-                logger.warning(f"Error while checking QSO timestamps: {e}")
+            except Exception:
+                logger.warning("Error while checking QSO timestamps")
                 return False
 
         return True
@@ -382,9 +382,7 @@ class QSO:
             )  # Pad with zeros so everything is in HHMMSS format
 
         # Parse date and time
-        dt = datetime.strptime(qso_date + time_on + "+0000", "%Y%m%d%H%M%S%z")
-
-        return dt
+        return datetime.strptime(qso_date + time_on + "+0000", "%Y%m%d%H%M%S%z")
 
     def timestamp_on(self):
         """Returns the timestamp of the QSO start time in UTC"""
