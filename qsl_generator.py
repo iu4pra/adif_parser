@@ -14,7 +14,6 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from queue import Empty, Queue
-from typing import Optional
 
 import pypdf
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -175,9 +174,7 @@ def render_qsl(
 
     # Convert template page to image
     if _image:
-        out_name = str(
-            Path(_out_folder) / (out_base_name + "_{i+1:04}." + _format)
-        )
+        out_name = str(Path(_out_folder) / f"{out_base_name}_{_i + 1:04}.{_format}")
         if _dry_run is False:
             renderer.render(
                 str(TEMPLATE_TEMP_FILENAME),
@@ -264,7 +261,7 @@ def generate_qsl_image_pdf(
     _height: float = QSL_HEIGHT,
     _dry_run: bool = False,
     _max_qso: int = 3,
-    progress_queue: Optional[Queue] = None,
+    progress_queue: Queue | None = None,
 ):
     """Generate QSL output and optionally send progress updates to a thread-safe queue."""
 

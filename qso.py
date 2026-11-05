@@ -6,7 +6,7 @@ import logging
 import re
 import string
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from random import choice, choices, randint
 
@@ -406,18 +406,16 @@ class QSO:
     ):
         """Generate a random QSO object"""
         # ruff: disable [S311]
-        start_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
-        end_date = datetime.now(timezone.utc)
+        start_date = datetime(2020, 1, 1, tzinfo=UTC)
+        end_date = datetime.now(UTC)
         qso_date = start_date + timedelta(
             days=randint(0, (end_date - start_date).days), minutes=randint(0, 1439)
         )
 
         # Check qso_date is not in the future (UTC-wise)
-        if qso_date > datetime.now(tz=timezone.utc):
+        if qso_date > datetime.now(tz=UTC):
             # Go back by a random number of minutes to make sure it's in the past
-            qso_date = datetime.now(tz=timezone.utc) - timedelta(
-                minutes=randint(0, 1439)
-            )
+            qso_date = datetime.now(tz=UTC) - timedelta(minutes=randint(0, 1439))
 
         _dict = {
             "STATION_CALLSIGN": _call_generator(),
