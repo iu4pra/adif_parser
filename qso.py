@@ -6,11 +6,13 @@ import logging
 import re
 import string
 import tempfile
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from random import choice, choices, randint
 
 import requests
+
+from datetime_compat import UTC
 
 logger = logging.getLogger(__name__)
 

@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from queue import Empty, Queue
+from typing import Optional
 
 import pypdf
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -261,7 +262,7 @@ def generate_qsl_image_pdf(
     _height: float = QSL_HEIGHT,
     _dry_run: bool = False,
     _max_qso: int = 3,
-    progress_queue: Queue | None = None,
+    progress_queue: Optional[Queue] = None,
 ):
     """Generate QSL output and optionally send progress updates to a thread-safe queue."""
 

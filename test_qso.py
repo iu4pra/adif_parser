@@ -214,7 +214,7 @@ class QSOTimestampTest(unittest.TestCase):
 
         self.assertEqual(
             timestamp,
-            datetime.datetime(2023, 1, 1, 12, 34, 56, tzinfo=datetime.UTC),
+            datetime.datetime(2023, 1, 1, 12, 34, 56, tzinfo=datetime.timezone.utc),
         )
 
     def test_timestamp_truncates_extra_characters(self):
@@ -222,7 +222,7 @@ class QSOTimestampTest(unittest.TestCase):
 
         self.assertEqual(
             timestamp,
-            datetime.datetime(2023, 1, 1, 12, 34, 56, tzinfo=datetime.UTC),
+            datetime.datetime(2023, 1, 1, 12, 34, 56, tzinfo=datetime.timezone.utc),
         )
 
     def test_timestamp_pads_short_time(self):
@@ -230,7 +230,7 @@ class QSOTimestampTest(unittest.TestCase):
 
         self.assertEqual(
             timestamp,
-            datetime.datetime(2023, 1, 1, 12, 34, 0, tzinfo=datetime.UTC),
+            datetime.datetime(2023, 1, 1, 12, 34, 0, tzinfo=datetime.timezone.utc),
         )
 
     def test_timestamp_on(self):
@@ -247,7 +247,7 @@ class QSOTimestampTest(unittest.TestCase):
 
         self.assertEqual(
             q.timestamp_on(),
-            datetime.datetime(2023, 1, 1, 12, 34, 56, tzinfo=datetime.UTC),
+            datetime.datetime(2023, 1, 1, 12, 34, 56, tzinfo=datetime.timezone.utc),
         )
 
     def test_timestamp_on_invalid_qso(self):
@@ -270,7 +270,7 @@ class QSOTimestampTest(unittest.TestCase):
 
         self.assertEqual(
             q.timestamp_off(),
-            datetime.datetime(2023, 1, 2, 1, 2, 3, tzinfo=datetime.UTC),
+            datetime.datetime(2023, 1, 2, 1, 2, 3, tzinfo=datetime.timezone.utc),
         )
 
     def test_timestamp_off_invalid_qso(self):
