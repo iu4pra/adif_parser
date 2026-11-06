@@ -9,6 +9,7 @@ import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 from random import choice, choices, randint
+from typing import ClassVar
 
 import requests
 
@@ -45,7 +46,9 @@ _UPPERCASE_FIELDS = frozenset(
 )
 
 # List of bands for random QSOs
-_BANDS_LIST = frozenset(["160m", "80m", "60m", "40m", "30m", "20m", "17m", "15m", "12m", "10m"])
+_BANDS_LIST = frozenset(
+    ["160m", "80m", "60m", "40m", "30m", "20m", "17m", "15m", "12m", "10m"]
+)
 
 # Minimal list of modes for random QSOs
 _MODES_LIST = frozenset(["SSB", "CW", "RTTY", "FT4", "FT8"])
@@ -63,7 +66,7 @@ class RandomCallGenerator:
     """Helper class to generate random callsigns"""
 
     scp_fail = False  # Class-level flag to indicate if SCP file download failed
-    scp_calls = []  # SuperCheckPartial calls list
+    scp_calls: ClassVar[list[str]] = []  # SuperCheckPartial calls list
 
     @classmethod
     def download_scp(cls):
@@ -271,8 +274,7 @@ class QSO:
         # Internal data storage
         self._d: dict = {}
 
-        for key in data:
-            value = data[key]
+        for key, value in data.items():
             # Only non-null fields are reported
             if value is None or value == "":
                 logger.warning(f"Skipping key {key} with invalid value")
@@ -379,7 +381,7 @@ class QSO:
                         f"QSO end time {dt_off} is before start time {dt_on}, invalid QSO"
                     )
                     return False
-            except Exception:
+            except ValueError:
                 logger.warning("Error while checking QSO timestamps")
                 return False
 
@@ -416,9 +418,7 @@ class QSO:
         return QSO.timestamp(self._d.get("QSO_DATE_OFF"), self._d.get("TIME_OFF"))
 
     @staticmethod
-    def random(
-        valid: bool = True, _call_generator=RandomCallGenerator.generate_call_random
-    ):
+    def random(valid=True, _call_generator=RandomCallGenerator.generate_call_random):
         """Generate a random QSO object"""
         # ruff: disable [S311]
         start_date = datetime(2020, 1, 1, tzinfo=UTC)
@@ -444,7 +444,7 @@ class QSO:
         if not valid:
             # Remove an essential field to make the QSO invalid
             _dict.pop(
-                choice([key for key in _dict.keys() if key in _ESSENTIAL_KEYS_UNION]),
+                choice([key for key in _dict if key in _ESSENTIAL_KEYS_UNION]),
                 None,
             )
         return QSO(_dict)

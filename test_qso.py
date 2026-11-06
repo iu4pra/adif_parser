@@ -279,8 +279,11 @@ class QSOTimestampTest(unittest.TestCase):
 
 
 class RandomQSOTest(unittest.TestCase):
-    def test_random_valis_qso_is_valid(self):
+    def test_random_valid_qso_is_valid(self):
         self.assertTrue(QSO.random(valid=True).is_valid())
+
+    def test_random_invalid_qso_is_invalid(self):
+        self.assertFalse(QSO.random(valid=False).is_valid())
 
 
 class RandomCallGeneratorTest(unittest.TestCase):

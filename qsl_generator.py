@@ -233,8 +233,8 @@ def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
             raise ValueError("Date must use YYYYMMDD format")
         dt = date.fromisoformat(f"{value[:4]}-{value[4:6]}-{value[6:8]}")
         return dt.strftime(fmt)
-    except (ValueError, TypeError) as e:
-        logger.exception(f"qsl_filter_format_date(value={value}): {e}")
+    except (ValueError, TypeError):
+        logger.exception(f"qsl_filter_format_date(value={value})")
         return value
 
 
