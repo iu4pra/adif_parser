@@ -9,7 +9,6 @@ import os.path
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from queue import Empty, Queue
-
 from tqdm import tqdm
 
 import adif
@@ -254,6 +253,7 @@ def main():
 
         # Display progress bar in the main thread
         progress_bar = tqdm(desc="Preparing QSLs", unit="QSL")
+
         # Current progress bar stage to track when to reset the bar and change its description
         current_stage = None
         stage_descriptions = {
@@ -279,10 +279,11 @@ def main():
             progress_bar.refresh()
 
         try:
-            future.result()  # Forward exceptions from the worker to the main thread
+            future.result()  # Forward exceptions from the worker to the main thread for non-regression
+
         finally:
             progress_bar.close()
 
 
 if __name__ == "__main__":
-    main()
+    main()  # Run the module
