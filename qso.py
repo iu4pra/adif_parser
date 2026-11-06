@@ -429,7 +429,7 @@ class QSO:
         }
         if not valid:
             # Remove an essential field to make the QSO invalid
-            _dict.pop(choice([key for key in _ESSENTIAL_KEYS if isinstance(key, str)]), None)
+            _dict.pop(choice([key for key in _dict.keys() if key in _ESSENTIAL_KEYS and isinstance(key, str)]), None)
         return QSO(_dict)
         # ruff: enable [S311]
 
