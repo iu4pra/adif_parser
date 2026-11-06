@@ -427,6 +427,9 @@ class QSO:
             "BAND": choice(["80m", "40m", "20m", "15m", "10m"]),
             "MODE": choice(["SSB", "CW", "FT8"]),
         }
+        if not valid:
+            # Remove an essential field to make the QSO invalid
+            _dict.pop(choice([key for key in _ESSENTIAL_KEYS if isinstance(key, str)]), None)
         return QSO(_dict)
         # ruff: enable [S311]
 
@@ -435,3 +438,4 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     callgen = RandomCallGenerator()
     logger.warning(f"CALLSIGN: {RandomCallGenerator.generate_call_scp()}")
+    logger.warning(f"{QSO.random(False)}")
