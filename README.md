@@ -50,7 +50,7 @@ Run the commands below from the repository root, so the relative `templates/`,
 The easiest way to use the tool is via the built-in GUI.
 
 ```bash
-python gui.py
+python qslgen_gui.py
 ```
 
 1. Click **"Open file..."** to select your `.adi` or `.adif` log file.
@@ -73,23 +73,23 @@ reporting and other GUI improvements are tracked in
 You can also run the generator directly from the terminal, which is useful for batch processing.
 
 ```bash
-python qsl_generator.py <input_file.adi> [output_file] [options]
+python qslgen_cli.py <input_file.adi> [output_file] [options]
 ```
 
 **Examples:**
 
 ```bash
 # Generate a PDF (default)
-python qsl_generator.py my_log.adi
+python qslgen_cli.py my_log.adi
 
 # Generate images using a custom template
-python qsl_generator.py my_log.adi --image --template my_custom_card.html --output-dir ./qsl_cards
+python qslgen_cli.py my_log.adi --image --template my_custom_card.html --output-dir ./qsl_cards
 
 # Generate both PDF and images, using "contacts" as the output base name
-python qsl_generator.py my_log.adi contacts.pdf --pdf --image --output-dir ./qsl_cards
+python qslgen_cli.py my_log.adi contacts.pdf --pdf --image --output-dir ./qsl_cards
 
 # Try the supplied multi-contact log
-python qsl_generator.py samples/multi_qso_same_station.adi
+python qslgen_cli.py samples/multi_qso_same_station.adi
 ```
 
 `--template` is relative to `templates/`: use `my_custom_card.html`, not
@@ -112,7 +112,7 @@ overwritten, and `tmp/` is recreated and removed during generation.
 | `--dry-run` | Log the planned rendering without writing output files. Chromium is still launched, so its installation is required. |
 | `--quiet`, `--verbose` | Suppress normal logging or enable debug logging; cannot be combined. |
 
-Use `python qsl_generator.py --help` for the command-line reference.
+Use `python qslgen_cli.py --help` for the command-line reference.
 
 While cards are generated, the CLI shows a progress bar: first the rendering of
 the single cards, then the assembly of the final PDF (only when PDF output is
@@ -287,8 +287,8 @@ For a real rendering check, install Chromium as above and run the single- and
 multi-contact samples into separate output folders:
 
 ```bash
-python qsl_generator.py samples/minimal_1qso.adi --pdf --image --output-dir ./out/single
-python qsl_generator.py samples/multi_qso_same_station.adi --pdf --image --output-dir ./out/multi
+python qslgen_cli.py samples/minimal_1qso.adi --pdf --image --output-dir ./out/single
+python qslgen_cli.py samples/multi_qso_same_station.adi --pdf --image --output-dir ./out/multi
 ```
 
 The multi-contact sample has seven contacts and produces four cards (3 + 1,
@@ -320,8 +320,9 @@ needed, so run `ruff format .` before pushing.
 
 * `adif.py`: **The Parser.** Handles reading the .adi files, validating tags, and building QSO lists (including random ones).
 * `qso.py`: **The Data Model.** Defines the `QSO` class representing a single contact, plus the random callsign helper used for test logs.
-* `qsl_generator.py`: **The Logic.** Handles the Jinja2 templating and PDF/Image generation using Playwright, and reports progress while it runs.
-* `gui.py`: **The Interface.** A Tkinter-based GUI for easy interaction.
+* `qsl_generator.py`: **The Logic.** Handles the Jinja2 templating and PDF/Image generation using Playwright.
+* `qslgen_cli.py`: **The Logic.** Command-line interface that reports progress while it runs.
+* `qslgen_gui.py`: **The Interface.** A Tkinter-based GUI for easy interaction.
 * `playwright_wrapper.py`: **The Renderer.** Reuses a Chromium browser to render cards.
 * `templates/`: Folder containing HTML QSL templates.
 * `samples/`: ADIF fixtures, including repeated contacts for grouped-card checks.
