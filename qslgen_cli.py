@@ -159,7 +159,7 @@ def check_card_size(name, value, maximum):
     """Validate a single card size field
     Exceptions are propagated to the caller for non-regression"""
     if value <= 0:
-        raise ValueError("{name} must be positive")
+        raise ValueError(f"{name} must be positive")
     if value > maximum:
         raise ValueError(f"{name} must be <= {maximum}")
 
@@ -169,13 +169,6 @@ def validate_args(args):
     Exceptions are propagated to the caller for non-regression"""
     if args.quiet and args.verbose:
         raise ValueError("Cannot use --quiet and --verbose together")
-
-    if args.quiet:
-        setup_logging(logging.CRITICAL)
-    elif args.verbose:
-        setup_logging(logging.DEBUG)
-    else:
-        setup_logging(logging.INFO)
 
     # Filename to be processed
     filename = os.path.relpath(args.filename)
@@ -214,9 +207,15 @@ def main():
     # Parse arguments
     args = parser.parse_args()
 
-    if not validate_args(args):
-        logger.error("Arguments validation failed")
-        return
+    validate_args(args)
+
+    # Logger setup
+    if args.quiet:
+        setup_logging(logging.CRITICAL)
+    elif args.verbose:
+        setup_logging(logging.DEBUG)
+    else:
+        setup_logging(logging.INFO)
 
     # File extension
     ext = args.filename.split(".")[-1]
