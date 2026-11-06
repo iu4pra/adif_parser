@@ -250,7 +250,8 @@ def qsl_filter_format_time(value, include_seconds=False, separator=":"):
     return separator.join(parts)
 
 
-def generate_qsl_image_pdf(
+# TODO (power-of-10): split into smaller functions
+def generate_qsl_image_pdf(  # noqa: C901, PLR0912, PLR0915
     qso_list: list[QSO],
     _image: bool = False,
     _pdf: bool = False,
@@ -432,7 +433,8 @@ def setup_logging(level=logging.INFO):
 
 
 # Main module function
-def main():
+# TODO (power-of-10): split into smaller functions + separate logic
+def main():  # noqa: C901, PLR0912, PLR0915
     # Define parser and its arguments
     parser = argparse.ArgumentParser(
         description="Generate a .pdf file from a QSO list in .adi format"

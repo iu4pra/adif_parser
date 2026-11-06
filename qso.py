@@ -68,8 +68,9 @@ class RandomCallGenerator:
     scp_fail = False  # Class-level flag to indicate if SCP file download failed
     scp_calls: ClassVar[list[str]] = []  # SuperCheckPartial calls list
 
+    # TODO (power-of-10): split into smaller functions
     @classmethod
-    def download_scp(cls):
+    def download_scp(cls):  # noqa: C901, PLR0911, PLR0912
         """Fetches the SuperCheckPartial file from the official source"""
         temp_path = None
         try:
@@ -291,7 +292,8 @@ class QSO:
             _str += f"{key} = {self._d[key]}\n"
         return _str
 
-    def is_valid(self):
+    # TODO (power-of-10): split into smaller functions
+    def is_valid(self):  # noqa: C901, PLR0911, PLR0912
         """Checks if the QSO is valid"""
         # All essential fields must be present
         for key in _ESSENTIAL_KEYS:
