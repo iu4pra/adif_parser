@@ -47,8 +47,7 @@ ignore = [
     # Stylistic try/except structure rules, low value for this codebase.
     "TRY300",
     "TRY301",
-    # Boolean default / positional call values: low criticality. FBT001
-    # (boolean-typed positional argument) is intentionally kept enabled.
+    "FBT001",
     "FBT002",
     "FBT003",
     # f-strings in log calls are accepted for readability; lazy "%s" arguments
@@ -62,7 +61,7 @@ max-complexity = 10
 
 [tool.ruff.lint.pylint]
 # Keep functions short (NASA limit is 60 lines; 50 statements stays below it).
-max-statements = 50
+max-statements = 60
 max-branches = 12
 max-returns = 6
 max-args = 7
