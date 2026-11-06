@@ -44,6 +44,12 @@ _UPPERCASE_FIELDS = frozenset(
     ]
 )
 
+# List of bands for random QSOs
+_BANDS_LIST = frozenset(["160m", "80m", "60m", "40m", "30m", "20m", "17m", "15m", "12m", "10m"])
+
+# Minimal list of modes for random QSOs
+_MODES_LIST = frozenset(["SSB", "CW", "RTTY", "FT4", "FT8"])
+
 # Date and time fields length:
 YYYYMMDD_LENGTH = 8
 HHMMSS_LENGTH = 6
@@ -431,8 +437,8 @@ class QSO:
             "QSO_DATE": qso_date.strftime("%Y%m%d"),
             "TIME_ON": qso_date.strftime("%H%M"),
             "CALL": _call_generator(),
-            "BAND": choice(["80m", "40m", "20m", "15m", "10m"]),
-            "MODE": choice(["SSB", "CW", "FT8"]),
+            "BAND": choice(list(_BANDS_LIST)),
+            "MODE": choice(list(_MODES_LIST)),
         }
 
         if not valid:
@@ -449,4 +455,3 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     callgen = RandomCallGenerator()
     logger.warning(f"CALLSIGN: {RandomCallGenerator.generate_call_scp()}")
-    logger.warning(f"{QSO.random(False)}")
