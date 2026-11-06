@@ -4,26 +4,22 @@
 # QSL generator
 # Generates a printable QSL starting from an HTML template with Jinja2
 
-import argparse
 import logging
 import math
-import os
 import shutil
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from queue import Empty, Queue
+from queue import Queue
 from typing import Optional
 
 import pypdf
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from tqdm import tqdm
 
-import adif
 import playwright_wrapper
 from qso import HHMM_LENGTH, HHMMSS_LENGTH, QSO, YYYYMMDD_LENGTH
 
+# Module-level logger
 logger = logging.getLogger(__name__)
 
 # QSL standard size in centimeters
@@ -406,7 +402,3 @@ def generate_qsl_image_pdf(  # noqa: C901, PLR0912, PLR0915
         # Delete temporary folder and its content
         rmtree_if_exists(TEMP_FOLDER)
     report_progress("done", total_batches, total_batches)
-
-
-if __name__ == "__main__":
-    main()

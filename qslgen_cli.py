@@ -4,10 +4,31 @@
 # Command line interface for QSL generator written in Tkinter
 
 import argparse
+import logging
+import os.path
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from queue import Empty, Queue
+
+from tqdm import tqdm
 
 import adif
-import os.path
-from qsl_generator import *
+import qsl_generator as qslgen
+from qsl_generator import (
+    IMG_OUT_EXTENSION,
+    OUT_FOLDER,
+    PDF_OUTPUT,
+    QSL_HEIGHT,
+    QSL_HEIGHT_MAX,
+    QSL_WIDTH,
+    QSL_WIDTH_MAX,
+    TEMPLATE_DEFAULT_FILE,
+    TEMPLATE_FOLDER,
+)
+
+# Module-level logger
+logger = logging.getLogger(__name__)
+
 
 def setup_logging(level=logging.INFO):
     """
@@ -31,6 +52,7 @@ def setup_logging(level=logging.INFO):
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
+
 
 # Main module function
 # TODO (power-of-10): split into smaller functions + separate logic
@@ -195,7 +217,7 @@ def main():  # noqa: C901, PLR0912, PLR0915
         progress_queue = Queue()  # To display progress
 
         future = executor.submit(
-            generate_qsl_image_pdf,
+            qslgen.generate_qsl_image_pdf,
             qso_list,
             _image=args.image,
             _pdf=args.pdf,
@@ -240,6 +262,7 @@ def main():  # noqa: C901, PLR0912, PLR0915
             future.result()  # Forward exceptions from the worker to the main thread
         finally:
             progress_bar.close()
+
 
 if __name__ == "__main__":
     main()
