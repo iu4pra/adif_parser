@@ -2,8 +2,9 @@
 # This software under the MIT License
 # Pytest configuration - Global mocks for Playwright tests
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 @pytest.fixture(autouse=True)
@@ -23,12 +24,12 @@ def mock_playwright_globally():
         # Configure return values for context manager
 
         # Covers pattern:
-        # with sync_playwright() as p:
+        # with sync_playwright () as p:
         mock_sync_playwright.return_value.__enter__.return_value = mock_pw
         mock_sync_playwright.return_value.__exit__.return_value = None
 
         # Covers pattern:
-        # sync_playwright().start()
+        # sync_playwright.start
         mock_sync_playwright.return_value.start.return_value = mock_pw
 
         mock_pw.chromium.launch.return_value = mock_browser

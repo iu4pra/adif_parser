@@ -4,6 +4,7 @@ omit =
     __init__.py
     gui.py
     conftest.py
+    datetime_compat.py
     test_*.py
 
 [report]

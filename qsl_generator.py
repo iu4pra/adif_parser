@@ -4,23 +4,27 @@
 # QSL generator
 # Generates a printable QSL starting from an HTML template with Jinja2
 
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
-from datetime import datetime
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-from qso import QSO
-from queue import Empty, Queue
-from tqdm import tqdm
-from typing import Optional
-
-import adif
 import argparse
 import logging
 import math
 import os
-import playwright_wrapper
-import pypdf
 import shutil
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from datetime import date
+from pathlib import Path
+from queue import Empty, Queue
+from typing import Optional
+
+import pypdf
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from tqdm import tqdm
+
+import adif
+import playwright_wrapper
+from qso import HHMM_LENGTH, HHMMSS_LENGTH, QSO, YYYYMMDD_LENGTH
+
+logger = logging.getLogger(__name__)
 
 # QSL standard size in centimeters
 QSL_WIDTH = 14.0
@@ -42,11 +46,11 @@ TEMPLATE_FOLDER = "./templates"
 # Temporary folder
 TEMP_FOLDER = "./tmp/"
 # Compiled template temporary filename
-TEMPLATE_TEMP_FILENAME = os.path.join(TEMP_FOLDER, "template_out.html")
+TEMPLATE_TEMP_FILENAME = Path(TEMP_FOLDER) / "template_out.html"
 
 # Temporary PDF base name
-# Usage: filename = PDF_TEMP_BASE_NAME % index
-PDF_TEMP_BASE_NAME = os.path.join(TEMP_FOLDER, "./qsl_%04d.pdf")
+# Usage: the page index is applied with the % operator
+PDF_TEMP_BASE_NAME = Path(TEMP_FOLDER) / "qsl_%04d.pdf"
 
 # Output folder
 OUT_FOLDER = "./out/"
@@ -88,7 +92,7 @@ def qso_list_generator(qso_list, every):
         ]
     )
     if len(unique_send_stations) > 1:
-        logging.warning(
+        logger.warning(
             f"Found {len(unique_send_stations)} unique sending stations, everything should work as expected anyway"
         )
 
@@ -114,9 +118,8 @@ def qso_list_generator(qso_list, every):
                 and qso.is_valid()
             ]
             no_qsos = len(qso_grouped[_station][_recipient])
-            logging.info(f"Detected {no_qsos} QSOs from {_station} to {_recipient}")
-            for _qso_list in split_every(qso_grouped[_station][_recipient], every):
-                yield _qso_list
+            logger.info(f"Detected {no_qsos} QSOs from {_station} to {_recipient}")
+            yield from split_every(qso_grouped[_station][_recipient], every)
 
 
 def render_qsl(
@@ -134,7 +137,7 @@ def render_qsl(
     renderer: playwright_wrapper.QSLRenderer,
 ):
 
-    logging.debug(f"\trender_qsl(_i={_i})")
+    logger.debug(f"\trender_qsl(_i={_i})")
 
     # Converting all keys into lowercase
     qsos_data_lowercase = [
@@ -144,9 +147,9 @@ def render_qsl(
     ]
 
     if len(qsos_data_lowercase) == 0:
-        logging.warning("Empty QSO list, nothing to do")
+        logger.warning("Empty QSO list, nothing to do")
         return False
-    elif len(qsos_data_lowercase) == 1:
+    if len(qsos_data_lowercase) == 1:
         # Render template in single QSO mode
         output = template.render(qso=qsos_data_lowercase[0])
     else:
@@ -163,43 +166,40 @@ def render_qsl(
     #    or {{ qso.band }}.
     # ---------------------------------------------------------------------
 
-    logging.info(f"\tCompiling QSL {_i + 1} to {qsos_data_lowercase[0]['call']} ")
+    logger.info(f"\tCompiling QSL {_i + 1} to {qsos_data_lowercase[0]['call']} ")
 
     if _dry_run is False:
         # Write compiled template to file
-        with open(TEMPLATE_TEMP_FILENAME, "wt", encoding="utf-8") as f:
+        with TEMPLATE_TEMP_FILENAME.open("w", encoding="utf-8") as f:
             f.write(output)
 
     # Convert template page to image
     if _image:
-        out_name = os.path.join(
-            _out_folder,
-            (out_base_name + "_%04d." % (_i + 1) + _format),
-        )
+        out_name = str(Path(_out_folder) / f"{out_base_name}_{_i + 1:04}.{_format}")
         if _dry_run is False:
             renderer.render(
-                TEMPLATE_TEMP_FILENAME,
+                str(TEMPLATE_TEMP_FILENAME),
                 out_name,
                 _width,
                 _height,
             )
         else:
-            logging.info(
-                f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, out_name, str(_width), str(_height)])}"
+            logger.info(
+                f"Would call: renderer.render {' '.join([str(TEMPLATE_TEMP_FILENAME), out_name, str(_width), str(_height)])}"
             )
 
     # Convert template page to PDF
     if _pdf:
         if _dry_run is False:
             renderer.render(
-                TEMPLATE_TEMP_FILENAME,
-                (PDF_TEMP_BASE_NAME % _i),
+                str(TEMPLATE_TEMP_FILENAME),
+                str(PDF_TEMP_BASE_NAME) % _i,
                 _width,
                 _height,
             )
         else:
-            logging.info(
-                f"Would call: renderer.render {' '.join([TEMPLATE_TEMP_FILENAME, (PDF_TEMP_BASE_NAME % _i), str(_width), str(_height)])}"
+            logger.info(
+                f"Would call: renderer.render {' '.join([str(TEMPLATE_TEMP_FILENAME), str(PDF_TEMP_BASE_NAME) % _i, str(_width), str(_height)])}"
             )
 
     return True
@@ -207,42 +207,51 @@ def render_qsl(
 
 def unlink_if_exists(path):
     """Utility function to delete a file without throwing an exception if it doesn't exist"""
-    try:
-        os.unlink(path)
-    except FileNotFoundError:
-        pass
+    if path != "":
+        try:
+            Path(path).unlink()
+        except FileNotFoundError:
+            logger.debug(f"unlink_if_exists: {path} not found")
+    else:
+        raise FileNotFoundError("Invalid empty path")
 
 
 def rmtree_if_exists(path):
     """Utility function to delete a folder and its subfolders and contents without throwing an exception if it doesn't exist"""
-    try:
-        shutil.rmtree(path)
-    except FileNotFoundError:
-        pass
+    if path != "":
+        try:
+            shutil.rmtree(path)
+        except FileNotFoundError:
+            logger.debug(f"rmtree_if_exists: {path} not found")
+    else:
+        raise FileNotFoundError("Invalid empty path")
 
 
 def qsl_filter_format_date(value, fmt="%d/%m/%Y"):
     try:
-        dt = datetime.strptime(value, "%Y%m%d")
+        if len(value) != YYYYMMDD_LENGTH:
+            raise ValueError("Date must use YYYYMMDD format")
+        dt = date.fromisoformat(f"{value[:4]}-{value[4:6]}-{value[6:8]}")
         return dt.strftime(fmt)
-    except (ValueError, TypeError) as e:
-        logging.error(f"qsl_filter_format_date(value={value}): {e}")
+    except (ValueError, TypeError):
+        logger.exception(f"qsl_filter_format_date(value={value})")
         return value
 
 
 def qsl_filter_format_time(value, include_seconds=False, separator=":"):
-    if not value or len(value) < 4:
+    if not value or len(value) < HHMM_LENGTH:
         return value
 
-    parts = [value[:2], value[2:4]]
+    parts = [value[:2], value[2:HHMM_LENGTH]]
 
-    if include_seconds and len(value) >= 6:
-        parts.append(value[4:6])
+    if include_seconds and len(value) >= HHMMSS_LENGTH:
+        parts.append(value[HHMM_LENGTH:HHMMSS_LENGTH])
 
     return separator.join(parts)
 
 
-def generate_qsl_image_pdf(
+# TODO (power-of-10): split into smaller functions
+def generate_qsl_image_pdf(  # noqa: C901, PLR0912, PLR0915
     qso_list: list[QSO],
     _image: bool = False,
     _pdf: bool = False,
@@ -263,10 +272,10 @@ def generate_qsl_image_pdf(
             progress_queue.put(ProgressUpdate(stage, completed, total))
 
     if _dry_run:
-        logging.warning("Running app in dry-run mode")
+        logger.warning("Running app in dry-run mode")
 
     if not _image and not _pdf:
-        logging.error("No output specified!")
+        logger.error("No output specified!")
         return
 
     assert isinstance(qso_list, list)
@@ -284,12 +293,12 @@ def generate_qsl_image_pdf(
         assert qso.is_valid()
 
     if removed_qsos > 0:
-        logging.warning(
+        logger.warning(
             f"Removed {removed_qsos} invalid QSOs from the list, which now contains {len(qso_list)} QSOs"
         )
 
     if len(qso_list) == 0:
-        logging.warning("No QSO found")
+        logger.warning("No QSO found")
         report_progress("done", 0, 0)
         return
 
@@ -298,13 +307,13 @@ def generate_qsl_image_pdf(
 
     # Remove any extension in the passed out filename, will be added later
     out_base_name = _out_filename.rsplit(".", 1)[0]
-    logging.debug(
+    logger.debug(
         f"Passed output filename : {_out_filename}\nBase name without extension: {out_base_name}"
     )
 
     # Template file full path
-    template_path = os.path.join(TEMPLATE_FOLDER, _template)
-    if not os.path.isfile(template_path):
+    template_path = Path(TEMPLATE_FOLDER) / _template
+    if not template_path.is_file():
         raise FileNotFoundError(f"Template file {template_path} not found")
 
     if _dry_run is False:
@@ -312,24 +321,22 @@ def generate_qsl_image_pdf(
         rmtree_if_exists(TEMP_FOLDER)
 
         # Re-create temporary folder
-        if not os.path.exists(TEMP_FOLDER):
-            os.makedirs(TEMP_FOLDER)
-        else:
-            if not os.path.isdir(TEMP_FOLDER):
-                os.unlink(TEMP_FOLDER)
-                os.makedirs(TEMP_FOLDER)
+        if not Path(TEMP_FOLDER).exists():
+            Path(TEMP_FOLDER).mkdir(parents=True)
+        elif not Path(TEMP_FOLDER).is_dir():
+            Path(TEMP_FOLDER).unlink()
+            Path(TEMP_FOLDER).mkdir(parents=True)
 
         if _pdf:
             # Delete previous output file(s)
             unlink_if_exists(_out_filename)
 
         # Create output folder
-        if not os.path.exists(_out_folder):
-            os.makedirs(_out_folder)
-        else:
-            if not os.path.isdir(_out_folder):
-                os.unlink(_out_folder)
-                os.makedirs(_out_folder)
+        if not Path(_out_folder).exists():
+            Path(_out_folder).mkdir(parents=True)
+        elif not Path(_out_folder).is_dir():
+            Path(_out_folder).unlink()
+            Path(_out_folder).mkdir(parents=True)
 
     # Loading Jinja environment
     env = Environment(
@@ -354,7 +361,7 @@ def generate_qsl_image_pdf(
         # Generate each QSL
         for _qso_list in qso_batches:
             if len(_qso_list) == 0:
-                logging.warning("Empty QSO list! Skipping to next one")
+                logger.warning("Empty QSO list! Skipping to next one")
                 continue
 
             if render_qsl(
@@ -373,26 +380,26 @@ def generate_qsl_image_pdf(
             ):
                 _i += 1
             else:
-                logging.warning("Didn't render anything")
+                logger.warning("Didn't render anything")
             report_progress("rendering", _i, total_batches)
 
     if _pdf:
         report_progress("assembling_pdf", 0, 1)
         # Concatenate all files to create a single PDF to print
-        out_name = os.path.join(_out_folder, out_base_name + ".pdf")
+        out_name = str(Path(_out_folder) / (out_base_name + ".pdf"))
         if not _dry_run:
             writer = pypdf.PdfWriter()
-            for pdf in [(PDF_TEMP_BASE_NAME % i) for i in range(_i)]:
-                if os.path.isfile(pdf):
+            for pdf in [str(PDF_TEMP_BASE_NAME) % i for i in range(_i)]:
+                if Path(pdf).is_file():
                     writer.append(pdf)
                 else:
-                    logging.error(
+                    logger.error(
                         f"Error: file {pdf} not found! Check Playwright output!"
                     )
             writer.write(out_name)
             writer.close()
         else:
-            logging.info(f"Would create output file {out_name}")
+            logger.info(f"Would create output file {out_name}")
         report_progress("assembling_pdf", 1, 1)
 
     if _dry_run is False:
@@ -426,7 +433,8 @@ def setup_logging(level=logging.INFO):
 
 
 # Main module function
-def main():
+# TODO (power-of-10): split into smaller functions + separate logic
+def main():  # noqa: C901, PLR0912, PLR0915
     # Define parser and its arguments
     parser = argparse.ArgumentParser(
         description="Generate a .pdf file from a QSO list in .adi format"
@@ -542,7 +550,7 @@ def main():
     filename = os.path.relpath(args.filename)
 
     # Arguments check
-    if not os.path.isfile(filename):
+    if not Path(filename).is_file():
         raise FileNotFoundError(f"File {filename} doesn't exist")
 
     # If no output is specified fallback to PDF
@@ -560,7 +568,7 @@ def main():
     ext = filename.split(".")[-1]
 
     if ext.casefold() in ["adi", "adif"]:
-        logging.info(
+        logger.info(
             f"Proceeding to parse ADIF file {args.filename}, only valid QSO: {args.only_valid}"
         )
         qso_list = adif.qso_list_from_file(filename, args.only_valid)
@@ -571,12 +579,12 @@ def main():
     # Optional parameters validation
     if args.width <= 0:
         raise ValueError("--width must be positive")
-    elif args.width > QSL_WIDTH_MAX:
+    if args.width > QSL_WIDTH_MAX:
         raise ValueError(f"--width must be <= {QSL_WIDTH_MAX}")
 
     if args.height <= 0:
         raise ValueError("--height must be positive")
-    elif args.height > QSL_HEIGHT_MAX:
+    if args.height > QSL_HEIGHT_MAX:
         raise ValueError(f"--height must be <= {QSL_HEIGHT_MAX}")
 
     if args.max_qso <= 0:

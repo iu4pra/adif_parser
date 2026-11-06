@@ -3,9 +3,10 @@
 # This software under the MIT License
 # Unit test for ADIF parser
 
-import adif
 import unittest
 from unittest.mock import patch
+
+import adif
 from qso import QSO
 
 
@@ -82,9 +83,11 @@ class TestAdifParser(unittest.TestCase):
             adif.parse_adif_string("<CALL:-1>IK4XYZ")[0]
 
     def test_parse_field_integrity_check_failure(self):
-        with patch("adif.check_field", return_value=False) as check_field:
-            with self.assertRaisesRegex(adif.AdifError, "Field integrity check failed"):
-                adif.parse_adif_string("<CALL:6>IK4XYZ")
+        with (
+            patch("adif.check_field", return_value=False) as check_field,
+            self.assertRaisesRegex(adif.AdifError, "Field integrity check failed"),
+        ):
+            adif.parse_adif_string("<CALL:6>IK4XYZ")
 
         check_field.assert_called_once_with(
             {"field": "CALL", "len": 6, "type": None, "value": "IK4XYZ"}
@@ -170,6 +173,7 @@ class TestAdifParser(unittest.TestCase):
         # After stripping, only CALL and EOR should remain
         self.assertEqual(clean_fields[0]["field"], "CALL")
         self.assertEqual(clean_fields[1]["field"], "EOR")
+        self.assertEqual(eoh_index, 0)
 
     def test_qso_list_creation(self):
         # Test converting raw fields into a list of QSO objects
