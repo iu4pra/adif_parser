@@ -49,8 +49,8 @@ def check_field(t: dict):
         try:
             length = t.get("len")
             assert isinstance(length, int)
-        except AssertionError:
-            raise AdifError(f"Invalid length value for field {field} ({length})")
+        except AssertionError as err:
+            raise AdifError(f"Invalid length value for field {field} ({length})") from err
 
         # Field length is now valid
         if length <= 0:

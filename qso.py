@@ -379,7 +379,7 @@ class QSO:
                         f"QSO end time {dt_off} is before start time {dt_on}, invalid QSO"
                     )
                     return False
-            except Exception:
+            except ValueError:
                 logger.warning("Error while checking QSO timestamps")
                 return False
 
@@ -417,7 +417,7 @@ class QSO:
 
     @staticmethod
     def random(
-        valid: bool = True, _call_generator=RandomCallGenerator.generate_call_random
+        valid = True, _call_generator=RandomCallGenerator.generate_call_random
     ):
         """Generate a random QSO object"""
         # ruff: disable [S311]
@@ -444,7 +444,7 @@ class QSO:
         if not valid:
             # Remove an essential field to make the QSO invalid
             _dict.pop(
-                choice([key for key in _dict.keys() if key in _ESSENTIAL_KEYS_UNION]),
+                choice([key for key in _dict if key in _ESSENTIAL_KEYS_UNION]),
                 None,
             )
         return QSO(_dict)
