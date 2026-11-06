@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # This software under the MIT License
-# Command line interface for QSL generator written in Tkinter
+# Command line interface for QSL generator written in Python
 
 import argparse
 import logging
@@ -9,6 +9,7 @@ import os.path
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from queue import Empty, Queue
+
 from tqdm import tqdm
 
 import adif
