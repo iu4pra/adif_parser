@@ -28,6 +28,13 @@ _ESSENTIAL_KEYS = frozenset(
     ]
 )
 
+# List of essential QSO keys as a single-level frozen set
+_ESSENTIAL_KEYS_UNION = frozenset(
+    [field for field in _ESSENTIAL_KEYS if isinstance(field, str)]
+)
+for _fset in [fs for fs in _ESSENTIAL_KEYS if isinstance(fs, frozenset)]:
+    _ESSENTIAL_KEYS_UNION = _ESSENTIAL_KEYS_UNION.union(_fset)
+
 # List of QSO keys that will be automatically converted to uppercase upon QSO creation
 _UPPERCASE_FIELDS = frozenset(
     [
@@ -427,6 +434,13 @@ class QSO:
             "BAND": choice(["80m", "40m", "20m", "15m", "10m"]),
             "MODE": choice(["SSB", "CW", "FT8"]),
         }
+
+        if not valid:
+            # Remove an essential field to make the QSO invalid
+            _dict.pop(
+                choice([key for key in _dict.keys() if key in _ESSENTIAL_KEYS_UNION]),
+                None,
+            )
         return QSO(_dict)
         # ruff: enable [S311]
 
@@ -435,3 +449,4 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     callgen = RandomCallGenerator()
     logger.warning(f"CALLSIGN: {RandomCallGenerator.generate_call_scp()}")
+    logger.warning(f"{QSO.random(False)}")
