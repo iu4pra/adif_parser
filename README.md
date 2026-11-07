@@ -323,7 +323,7 @@ does not apply or commit formatting changes. If formatting checks fail, run
 * `adif.py`: **The Parser.** Handles reading the .adi files, validating tags, and building QSO lists (including random ones).
 * `qso.py`: **The Data Model.** Defines the `QSO` class representing a single contact, plus the random callsign helper used for test logs.
 * `qsl_generator.py`: **The Logic.** Handles the Jinja2 templating and PDF/Image generation using Playwright.
-* `qslgen_cli.py`: **The Logic.** Command-line interface that reports progress while it runs.
+* `qslgen_cli.py`: **The CLI.** Command-line entry point: argument parsing and validation, logging setup, and progress bar while the cards are generated.
 * `qslgen_gui.py`: **The Interface.** A Tkinter-based GUI for easy interaction.
 * `playwright_wrapper.py`: **The Renderer.** Reuses a Chromium browser to render cards.
 * `templates/`: Folder containing HTML QSL templates.

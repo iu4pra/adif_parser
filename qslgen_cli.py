@@ -165,8 +165,9 @@ def check_card_size(name, value, maximum):
 
 
 def validate_args(args):
-    """Validate command-line args
-    Exceptions are propagated to the caller for non-regression"""
+    """Validate command-line args and normalize the output selection.
+    Returns nothing: invalid values raise an exception, which is propagated
+    to the caller for non-regression"""
     if args.quiet and args.verbose:
         raise ValueError("Cannot use --quiet and --verbose together")
 
@@ -195,8 +196,6 @@ def validate_args(args):
 
     if args.max_qso <= 0:
         raise ValueError("--max-qso must be positive (1 to disable multi-QSO cards)")
-
-    return True
 
 
 # Main module function
