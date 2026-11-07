@@ -6,11 +6,11 @@ A Python tool to parse ADIF (Amateur Data Interchange Format) log files and gene
 * **ADIF Parsing:** Robust parsing of standard `.adi` and `.adif` log files.
 * **Custom Templates:** Design QSL cards using standard HTML and CSS.
 * **Dual Output:** Generate printable PDFs or digital images (JPEG by default, PNG with `--image-format png`).
-* **Cross-Platform:** Works on Windows and Linux
+* **Cross-Platform:** CI runs unit tests on Windows, Linux, and macOS.
 * **GUI & CLI:** Includes a simple Tkinter GUI for ease of use and a CLI for scripting.
 * **Grouped Cards:** Contacts with the same sending and receiving callsigns share a card, up to three QSOs per card by default.
 * **Chronological Contacts:** QSOs are sorted by their UTC start date and time before grouping and rendering.
-* **Incomplete Contacts Skipped:** Contacts missing essential fields are skipped with a warning instead of stopping the generation.
+* **Invalid Contacts Skipped:** Contacts that fail required-field, callsign, or date/time checks are skipped with a warning instead of stopping generation.
 * **Progress Bar (CLI):** The command line shows the progress of card rendering and PDF assembly.
 * **Random Test Logs:** Python helpers build random, valid logs to stress-test the tool with thousands of contacts (see [Generating random test logs](#generating-random-test-logs)).
 
@@ -50,7 +50,7 @@ Run the commands below from the repository root, so the relative `templates/`,
 The easiest way to use the tool is via the built-in GUI.
 
 ```bash
-python gui.py
+python qslgen_gui.py
 ```
 
 1. Click **"Open file..."** to select your `.adi` or `.adif` log file.
@@ -73,23 +73,23 @@ reporting and other GUI improvements are tracked in
 You can also run the generator directly from the terminal, which is useful for batch processing.
 
 ```bash
-python qsl_generator.py <input_file.adi> [output_file] [options]
+python qslgen_cli.py <input_file.adi> [output_file] [options]
 ```
 
 **Examples:**
 
 ```bash
 # Generate a PDF (default)
-python qsl_generator.py my_log.adi
+python qslgen_cli.py my_log.adi
 
 # Generate images using a custom template
-python qsl_generator.py my_log.adi --image --template my_custom_card.html --output-dir ./qsl_cards
+python qslgen_cli.py my_log.adi --image --template my_custom_card.html --output-dir ./qsl_cards
 
 # Generate both PDF and images, using "contacts" as the output base name
-python qsl_generator.py my_log.adi contacts.pdf --pdf --image --output-dir ./qsl_cards
+python qslgen_cli.py my_log.adi contacts.pdf --pdf --image --output-dir ./qsl_cards
 
 # Try the supplied multi-contact log
-python qsl_generator.py samples/multi_qso_same_station.adi
+python qslgen_cli.py samples/multi_qso_same_station.adi
 ```
 
 `--template` is relative to `templates/`: use `my_custom_card.html`, not
@@ -97,7 +97,8 @@ python qsl_generator.py samples/multi_qso_same_station.adi
 (default `qsl.pdf`); use `--output-dir` for the destination folder. For example,
 the third command writes `qsl_cards/contacts.pdf` and numbered
 `qsl_cards/contacts_0001.jpg` images. Existing outputs with the same names can be
-overwritten, and `tmp/` is recreated and removed during generation.
+overwritten. During a normal (non-dry-run) generation, `tmp/` is recreated and
+removed on successful completion.
 
 | Option | Behavior |
 | --- | --- |
@@ -108,22 +109,23 @@ overwritten, and `tmp/` is recreated and removed during generation.
 | `--image-format FORMAT` | Image filename extension; default `jpg` (for example, `png`). |
 | `--width CM`, `--height CM` | Card dimensions in centimeters; defaults 14 by 9. Width must be greater than 0 and at most 700; height greater than 0 and at most 180. |
 | `--max-qso N` | Maximum contacts per card; default 3. Use 1 to disable multi-contact cards. Must be a positive integer. |
-| `--only-valid` | Discard contacts missing essential fields while reading the log (they are skipped before generation anyway). It does not validate calendar dates or time values. |
+| `--only-valid` | Discard invalid contacts while reading the log. Validation checks required fields, callsign format, and date/time format; it does not validate every ADIF field value. Invalid contacts are also discarded during generation if this option is not used. |
 | `--dry-run` | Log the planned rendering without writing output files. Chromium is still launched, so its installation is required. |
 | `--quiet`, `--verbose` | Suppress normal logging or enable debug logging; cannot be combined. |
 
-Use `python qsl_generator.py --help` for the command-line reference.
+Use `python qslgen_cli.py --help` for the command-line reference.
 
 While cards are generated, the CLI shows a progress bar: first the rendering of
-the single cards, then the assembly of the final PDF (only when PDF output is
+each card, then the assembly of the final PDF (only when PDF output is
 requested). The bar is shown even with `--quiet`, which only silences log
 messages.
 
 ## Grouping, sorting, and valid contacts
 
-The generator sorts the input list in place by `QSO_DATE` and `TIME_ON`, using
-`QSO.timestamp_on()`. Dates use `YYYYMMDD`, and times use `HHMM` or `HHMMSS` in UTC;
-four-digit times are padded with zero seconds. Dates and times must be parseable.
+The generator first filters out invalid contacts, then sorts the remaining list
+by `QSO_DATE` and `TIME_ON`, using `QSO.timestamp_on()`. The input list is not
+modified. Dates use `YYYYMMDD`, and times use `HHMM` or `HHMMSS` in UTC;
+four-digit times are padded with zero seconds.
 
 Contacts are then grouped by both `STATION_CALLSIGN` (sender) and `CALL`
 (recipient), with at most **three QSOs per card by default**. Different bands and modes for
@@ -140,13 +142,12 @@ the single-contact template context described below, including the last chunk
 of a larger group.
 
 `QSO.is_valid()` checks for `STATION_CALLSIGN`, `CALL`, `QSO_DATE`, `TIME_ON`,
-`MODE`, and at least one of `FREQ` or `BAND`. It checks presence, not full ADIF
-value validity. Before sorting, the generator removes the contacts that fail this
-check and logs a warning with their number, so a few incomplete records no longer
-stop the generation. In the CLI, `--only-valid` discards them earlier, while the
-log is being read. A record that has all essential fields but a malformed date or
-time (for example `20261340`) still causes an error and needs correcting in the
-input log.
+`MODE`, and at least one of `FREQ` or `BAND`. It also checks callsign format,
+date/time formats, and (when both end fields are present) that the QSO end is
+not before its start. It does not validate every ADIF field value. The generator
+removes contacts that fail these checks and logs a warning, so invalid records
+do not stop generation. In the CLI, `--only-valid` applies the same checks while
+the log is being read instead of waiting for generation.
 
 ## Writing HTML/Jinja2 templates
 
@@ -248,7 +249,7 @@ What to expect:
 
 * Each contact has only the essential fields: sending and receiving callsigns,
   a random date since 2020 with a start time, a band (80m to 10m), and a mode
-  (SSB, CW, or FT8).
+  (SSB, CW, RTTY, FT4, or FT8).
 * Callsigns are picked from the [SuperCheckPartial](https://www.supercheckpartial.com/)
   list (`MASTER.SCP`) when the file is in the current folder. If it is missing,
   the generator tries to download it (5-second timeout), checks its length when
@@ -259,8 +260,10 @@ What to expect:
 * Sender and recipient are drawn independently, so almost every contact ends up
   on its own card. This suits volume tests but does not exercise grouped cards;
   use `samples/multi_qso_same_station.adi` for that.
-* Optional fields and deliberately invalid contacts are not generated yet; this
-  and other improvements are tracked in
+* Optional fields are not generated yet. To include deliberately invalid
+  contacts, call `adif.qso_list_random(n, _only_valid=False)`; individual
+  invalid contacts can also be created with `QSO.random(valid=False)`. Optional
+  fields and other random-log improvements are tracked in
   [#92](https://github.com/iu4pra/adif_parser/issues/92).
 
 ## Development and verification
@@ -287,8 +290,8 @@ For a real rendering check, install Chromium as above and run the single- and
 multi-contact samples into separate output folders:
 
 ```bash
-python qsl_generator.py samples/minimal_1qso.adi --pdf --image --output-dir ./out/single
-python qsl_generator.py samples/multi_qso_same_station.adi --pdf --image --output-dir ./out/multi
+python qslgen_cli.py samples/minimal_1qso.adi --pdf --image --output-dir ./out/single
+python qslgen_cli.py samples/multi_qso_same_station.adi --pdf --image --output-dir ./out/multi
 ```
 
 The multi-contact sample has seven contacts and produces four cards (3 + 1,
@@ -311,17 +314,17 @@ ruff format .
 ruff check .
 ```
 
-On pull requests, a GitHub workflow runs the same two steps. For branches of
-this repository it commits the formatting changes automatically; for pull
-requests from forks it only checks the formatting and fails if changes are
-needed, so run `ruff format .` before pushing.
+On pull requests, a GitHub workflow checks formatting and runs the linter; it
+does not apply or commit formatting changes. If formatting checks fail, run
+`ruff format .` locally and push the result.
 
 ## Project Structure
 
 * `adif.py`: **The Parser.** Handles reading the .adi files, validating tags, and building QSO lists (including random ones).
 * `qso.py`: **The Data Model.** Defines the `QSO` class representing a single contact, plus the random callsign helper used for test logs.
-* `qsl_generator.py`: **The Logic.** Handles the Jinja2 templating and PDF/Image generation using Playwright, and reports progress while it runs.
-* `gui.py`: **The Interface.** A Tkinter-based GUI for easy interaction.
+* `qsl_generator.py`: **The Logic.** Handles the Jinja2 templating and PDF/Image generation using Playwright.
+* `qslgen_cli.py`: **The CLI.** Command-line entry point: argument parsing and validation, logging setup, and progress bar while the cards are generated.
+* `qslgen_gui.py`: **The Interface.** A Tkinter-based GUI for easy interaction.
 * `playwright_wrapper.py`: **The Renderer.** Reuses a Chromium browser to render cards.
 * `templates/`: Folder containing HTML QSL templates.
 * `samples/`: ADIF fixtures, including repeated contacts for grouped-card checks.
