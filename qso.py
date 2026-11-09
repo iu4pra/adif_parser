@@ -268,30 +268,6 @@ class RandomCallGenerator:
 class QSO:
     """Class representing a single QSO record"""
 
-    def __init__(self, data: dict):
-        # Check input data
-        assert isinstance(data, dict)
-
-        # Internal data storage
-        self._d: dict = {}
-
-        for key, value in data.items():
-            # Only non-null fields are reported
-            if value is None or value == "":
-                logger.warning(f"Skipping key {key} with invalid value")
-            # All keys are put uppercase and values are converted to string
-            elif key.upper() in _UPPERCASE_FIELDS:
-                self._d[key.upper()] = str(value).upper()
-            else:
-                self._d[key.upper()] = str(value)
-
-    def __str__(self):
-        """String representation of the object"""
-        _str = ""
-        for key in self._d:
-            _str += f"{key} = {self._d[key]}\n"
-        return _str
-
     @staticmethod
     def is_valid_date(date_str: str) -> bool:
         """Checks if the date string is in YYYYMMDD format"""
@@ -320,10 +296,32 @@ class QSO:
             except ValueError:
                 return False
 
-    # TODO (power-of-10): split into smaller functions
-    def is_valid(self):  # noqa: C901, PLR0911, PLR0912
-        """Checks if the QSO is valid"""
-        # All essential fields must be present
+    def __init__(self, data: dict):
+        # Check input data
+        assert isinstance(data, dict)
+
+        # Internal data storage
+        self._d: dict = {}
+
+        for key, value in data.items():
+            # Only non-null fields are reported
+            if value is None or value == "":
+                logger.warning(f"Skipping key {key} with invalid value")
+            # All keys are put uppercase and values are converted to string
+            elif key.upper() in _UPPERCASE_FIELDS:
+                self._d[key.upper()] = str(value).upper()
+            else:
+                self._d[key.upper()] = str(value)
+
+    def __str__(self):
+        """String representation of the object"""
+        _str = ""
+        for key in self._d:
+            _str += f"{key} = {self._d[key]}\n"
+        return _str
+
+    def check_essential_fields(self):
+        """Check if all essential fields are present"""
         for key in _ESSENTIAL_KEYS:
             # If the element itself is a frozenset, then check at least one of the elements is present
             if isinstance(key, frozenset):
@@ -333,8 +331,10 @@ class QSO:
             elif not self._d.get(key):
                 logger.warning(f"Essential field {key} not found, invalid QSO")
                 return False
+        return True
 
-        # All mandatory uppercase fields must be uppercase
+    def check_uppercase_fields(self):
+        """Check case on uppercase required fields"""
         for key in _UPPERCASE_FIELDS:
             value = self._d.get(key)
             if value and value.upper() != value:
@@ -342,6 +342,14 @@ class QSO:
                     f"Bad mandatory uppercase field {key}, invalid QSO: {value}"
                 )
                 return False
+        return True
+
+    # TODO (power-of-10): split into smaller functions
+    def is_valid(self):
+        """Checks if the QSO is valid"""
+        # All essential fields must be present
+        if not self.check_essential_fields() or not self.check_uppercase_fields(self):
+            return False
 
         # Callsign validation (maybe regex?)
         match_station_callsign = _CALLSIGN_SIMPLE_RE.fullmatch(
