@@ -277,6 +277,7 @@ class QSO:
             )  # "+0000" explicitly sets the timezone to UTC
             return True
         except ValueError:
+            logger.warning(f"Invalid date format: {date_str}")
             return False
 
     @staticmethod
@@ -294,6 +295,7 @@ class QSO:
                 )  # "+0000" for explit UTC timezone
                 return True
             except ValueError:
+                logger.warning(f"Invalid time format: {time_str}")
                 return False
 
     def __init__(self, data: dict):
