@@ -360,7 +360,6 @@ class QSO:
 
         return True
 
-    # TODO (power-of-10): split into smaller functions
     def is_valid(self):
         """Checks if the QSO is valid"""
 
