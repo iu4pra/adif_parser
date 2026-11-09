@@ -344,26 +344,29 @@ class QSO:
                 return False
         return True
 
-    # TODO (power-of-10): split into smaller functions
-    def is_valid(self):
-        """Checks if the QSO is valid"""
-        # All essential fields must be present
-        if not self.check_essential_fields() or not self.check_uppercase_fields(self):
-            return False
-
-        # Callsign validation (maybe regex?)
-        match_station_callsign = _CALLSIGN_SIMPLE_RE.fullmatch(
-            self._d.get("STATION_CALLSIGN")
-        )
-        if not match_station_callsign:
+    def check_callsigns(self):
+        """Checks QSO callsigns against a simple regex"""
+        if not _CALLSIGN_SIMPLE_RE.fullmatch(self._d.get("STATION_CALLSIGN", "")):
             logger.warning(
                 f"""Bad STATION_CALLSIGN, invalid QSO: {self._d.get("STATION_CALLSIGN")}"""
             )
             return False
 
-        match_call = _CALLSIGN_SIMPLE_RE.fullmatch(self._d.get("CALL"))
-        if not match_call:
+        if not _CALLSIGN_SIMPLE_RE.fullmatch(self._d.get("CALL", "")):
             logger.warning(f"""Bad CALL, invalid QSO: {self._d.get("CALL")}""")
+            return False
+
+        return True
+
+    # TODO (power-of-10): split into smaller functions
+    def is_valid(self):
+        """Checks if the QSO is valid"""
+        # All essential fields must be present
+        if not self.check_essential_fields() or not self.check_uppercase_fields():
+            return False
+
+        # Callsign validation
+        if not self.check_callsigns():
             return False
 
         # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
