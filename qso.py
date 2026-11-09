@@ -363,29 +363,41 @@ class QSO:
     # TODO (power-of-10): split into smaller functions
     def is_valid(self):
         """Checks if the QSO is valid"""
+
+        _qso_ok = True
+
         # All essential fields must be present
-        if not self.check_essential_fields() or not self.check_uppercase_fields():
-            return False
+        if _qso_ok and (
+            not self.check_essential_fields() or not self.check_uppercase_fields()
+        ):
+            _qso_ok = False
 
         # Callsign validation
-        if not self.check_callsigns():
-            return False
+        if _qso_ok and not self.check_callsigns():
+            _qso_ok = False
 
         # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
-        if not self.is_valid_date(self._d.get("QSO_DATE")) or (
-            self._d.get("QSO_DATE_OFF")
-            and not self.is_valid_date(self._d.get("QSO_DATE_OFF"))
+        if _qso_ok and (
+            not self.is_valid_date(self._d.get("QSO_DATE"))
+            or (
+                self._d.get("QSO_DATE_OFF")
+                and not self.is_valid_date(self._d.get("QSO_DATE_OFF"))
+            )
         ):
-            return False
+            _qso_ok = False
 
         # TIME_ON and TIME_OFF validation (must be in HHMM or HHMMSS format)
-        if not self.is_valid_time(self._d.get("TIME_ON")) or (
-            self._d.get("TIME_OFF") and not self.is_valid_time(self._d.get("TIME_OFF"))
+        if _qso_ok and (
+            not self.is_valid_time(self._d.get("TIME_ON"))
+            or (
+                self._d.get("TIME_OFF")
+                and not self.is_valid_time(self._d.get("TIME_OFF"))
+            )
         ):
-            return False
+            _qso_ok = False
 
         # Check QSO end time is after QSO start time (if end time exists)
-        if self._d.get("TIME_OFF") and self._d.get("QSO_DATE_OFF"):
+        if _qso_ok and self._d.get("TIME_OFF") and self._d.get("QSO_DATE_OFF"):
             try:
                 dt_on = QSO.timestamp(self._d.get("QSO_DATE"), self._d.get("TIME_ON"))
                 dt_off = QSO.timestamp(
@@ -395,12 +407,12 @@ class QSO:
                     logger.warning(
                         f"QSO end time {dt_off} is before start time {dt_on}, invalid QSO"
                     )
-                    return False
+                    _qso_ok = False
             except ValueError:
                 logger.warning("Error while checking QSO timestamps")
-                return False
+                _qso_ok = False
 
-        return True
+        return _qso_ok
 
     @staticmethod
     def timestamp(qso_date: str, time_on: str):
