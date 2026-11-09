@@ -372,26 +372,16 @@ class QSO:
             return False
 
         # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
-        if not self.is_valid_date(self._d.get("QSO_DATE")):
-            logger.warning(f"Invalid QSO_DATE format: {self._d.get('QSO_DATE')}")
-            return False
-
-        if self._d.get("QSO_DATE_OFF") and not self.is_valid_date(
+        if not self.is_valid_date(self._d.get("QSO_DATE")) or (
             self._d.get("QSO_DATE_OFF")
+            and not self.is_valid_date(self._d.get("QSO_DATE_OFF"))
         ):
-            logger.warning(
-                f"Invalid QSO_DATE_OFF format: {self._d.get('QSO_DATE_OFF')}"
-            )
             return False
 
-        # TIME_ON validation (must be in HHMM or HHMMSS format)
-        if not self.is_valid_time(self._d.get("TIME_ON")):
-            logger.warning(f"Invalid TIME_ON format: {self._d.get('TIME_ON')}")
-            return False
-
-        # TIME_OFF validation (must be in HHMM or HHMMSS format)
-        if self._d.get("TIME_OFF") and not self.is_valid_time(self._d.get("TIME_OFF")):
-            logger.warning(f"Invalid TIME_OFF format: {self._d.get('TIME_OFF')}")
+        # TIME_ON and TIME_OFF validation (must be in HHMM or HHMMSS format)
+        if not self.is_valid_time(self._d.get("TIME_ON")) or (
+            self._d.get("TIME_OFF") and not self.is_valid_time(self._d.get("TIME_OFF"))
+        ):
             return False
 
         # Check QSO end time is after QSO start time (if end time exists)
