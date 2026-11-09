@@ -359,45 +359,27 @@ class QSO:
             return False
 
         # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
-        try:
-            datetime.strptime(
-                self._d.get("QSO_DATE") + "+0000", "%Y%m%d%z"
-            )  # "+0000" explicitly sets the timezone to UTC
-        except ValueError:
+        if not self.is_valid_date(self._d.get("QSO_DATE")):
             logger.warning(f"Invalid QSO_DATE format: {self._d.get('QSO_DATE')}")
             return False
 
-        if self._d.get("QSO_DATE_OFF"):
-            try:
-                datetime.strptime(self._d.get("QSO_DATE_OFF") + "+0000", "%Y%m%d%z")
-            except ValueError:
-                logger.warning(
-                    f"Invalid QSO_DATE_OFF format: {self._d.get('QSO_DATE_OFF')}"
-                )
-                return False
+        if self._d.get("QSO_DATE_OFF") and not self.is_valid_date(
+            self._d.get("QSO_DATE_OFF")
+        ):
+            logger.warning(
+                f"Invalid QSO_DATE_OFF format: {self._d.get('QSO_DATE_OFF')}"
+            )
+            return False
 
         # TIME_ON validation (must be in HHMM or HHMMSS format)
-        try:
-            datetime.strptime(self._d.get("TIME_ON") + "+0000", "%H%M%z")
-        except ValueError:
-            try:
-                datetime.strptime(self._d.get("TIME_ON") + "+0000", "%H%M%S%z")
-            except ValueError:
-                logger.warning(f"Invalid TIME_ON format: {self._d.get('TIME_ON')}")
-                return False
+        if not self.is_valid_time(self._d.get("TIME_ON")):
+            logger.warning(f"Invalid TIME_ON format: {self._d.get('TIME_ON')}")
+            return False
 
         # TIME_OFF validation (must be in HHMM or HHMMSS format)
-        if self._d.get("TIME_OFF"):
-            try:
-                datetime.strptime(self._d.get("TIME_OFF") + "+0000", "%H%M%z")
-            except ValueError:
-                try:
-                    datetime.strptime(self._d.get("TIME_OFF") + "+0000", "%H%M%S%z")
-                except ValueError:
-                    logger.warning(
-                        f"Invalid TIME_OFF format: {self._d.get('TIME_OFF')}"
-                    )
-                    return False
+        if self._d.get("TIME_OFF") and not self.is_valid_time(self._d.get("TIME_OFF")):
+            logger.warning(f"Invalid TIME_OFF format: {self._d.get('TIME_OFF')}")
+            return False
 
         # Check QSO end time is after QSO start time (if end time exists)
         if self._d.get("TIME_OFF") and self._d.get("QSO_DATE_OFF"):
