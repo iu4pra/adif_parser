@@ -208,6 +208,23 @@ class QSOValidationTest(unittest.TestCase):
         mock_timestamp.assert_called_once_with("20230101", "120000")
 
 
+class QSODateTimeValidationTest(unittest.TestCase):
+    def test_is_valid_date_accepts_valid_date(self):
+        self.assertTrue(QSO.is_valid_date("20240229"))
+
+    def test_is_valid_date_rejects_invalid_date(self):
+        self.assertFalse(QSO.is_valid_date("20230229"))
+        self.assertFalse(QSO.is_valid_date("2024-02-29"))
+
+    def test_is_valid_time_accepts_hhmm_and_hhmmss(self):
+        self.assertTrue(QSO.is_valid_time("1234"))
+        self.assertTrue(QSO.is_valid_time("123456"))
+
+    def test_is_valid_time_rejects_invalid_time(self):
+        self.assertFalse(QSO.is_valid_time("246000"))
+        self.assertFalse(QSO.is_valid_time("12:34"))
+
+
 class QSOTimestampTest(unittest.TestCase):
     def test_timestamp(self):
         timestamp = QSO.timestamp("20230101", "123456")

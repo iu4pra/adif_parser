@@ -292,6 +292,34 @@ class QSO:
             _str += f"{key} = {self._d[key]}\n"
         return _str
 
+    @staticmethod
+    def is_valid_date(date_str: str) -> bool:
+        """Checks if the date string is in YYYYMMDD format"""
+        try:
+            datetime.strptime(
+                date_str + "+0000", "%Y%m%d%z"
+            )  # "+0000" explicitly sets the timezone to UTC
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def is_valid_time(time_str: str) -> bool:
+        """Checks if the time string is in HHMM or HHMMSS format"""
+        try:
+            datetime.strptime(
+                time_str + "+0000", "%H%M%z"
+            )  # "+0000" for explit UTC timezone
+            return True
+        except ValueError:
+            try:
+                datetime.strptime(
+                    time_str + "+0000", "%H%M%S%z"
+                )  # "+0000" for explit UTC timezone
+                return True
+            except ValueError:
+                return False
+
     # TODO (power-of-10): split into smaller functions
     def is_valid(self):  # noqa: C901, PLR0911, PLR0912
         """Checks if the QSO is valid"""
