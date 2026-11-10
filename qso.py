@@ -268,6 +268,30 @@ class RandomCallGenerator:
 class QSO:
     """Class representing a single QSO record"""
 
+    def __init__(self, data: dict):
+        # Check input data
+        assert isinstance(data, dict)
+
+        # Internal data storage
+        self._d: dict = {}
+
+        for key, value in data.items():
+            # Only non-null fields are reported
+            if value is None or value == "":
+                logger.warning(f"Skipping key {key} with invalid value")
+            # All keys are put uppercase and values are converted to string
+            elif key.upper() in _UPPERCASE_FIELDS:
+                self._d[key.upper()] = str(value).upper()
+            else:
+                self._d[key.upper()] = str(value)
+
+    def __str__(self):
+        """String representation of the object"""
+        _str = ""
+        for key in self._d:
+            _str += f"{key} = {self._d[key]}\n"
+        return _str
+
     @staticmethod
     def is_valid_date(date_str: str) -> bool:
         """Checks if the date string is in YYYYMMDD format"""
@@ -298,31 +322,7 @@ class QSO:
                 logger.warning(f"Invalid time format: {time_str}")
                 return False
 
-    def __init__(self, data: dict):
-        # Check input data
-        assert isinstance(data, dict)
-
-        # Internal data storage
-        self._d: dict = {}
-
-        for key, value in data.items():
-            # Only non-null fields are reported
-            if value is None or value == "":
-                logger.warning(f"Skipping key {key} with invalid value")
-            # All keys are put uppercase and values are converted to string
-            elif key.upper() in _UPPERCASE_FIELDS:
-                self._d[key.upper()] = str(value).upper()
-            else:
-                self._d[key.upper()] = str(value)
-
-    def __str__(self):
-        """String representation of the object"""
-        _str = ""
-        for key in self._d:
-            _str += f"{key} = {self._d[key]}\n"
-        return _str
-
-    def check_essential_fields(self):
+    def _check_essential_fields(self):
         """Check if all essential fields are present"""
         for key in _ESSENTIAL_KEYS:
             # If the element itself is a frozenset, then check at least one of the elements is present
@@ -335,7 +335,7 @@ class QSO:
                 return False
         return True
 
-    def check_uppercase_fields(self):
+    def _check_uppercase_fields(self):
         """Check case on uppercase required fields"""
         for key in _UPPERCASE_FIELDS:
             value = self._d.get(key)
@@ -346,7 +346,7 @@ class QSO:
                 return False
         return True
 
-    def check_callsigns(self):
+    def _check_callsigns(self):
         """Checks QSO callsigns against a simple regex"""
         if not _CALLSIGN_SIMPLE_RE.fullmatch(self._d.get("STATION_CALLSIGN", "")):
             logger.warning(
@@ -367,12 +367,12 @@ class QSO:
 
         # All essential fields must be present
         if _qso_ok and (
-            not self.check_essential_fields() or not self.check_uppercase_fields()
+            not self._check_essential_fields() or not self._check_uppercase_fields()
         ):
             _qso_ok = False
 
         # Callsign validation
-        if _qso_ok and not self.check_callsigns():
+        if _qso_ok and not self._check_callsigns():
             _qso_ok = False
 
         # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
