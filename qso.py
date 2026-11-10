@@ -322,57 +322,56 @@ class QSO:
                 logger.warning(f"Invalid time format: {time_str}")
                 return False
 
-    def _check_essential_fields(self):
-        """Check if all essential fields are present"""
-        for key in _ESSENTIAL_KEYS:
-            # If the element itself is a frozenset, then check at least one of the elements is present
-            if isinstance(key, frozenset):
-                if not any(self._d.get(field) for field in key):
-                    logger.warning(f"No fields among {key} found, invalid QSO")
-                    return False
-            elif not self._d.get(key):
-                logger.warning(f"Essential field {key} not found, invalid QSO")
-                return False
-        return True
+    def is_valid(self):  # noqa: C901
+        """Checks if the QSO is valid"""
 
-    def _check_uppercase_fields(self):
-        """Check case on uppercase required fields"""
-        for key in _UPPERCASE_FIELDS:
-            value = self._d.get(key)
-            if value and value.upper() != value:
+        def check_essential_fields():
+            for key in _ESSENTIAL_KEYS:
+                # If the element itself is a frozenset, then check at least one of the elements is present
+                if isinstance(key, frozenset):
+                    if not any(self._d.get(field) for field in key):
+                        logger.warning(f"No fields among {key} found, invalid QSO")
+                        return False
+                elif not self._d.get(key):
+                    logger.warning(f"Essential field {key} not found, invalid QSO")
+                    return False
+            return True
+
+        def check_uppercase_fields():
+            for key in _UPPERCASE_FIELDS:
+                value = self._d.get(key)
+                if value and value.upper() != value:
+                    logger.warning(
+                        f"Bad mandatory uppercase field {key}, invalid QSO: {value}"
+                    )
+                    return False
+            return True
+
+        def check_callsigns():
+            if not _CALLSIGN_SIMPLE_RE.fullmatch(
+                self._d.get("STATION_CALLSIGN", "")
+            ):
                 logger.warning(
-                    f"Bad mandatory uppercase field {key}, invalid QSO: {value}"
+                    f"""Bad STATION_CALLSIGN, invalid QSO: {self._d.get("STATION_CALLSIGN")}"""
                 )
                 return False
-        return True
 
-    def _check_callsigns(self):
-        """Checks QSO callsigns against a simple regex"""
-        if not _CALLSIGN_SIMPLE_RE.fullmatch(self._d.get("STATION_CALLSIGN", "")):
-            logger.warning(
-                f"""Bad STATION_CALLSIGN, invalid QSO: {self._d.get("STATION_CALLSIGN")}"""
-            )
-            return False
+            if not _CALLSIGN_SIMPLE_RE.fullmatch(self._d.get("CALL", "")):
+                logger.warning(f"""Bad CALL, invalid QSO: {self._d.get("CALL")}""")
+                return False
 
-        if not _CALLSIGN_SIMPLE_RE.fullmatch(self._d.get("CALL", "")):
-            logger.warning(f"""Bad CALL, invalid QSO: {self._d.get("CALL")}""")
-            return False
-
-        return True
-
-    def is_valid(self):
-        """Checks if the QSO is valid"""
+            return True
 
         _qso_ok = True
 
         # All essential fields must be present
         if _qso_ok and (
-            not self._check_essential_fields() or not self._check_uppercase_fields()
+            not check_essential_fields() or not check_uppercase_fields()
         ):
             _qso_ok = False
 
         # Callsign validation
-        if _qso_ok and not self._check_callsigns():
+        if _qso_ok and not check_callsigns():
             _qso_ok = False
 
         # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
