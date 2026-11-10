@@ -21,11 +21,14 @@ It is responsible for:
 import logging
 import re
 from pathlib import Path
+from collections.abc import Callable
+from typing import TypeVar
 
 from qso import QSO, RandomCallGenerator
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
 
 class AdifError(Exception):
     """Base error."""
@@ -72,7 +75,7 @@ def field_is_type(f: dict, _type: str):
     return f["field"].casefold() == _type.casefold()
 
 
-def index_of(item_list: list, cond, cond_value: bool = True):
+def index_of(item_list: list[T], cond: Callable[[T], bool], cond_value: bool = True, start: int = 0):
     """Returns the index of the first element satisfying the condition or -1 if not found
 
     If cond_value = False returns the index of the first element NOT satisfying the condition
@@ -80,8 +83,8 @@ def index_of(item_list: list, cond, cond_value: bool = True):
     Example usage:
 
         index_of(field_list, lambda x: field_is_type(x, 'EOR'))"""
-    for index, item in enumerate(item_list):
-        if cond(item) == cond_value:
+    for index in range(start,len(item_list)):
+        if cond(item_list[index]) is cond_value:
             return index
     return -1
 
