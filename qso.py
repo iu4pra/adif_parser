@@ -292,87 +292,106 @@ class QSO:
             _str += f"{key} = {self._d[key]}\n"
         return _str
 
-    # TODO (power-of-10): split into smaller functions
-    def is_valid(self):  # noqa: C901, PLR0911, PLR0912
-        """Checks if the QSO is valid"""
-        # All essential fields must be present
-        for key in _ESSENTIAL_KEYS:
-            # If the element itself is a frozenset, then check at least one of the elements is present
-            if isinstance(key, frozenset):
-                if not any(self._d.get(field) for field in key):
-                    logger.warning(f"No fields among {key} found, invalid QSO")
-                    return False
-            elif not self._d.get(key):
-                logger.warning(f"Essential field {key} not found, invalid QSO")
-                return False
-
-        # All mandatory uppercase fields must be uppercase
-        for key in _UPPERCASE_FIELDS:
-            value = self._d.get(key)
-            if value and value.upper() != value:
-                logger.warning(
-                    f"Bad mandatory uppercase field {key}, invalid QSO: {value}"
-                )
-                return False
-
-        # Callsign validation (maybe regex?)
-        match_station_callsign = _CALLSIGN_SIMPLE_RE.fullmatch(
-            self._d.get("STATION_CALLSIGN")
-        )
-        if not match_station_callsign:
-            logger.warning(
-                f"""Bad STATION_CALLSIGN, invalid QSO: {self._d.get("STATION_CALLSIGN")}"""
-            )
-            return False
-
-        match_call = _CALLSIGN_SIMPLE_RE.fullmatch(self._d.get("CALL"))
-        if not match_call:
-            logger.warning(f"""Bad CALL, invalid QSO: {self._d.get("CALL")}""")
-            return False
-
-        # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
+    @staticmethod
+    def is_valid_date(date_str: str) -> bool:
+        """Checks if the date string is in YYYYMMDD format"""
         try:
             datetime.strptime(
-                self._d.get("QSO_DATE") + "+0000", "%Y%m%d%z"
+                date_str + "+0000", "%Y%m%d%z"
             )  # "+0000" explicitly sets the timezone to UTC
+            return True
         except ValueError:
-            logger.warning(f"Invalid QSO_DATE format: {self._d.get('QSO_DATE')}")
+            logger.warning(f"Invalid date format: {date_str}")
             return False
 
-        if self._d.get("QSO_DATE_OFF"):
+    @staticmethod
+    def is_valid_time(time_str: str) -> bool:
+        """Checks if the time string is in HHMM or HHMMSS format"""
+        try:
+            datetime.strptime(
+                time_str + "+0000", "%H%M%z"
+            )  # "+0000" for explit UTC timezone
+            return True
+        except ValueError:
             try:
-                datetime.strptime(self._d.get("QSO_DATE_OFF") + "+0000", "%Y%m%d%z")
+                datetime.strptime(
+                    time_str + "+0000", "%H%M%S%z"
+                )  # "+0000" for explit UTC timezone
+                return True
             except ValueError:
+                logger.warning(f"Invalid time format: {time_str}")
+                return False
+
+    def is_valid(self):  # noqa: C901
+        """Checks if the QSO is valid"""
+
+        def check_essential_fields():
+            for key in _ESSENTIAL_KEYS:
+                # If the element itself is a frozenset, then check at least one of the elements is present
+                if isinstance(key, frozenset):
+                    if not any(self._d.get(field) for field in key):
+                        logger.warning(f"No fields among {key} found, invalid QSO")
+                        return False
+                elif not self._d.get(key):
+                    logger.warning(f"Essential field {key} not found, invalid QSO")
+                    return False
+            return True
+
+        def check_uppercase_fields():
+            for key in _UPPERCASE_FIELDS:
+                value = self._d.get(key)
+                if value and value.upper() != value:
+                    logger.warning(
+                        f"Bad mandatory uppercase field {key}, invalid QSO: {value}"
+                    )
+                    return False
+            return True
+
+        def check_callsigns():
+            if not _CALLSIGN_SIMPLE_RE.fullmatch(self._d.get("STATION_CALLSIGN", "")):
                 logger.warning(
-                    f"Invalid QSO_DATE_OFF format: {self._d.get('QSO_DATE_OFF')}"
+                    f"""Bad STATION_CALLSIGN, invalid QSO: {self._d.get("STATION_CALLSIGN")}"""
                 )
                 return False
 
-        # TIME_ON validation (must be in HHMM or HHMMSS format)
-        try:
-            datetime.strptime(self._d.get("TIME_ON") + "+0000", "%H%M%z")
-        except ValueError:
-            try:
-                datetime.strptime(self._d.get("TIME_ON") + "+0000", "%H%M%S%z")
-            except ValueError:
-                logger.warning(f"Invalid TIME_ON format: {self._d.get('TIME_ON')}")
+            if not _CALLSIGN_SIMPLE_RE.fullmatch(self._d.get("CALL", "")):
+                logger.warning(f"""Bad CALL, invalid QSO: {self._d.get("CALL")}""")
                 return False
 
-        # TIME_OFF validation (must be in HHMM or HHMMSS format)
-        if self._d.get("TIME_OFF"):
-            try:
-                datetime.strptime(self._d.get("TIME_OFF") + "+0000", "%H%M%z")
-            except ValueError:
-                try:
-                    datetime.strptime(self._d.get("TIME_OFF") + "+0000", "%H%M%S%z")
-                except ValueError:
-                    logger.warning(
-                        f"Invalid TIME_OFF format: {self._d.get('TIME_OFF')}"
-                    )
-                    return False
+            return True
+
+        _qso_ok = True
+
+        # All essential fields must be present
+        if _qso_ok and (not check_essential_fields() or not check_uppercase_fields()):
+            _qso_ok = False
+
+        # Callsign validation
+        if _qso_ok and not check_callsigns():
+            _qso_ok = False
+
+        # Date validation (QSO_DATE and QSO_DATE_OFF must be in YYYYMMDD format)
+        if _qso_ok and (
+            not self.is_valid_date(self._d.get("QSO_DATE"))
+            or (
+                self._d.get("QSO_DATE_OFF")
+                and not self.is_valid_date(self._d.get("QSO_DATE_OFF"))
+            )
+        ):
+            _qso_ok = False
+
+        # TIME_ON and TIME_OFF validation (must be in HHMM or HHMMSS format)
+        if _qso_ok and (
+            not self.is_valid_time(self._d.get("TIME_ON"))
+            or (
+                self._d.get("TIME_OFF")
+                and not self.is_valid_time(self._d.get("TIME_OFF"))
+            )
+        ):
+            _qso_ok = False
 
         # Check QSO end time is after QSO start time (if end time exists)
-        if self._d.get("TIME_OFF") and self._d.get("QSO_DATE_OFF"):
+        if _qso_ok and self._d.get("TIME_OFF") and self._d.get("QSO_DATE_OFF"):
             try:
                 dt_on = QSO.timestamp(self._d.get("QSO_DATE"), self._d.get("TIME_ON"))
                 dt_off = QSO.timestamp(
@@ -382,12 +401,12 @@ class QSO:
                     logger.warning(
                         f"QSO end time {dt_off} is before start time {dt_on}, invalid QSO"
                     )
-                    return False
+                    _qso_ok = False
             except ValueError:
                 logger.warning("Error while checking QSO timestamps")
-                return False
+                _qso_ok = False
 
-        return True
+        return _qso_ok
 
     @staticmethod
     def timestamp(qso_date: str, time_on: str):

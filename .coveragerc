@@ -2,7 +2,7 @@
 branch = True
 omit =
     __init__.py
-    gui.py
+    qslgen_gui.py
     conftest.py
     datetime_compat.py
     test_*.py
