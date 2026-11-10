@@ -348,9 +348,7 @@ class QSO:
             return True
 
         def check_callsigns():
-            if not _CALLSIGN_SIMPLE_RE.fullmatch(
-                self._d.get("STATION_CALLSIGN", "")
-            ):
+            if not _CALLSIGN_SIMPLE_RE.fullmatch(self._d.get("STATION_CALLSIGN", "")):
                 logger.warning(
                     f"""Bad STATION_CALLSIGN, invalid QSO: {self._d.get("STATION_CALLSIGN")}"""
                 )
@@ -365,9 +363,7 @@ class QSO:
         _qso_ok = True
 
         # All essential fields must be present
-        if _qso_ok and (
-            not check_essential_fields() or not check_uppercase_fields()
-        ):
+        if _qso_ok and (not check_essential_fields() or not check_uppercase_fields()):
             _qso_ok = False
 
         # Callsign validation
