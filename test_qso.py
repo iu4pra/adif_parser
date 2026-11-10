@@ -53,7 +53,7 @@ class QSOTest(unittest.TestCase):
         _adif_string = adif.parse_adif_string(
             "<STATION_CALLSIGN:5>W1ABC <QSO_DATE:8>20251005 <TIME_ON:6>123000 <CALL:6>IW9YZA <BAND:3>12m <MODE:3>FT8 <RST_SENT:2>-- <RST_RCVD:2>-- <EOR>"
         )
-        _qso_list = adif.adif_to_qso_list(_adif_string)
+        _qso_list = adif.adif_to_qso_list_in_place(_adif_string)
         self.assertEqual(len(_qso_list), 1)
         self.assertTrue(_qso_list[0].is_valid())
 

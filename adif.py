@@ -258,15 +258,17 @@ def adif_to_qso_list(_adif_fields: list, _only_valid=False):
 
     return _qso_list
 
+
 def adif_to_qso_list_in_place(_adif_fields: list, _only_valid=False):
-    """Parse QSO data from an ADIF list, in-place version
+    """Parse QSO data from an ADIF list
+    In-place version, more efficient for large files
 
     Header is automatically stripped if not already done.
     Invalid QSOs are ignored by default"""
     # Input type check
     assert isinstance(_adif_fields, list)
     # Strip header
-    _adif_fields, eoh_index = remove_header(_adif_fields)
+    _adif_fields, _eoh_index = remove_header(_adif_fields)
 
     _qso_list: list[QSO] = []
     _num_adif_fields = len(_adif_fields)
@@ -275,37 +277,39 @@ def adif_to_qso_list_in_place(_adif_fields: list, _only_valid=False):
     # Initlalize list cursor
     while _index < _num_adif_fields:
         # Look for next EOR field
-        eor_index = index_of(_adif_fields, lambda x: field_is_type(x, "EOR"), start = _index)
+        eor_index = index_of(
+            _adif_fields, lambda x: field_is_type(x, "EOR"), start=_index
+        )
 
         if eor_index == -1:
             # End of list found before EOR, raise error
             raise AdifError("End of list found before EOR")
+        # EOR found, discard it and create QSO object
+
+        _dict = {}  # Support dict for creating QSO
+
+        for f in _adif_fields[_index:eor_index]:
+            # Raise an error if a field already exists for the QSO
+            if _dict.get(f["field"]):
+                raise AdifError(
+                    f"Duplicate field {f['field']} ({_dict.get(f['field'])})"
+                )
+            _dict.update(adif_field_to_qso_field(f))
+
+        # Index update
+        _index = eor_index + 1
+
+        logger.debug(f"Creating a QSO object based on {_dict}")
+        _new_qso = QSO(_dict)
+        _valid = _new_qso.is_valid()  # To avoid multiple calls to is_valid()
+        logger.debug(f"Valid QSO: {_valid}")
+        if not _only_valid or _valid:
+            _qso_list.append(_new_qso)
         else:
-            # EOR found, discard it and create QSO object
-
-            _dict = {}  # Support dict for creating QSO
-            
-            for f in _adif_fields[_index:eor_index]:
-                # Raise an error if a field already exists for the QSO
-                if _dict.get(f["field"]):
-                    raise AdifError(
-                        f"Duplicate field {f['field']} ({_dict.get(f['field'])})"
-                    )
-                _dict.update(adif_field_to_qso_field(f))
-
-            # Index update
-            _index = eor_index + 1
-
-            logger.debug(f"Creating a QSO object based on {_dict}")
-            _new_qso = QSO(_dict)
-            _valid = _new_qso.is_valid()  # To avoid multiple calls to is_valid()
-            logger.debug(f"Valid QSO: {_valid}")
-            if not _only_valid or _valid:
-                _qso_list.append(_new_qso)
-            else:
-                logger.warning(f"Invalid QSO object will be ignored: {_dict}")
+            logger.warning(f"Invalid QSO object will be ignored: {_dict}")
 
     return _qso_list
+
 
 def qso_list_from_file(filename: str, _only_valid=False):
     """Convenience function to convert an ADIF file into a QSO list"""
@@ -313,11 +317,14 @@ def qso_list_from_file(filename: str, _only_valid=False):
     qso_list: list[QSO] = adif_to_qso_list(field_list, _only_valid)
     return qso_list
 
+
 def qso_list_from_file_in_place(filename: str, _only_valid=False):
-    """Convenience function to convert an ADIF file into a QSO list"""
+    """Convenience function to convert an ADIF file into a QSO list
+    In-place variant, more efficient for large files"""
     field_list = parse_adif_file(filename)
     qso_list: list[QSO] = adif_to_qso_list_in_place(field_list, _only_valid)
     return qso_list
+
 
 def qso_list_random(n: int, _only_valid=True):
     """Generate a random QSO list of a given size"""

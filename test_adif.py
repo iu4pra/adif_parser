@@ -180,7 +180,7 @@ class TestAdifParser(unittest.TestCase):
         # FIXED: Adjusted lengths to match data (3 chars for K1A and K2B)
         data = "<CALL:3>K1A <EOR> <CALL:3>K2B <EOR>"
         fields = adif.parse_adif_string(data)
-        qso_list = adif.adif_to_qso_list(fields)
+        qso_list = adif.adif_to_qso_list_in_place(fields)
 
         self.assertEqual(len(qso_list), 2)
         self.assertEqual(qso_list[0]._d["CALL"], "K1A")
@@ -189,28 +189,32 @@ class TestAdifParser(unittest.TestCase):
     def test_qso_bad_data_1(self):
         with self.assertRaises(adif.AdifError):
             fields = adif.parse_adif_string("<CALL:3>K1A <CALL:3>K2B<EOR>")
-            adif.adif_to_qso_list(fields)
+            adif.adif_to_qso_list_in_place(fields)
 
     def test_qso_bad_data_2(self):
         with self.assertRaises(adif.AdifError):
             fields = adif.parse_adif_string("<CALL:3>K1A <EOR> <CALL:3>K2B")
-            adif.adif_to_qso_list(fields)
+            adif.adif_to_qso_list_in_place(fields)
 
     def test_qso_bad_data_3(self):
         with self.assertRaises(adif.AdifError):
             fields = adif.parse_adif_string("<CALL:5>K1A <EOR><CALL:3>K2B<EOR>")
-            adif.adif_to_qso_list(fields)
+            adif.adif_to_qso_list_in_place(fields)
 
     def test_qso_bad_data_4(self):
         fields = [
             {"field": "CALL", "len": 3, "type": None, "value": "K1A"},
             {"field": "EOR", "len": 0, "type": None, "value": None},
         ]
-        self.assertEqual(len(adif.adif_to_qso_list(fields, _only_valid=True)), 0)
+        self.assertEqual(
+            len(adif.adif_to_qso_list_in_place(fields, _only_valid=True)), 0
+        )
 
     def test_qso_bad_data_5(self):
         fields = adif.parse_adif_string("<CALL:3>K1A <EOR><CALL:3>K2B<EOR>")
-        self.assertEqual(len(adif.adif_to_qso_list(fields, _only_valid=True)), 0)
+        self.assertEqual(
+            len(adif.adif_to_qso_list_in_place(fields, _only_valid=True)), 0
+        )
 
     def test_parse_non_file(self):
         with self.assertRaises(AssertionError):
@@ -224,13 +228,13 @@ class TestAdifParser(unittest.TestCase):
         field_list = adif.parse_adif_file("samples/minimal_1qso.adi")
         self.assertEqual(len(field_list), 16)
 
-    def test_qso_list_from_file(self):
-        qso_list = adif.qso_list_from_file("samples/minimal_1qso.adi")
+    def test_qso_list_from_file_in_place(self):
+        qso_list = adif.qso_list_from_file_in_place("samples/minimal_1qso.adi")
         assert isinstance(qso_list[0], QSO)
         self.assertEqual(len(qso_list), 1)
 
-class TestAdifParserInPlace(unittest.TestCase):
 
+class TestAdifParserInPlace(unittest.TestCase):
     def test_qso_list_from_file(self):
         qso_list = adif.qso_list_from_file("samples/iu4pra_sample_log.adi")
         assert isinstance(qso_list[0], QSO)
@@ -243,10 +247,13 @@ class TestAdifParserInPlace(unittest.TestCase):
 
     def test_qso_list_in_place_is_same(self):
         qso_list = adif.qso_list_from_file("samples/iu4pra_sample_log.adi")
-        qso_list_in_place = adif.qso_list_from_file_in_place("samples/iu4pra_sample_log.adi")
+        qso_list_in_place = adif.qso_list_from_file_in_place(
+            "samples/iu4pra_sample_log.adi"
+        )
         self.assertTrue(len(qso_list) == len(qso_list_in_place))
         for i in range(len(qso_list)):
             self.assertEqual(qso_list[i].__str__(), qso_list_in_place[i].__str__())
+
 
 class TestRandomQSOListGenerator(unittest.TestCase):
     def test_n_negative(self):
