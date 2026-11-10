@@ -229,6 +229,24 @@ class TestAdifParser(unittest.TestCase):
         assert isinstance(qso_list[0], QSO)
         self.assertEqual(len(qso_list), 1)
 
+class TestAdifParserInPlace(unittest.TestCase):
+
+    def test_qso_list_from_file(self):
+        qso_list = adif.qso_list_from_file("samples/iu4pra_sample_log.adi")
+        assert isinstance(qso_list[0], QSO)
+        self.assertEqual(len(qso_list), 200)
+
+    def test_qso_list_from_file_in_place(self):
+        qso_list = adif.qso_list_from_file_in_place("samples/iu4pra_sample_log.adi")
+        assert isinstance(qso_list[0], QSO)
+        self.assertEqual(len(qso_list), 200)
+
+    def test_qso_list_in_place_is_same(self):
+        qso_list = adif.qso_list_from_file("samples/iu4pra_sample_log.adi")
+        qso_list_in_place = adif.qso_list_from_file_in_place("samples/iu4pra_sample_log.adi")
+        self.assertTrue(len(qso_list) == len(qso_list_in_place))
+        for i in range(len(qso_list)):
+            self.assertEqual(qso_list[i].__str__(), qso_list_in_place[i].__str__())
 
 class TestRandomQSOListGenerator(unittest.TestCase):
     def test_n_negative(self):
