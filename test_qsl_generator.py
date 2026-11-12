@@ -613,7 +613,7 @@ class TestGenerateQslImagePdf(unittest.TestCase):
     ],
 )
 def test_grouping_preserves_qsos_with_mixed_case_callsigns(filename):
-    qsos = adif.qso_list_from_file(filename)
+    qsos = adif.qso_list_from_file_in_place(filename)
     groups = list(qslgen.qso_list_generator(qsos, 10))
 
     assert len(groups) == 2

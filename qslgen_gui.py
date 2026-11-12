@@ -218,7 +218,7 @@ class App:
             3. Calls qsl_generator.generate_qsl_image_pdf
         """
         if hasattr(self, "logfile") and Path(self.logfile).is_file():
-            qso_list = adif.qso_list_from_file(self.logfile)
+            qso_list = adif.qso_list_from_file_in_place(self.logfile)
 
             with ThreadPoolExecutor() as executor:
                 future = executor.submit(

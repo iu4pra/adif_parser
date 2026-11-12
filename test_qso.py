@@ -53,7 +53,7 @@ class QSOTest(unittest.TestCase):
         _adif_string = adif.parse_adif_string(
             "<STATION_CALLSIGN:5>W1ABC <QSO_DATE:8>20251005 <TIME_ON:6>123000 <CALL:6>IW9YZA <BAND:3>12m <MODE:3>FT8 <RST_SENT:2>-- <RST_RCVD:2>-- <EOR>"
         )
-        _qso_list = adif.adif_to_qso_list(_adif_string)
+        _qso_list = adif.adif_to_qso_list_in_place(_adif_string)
         self.assertEqual(len(_qso_list), 1)
         self.assertTrue(_qso_list[0].is_valid())
 
@@ -539,6 +539,36 @@ class RandomCallGeneratorSCPTest(unittest.TestCase):
                 os.chdir(original_cwd)
 
         self.assertIn("Incomplete SuperCheckPartial download", logs.output[0])
+        self.assertTrue(RandomCallGenerator.scp_fail)
+
+    @patch("qso.requests.get")
+    def test_download_scp_invalid_size_preserves_existing_file(self, mock_get):
+        content = b"!!Order,1,1\n#\nK1ABC\n"
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.content = content
+        mock_get.return_value.headers = {"Content-Length": "test"}
+
+        original_cwd = Path.cwd()
+        with tempfile.TemporaryDirectory() as directory:
+            try:
+                os.chdir(directory)
+                with Path("MASTER.SCP").open("wb") as existing_file:
+                    existing_file.write(b"previous SCP data")
+
+                with self.assertLogs(level="ERROR") as logs:
+                    self.assertFalse(RandomCallGenerator.download_scp())
+
+                with Path("MASTER.SCP").open("rb") as existing_file:
+                    self.assertEqual(existing_file.read(), b"previous SCP data")
+                self.assertEqual(
+                    [path.name for path in Path(directory).iterdir()], ["MASTER.SCP"]
+                )
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn(
+            "Invalid Content-Length for SuperCheckPartial file", logs.output[0]
+        )
         self.assertTrue(RandomCallGenerator.scp_fail)
 
     @patch("qso.requests.get")
