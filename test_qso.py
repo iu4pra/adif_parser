@@ -542,6 +542,36 @@ class RandomCallGeneratorSCPTest(unittest.TestCase):
         self.assertTrue(RandomCallGenerator.scp_fail)
 
     @patch("qso.requests.get")
+    def test_download_scp_invalid_size_preserves_existing_file(self, mock_get):
+        content = b"!!Order,1,1\n#\nK1ABC\n"
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.content = content
+        mock_get.return_value.headers = {"Content-Length": "test"}
+
+        original_cwd = Path.cwd()
+        with tempfile.TemporaryDirectory() as directory:
+            try:
+                os.chdir(directory)
+                with Path("MASTER.SCP").open("wb") as existing_file:
+                    existing_file.write(b"previous SCP data")
+
+                with self.assertLogs(level="ERROR") as logs:
+                    self.assertFalse(RandomCallGenerator.download_scp())
+
+                with Path("MASTER.SCP").open("rb") as existing_file:
+                    self.assertEqual(existing_file.read(), b"previous SCP data")
+                self.assertEqual(
+                    [path.name for path in Path(directory).iterdir()], ["MASTER.SCP"]
+                )
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn(
+            "Invalid Content-Length for SuperCheckPartial file", logs.output[0]
+        )
+        self.assertTrue(RandomCallGenerator.scp_fail)
+
+    @patch("qso.requests.get")
     def test_download_scp_invalid_format_preserves_existing_file(self, mock_get):
         mock_get.return_value.status_code = 200
         mock_get.return_value.content = b"<html>not an SCP file</html>"
