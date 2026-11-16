@@ -181,6 +181,12 @@ class RandomCallGenerator:
     @classmethod
     def load_scp(cls):
         """Loads the SuperCheckPartial file from the local copy or downloads it if not present"""
+        # Check if scp_calls is non-empty. If so, there is no need to search for the file or download it again.
+        if cls.scp_calls:
+            logger.debug(
+                "SuperCheckPartial calls list already loaded, no action needed"
+            )
+            return True
         if not cls.scp_fail:
             try:
                 if not Path("MASTER.SCP").is_file():

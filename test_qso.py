@@ -304,6 +304,12 @@ class RandomQSOTest(unittest.TestCase):
 
 
 class RandomCallGeneratorTest(unittest.TestCase):
+    def setUp(self):
+        RandomCallGenerator.reset_scp()
+
+    def tearDown(self):
+        RandomCallGenerator.reset_scp()
+
     @patch.object(RandomCallGenerator, "scp_fail", False)
     @patch("qso.Path.is_file", return_value=False)
     @patch("qso.requests.get")
@@ -629,6 +635,18 @@ class RandomCallGeneratorSCPTest(unittest.TestCase):
 
         self.assertEqual(RandomCallGenerator.scp_calls, ["K1ABC", "W1AW"])
         self.assertFalse(RandomCallGenerator.scp_fail)
+
+    def test_load_scp_uses_cached_calls_without_checking_file(self):
+        RandomCallGenerator.scp_calls = ["K1ABC"]
+
+        with (
+            patch("qso.Path.is_file") as is_file,
+            patch.object(RandomCallGenerator, "download_scp") as download,
+        ):
+            self.assertTrue(RandomCallGenerator.load_scp())
+
+        is_file.assert_not_called()
+        download.assert_not_called()
 
     def test_load_scp_downloads_missing_file(self):
         file_mock = mock_open(read_data="K1ABC\nW1AW\n")
