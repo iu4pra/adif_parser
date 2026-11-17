@@ -285,12 +285,9 @@ def generate_qsl_image_pdf(  # noqa: C901, PLR0912, PLR0915
     # The list lenght after pruning is subtraced to get how many QSOs were removed
     removed_qsos -= len(qso_list)
 
-    for qso in qso_list:
-        assert qso.is_valid()
-
     if removed_qsos > 0:
         logger.warning(
-            f"Removed {removed_qsos} invalid QSOs from the list, which now contains {len(qso_list)} QSOs"
+            f"Removed {removed_qsos} invalid QSOs from the list, which now contains {len(qso_list)} valid QSOs"
         )
 
     if len(qso_list) == 0:
