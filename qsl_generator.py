@@ -101,7 +101,7 @@ def qso_list_generator(qso_list, every):
                 for qso in qso_list
                 if isinstance(qso, QSO)
                 and qso._d.get("STATION_CALLSIGN", "").upper() == _station
-                and qso.is_valid()
+                and qso.is_valid()  # Discard invalid QSOs (TODO maybe do this check in a single pass before grouping)
             ]
         )
         for _recipient in unique_recipients:
@@ -111,7 +111,7 @@ def qso_list_generator(qso_list, every):
                 if isinstance(qso, QSO)
                 and qso._d.get("STATION_CALLSIGN", "").upper() == _station
                 and qso._d.get("CALL", "").upper() == _recipient
-                and qso.is_valid()
+                and qso.is_valid()  # Discard invalid QSOs (TODO maybe do this check in a single pass before grouping)
             ]
             no_qsos = len(qso_grouped[_station][_recipient])
             logger.info(f"Detected {no_qsos} QSOs from {_station} to {_recipient}")
@@ -348,7 +348,7 @@ def generate_qsl_image_pdf(  # noqa: C901, PLR0912, PLR0915
     report_progress("rendering", 0, total_batches)
 
     with playwright_wrapper.QSLRenderer() as renderer:
-        # Initialize counter
+        # QSLs index counter (used for naming temporary and output files)
         _i = 0
 
         # Generate each QSL
