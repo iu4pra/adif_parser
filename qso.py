@@ -88,7 +88,7 @@ class RandomCallGenerator:
         """Fetches the SuperCheckPartial file from the official source"""
 
         def validate_response(response):
-            """Validate HTTP request response"""
+            """Helper function to validate HTTP request response"""
             content_encoding = response.headers.get(
                 "Content-Encoding", "identity"
             ).lower()
@@ -112,6 +112,7 @@ class RandomCallGenerator:
             return True
 
         def validate_scp_content(content):
+            """Helper function to validate SCP file contents"""
             try:
                 text = content.decode("utf-8")
 
@@ -136,6 +137,7 @@ class RandomCallGenerator:
                 logger.exception("SuperCheckPartial download is not valid UTF-8")
                 return False
 
+        # download_scp main function body
         temp_path = None
         try:
             response = requests.get(
