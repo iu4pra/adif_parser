@@ -84,7 +84,7 @@ class RandomCallGenerator:
 
     # TODO (power-of-10): split into smaller functions
     @classmethod
-    def download_scp(cls):  # noqa: C901, PLR0911, PLR0912
+    def download_scp(cls):  # noqa: C901
         """Fetches the SuperCheckPartial file from the official source"""
 
         def validate_response(response):
