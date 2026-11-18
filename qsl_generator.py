@@ -276,19 +276,24 @@ def generate_qsl_image_pdf(  # noqa: C901, PLR0912, PLR0915
 
     assert isinstance(qso_list, list)
 
-    # Removed QSOs counter initialized to list length before pruning
-    removed_qsos = len(qso_list)  # Counter for debugging
+    def prune_invalid_qsos(qso_list: list[QSO]) -> (list[QSO], int):
+        """Remove invalid QSOs from the list and log how many were removed."""
+        # Removed QSOs counter initialized to list length before pruning
+        removed_qsos = len(qso_list)
 
-    # Build a list with only valid QSOs
-    qso_list = [qso for qso in qso_list if qso.is_valid()]
+        # Build a list with only valid QSOs
+        qso_list = [qso for qso in qso_list if qso.is_valid()]
 
-    # The list lenght after pruning is subtraced to get how many QSOs were removed
-    removed_qsos -= len(qso_list)
+        # The list lenght after pruning is subtraced to get how many QSOs were removed
+        removed_qsos -= len(qso_list)
 
-    if removed_qsos > 0:
-        logger.warning(
-            f"Removed {removed_qsos} invalid QSOs from the list, which now contains {len(qso_list)} valid QSOs"
-        )
+        if removed_qsos > 0:
+            logger.warning(
+                f"Removed {removed_qsos} invalid QSOs from the list, which now contains {len(qso_list)} valid QSOs"
+            )
+        return (qso_list, removed_qsos)
+
+    qso_list, _ = prune_invalid_qsos(qso_list)
 
     if len(qso_list) == 0:
         logger.warning("No QSO found")
