@@ -293,6 +293,22 @@ def generate_qsl_image_pdf(  # noqa: C901, PLR0912, PLR0915
             )
         return (qso_list, removed_qsos)
 
+    def concatenate_pdfs(_base_name, _out_folder, _dry_run) -> None:
+        out_name = str(Path(_out_folder) / (_base_name + ".pdf"))
+        if not _dry_run:
+            writer = pypdf.PdfWriter()
+            for pdf in [str(PDF_TEMP_BASE_NAME) % i for i in range(_i)]:
+                if Path(pdf).is_file():
+                    writer.append(pdf)
+                else:
+                    logger.error(
+                        f"Error: file {pdf} not found! Check Playwright output!"
+                    )
+            writer.write(out_name)
+            writer.close()
+        else:
+            logger.info(f"Would create output file {out_name}")
+
     qso_list, _ = prune_invalid_qsos(qso_list)
 
     if len(qso_list) == 0:
@@ -384,20 +400,7 @@ def generate_qsl_image_pdf(  # noqa: C901, PLR0912, PLR0915
     if _pdf:
         report_progress("assembling_pdf", 0, 1)
         # Concatenate all files to create a single PDF to print
-        out_name = str(Path(_out_folder) / (out_base_name + ".pdf"))
-        if not _dry_run:
-            writer = pypdf.PdfWriter()
-            for pdf in [str(PDF_TEMP_BASE_NAME) % i for i in range(_i)]:
-                if Path(pdf).is_file():
-                    writer.append(pdf)
-                else:
-                    logger.error(
-                        f"Error: file {pdf} not found! Check Playwright output!"
-                    )
-            writer.write(out_name)
-            writer.close()
-        else:
-            logger.info(f"Would create output file {out_name}")
+        concatenate_pdfs(out_base_name, _out_folder, _dry_run)
         report_progress("assembling_pdf", 1, 1)
 
     if _dry_run is False:
