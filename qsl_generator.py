@@ -76,7 +76,10 @@ def split_every(items, every):
         yield items[_from:_to]
 
 
-def qso_list_generator(qso_list, every):
+def qso_list_generator(qso_list, every, check_valid=True):
+    """Generator that yields sublists of QSOs, each one with at most 'every' elements, grouped by sending station
+    and recipient callsign.
+    If check_valid is True, only valid QSOs are included in the output."""
     qso_grouped = {}
 
     # Get any unique sending station callsign (typically should be only one)
@@ -101,7 +104,9 @@ def qso_list_generator(qso_list, every):
                 for qso in qso_list
                 if isinstance(qso, QSO)
                 and qso._d.get("STATION_CALLSIGN", "").upper() == _station
-                and qso.is_valid()  # Discard invalid QSOs (TODO maybe do this check in a single pass before grouping)
+                and (
+                    not check_valid or qso.is_valid()
+                )  # Discard invalid QSOs (TODO maybe do this check in a single pass before grouping)
             ]
         )
         for _recipient in unique_recipients:
@@ -111,7 +116,9 @@ def qso_list_generator(qso_list, every):
                 if isinstance(qso, QSO)
                 and qso._d.get("STATION_CALLSIGN", "").upper() == _station
                 and qso._d.get("CALL", "").upper() == _recipient
-                and qso.is_valid()  # Discard invalid QSOs (TODO maybe do this check in a single pass before grouping)
+                and (
+                    not check_valid or qso.is_valid()
+                )  # Discard invalid QSOs (TODO maybe do this check in a single pass before grouping)
             ]
             no_qsos = len(qso_grouped[_station][_recipient])
             logger.info(f"Detected {no_qsos} QSOs from {_station} to {_recipient}")
@@ -364,7 +371,7 @@ def generate_qsl_image_pdf(  # noqa: C901, PLR0912, PLR0915
     # Loading HTML template
     template = env.get_template(_template)
 
-    qso_batches = list(qso_list_generator(qso_list, _max_qso))
+    qso_batches = list(qso_list_generator(qso_list, _max_qso, check_valid=False))
     total_batches = len(qso_batches)
     report_progress("rendering", 0, total_batches)
 
