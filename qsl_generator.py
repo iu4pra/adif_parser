@@ -276,7 +276,7 @@ def generate_qsl_image_pdf(  # noqa: C901, PLR0912, PLR0915
 
     assert isinstance(qso_list, list)
 
-    def prune_invalid_qsos(qso_list: list[QSO]) -> (list[QSO], int):
+    def prune_invalid_qsos(qso_list: list[QSO]) -> tuple[list[QSO], int]:
         """Remove invalid QSOs from the list and log how many were removed."""
         # Removed QSOs counter initialized to list length before pruning
         removed_qsos = len(qso_list)
