@@ -713,9 +713,7 @@ def test_grouping_skips_validation_when_check_valid_is_false():
     invalid_qso = QSO({"STATION_CALLSIGN": "IU4PRA"})
 
     with patch.object(QSO, "is_valid", autospec=True) as is_valid:
-        groups = list(
-            qslgen.qso_list_generator([invalid_qso], 10, check_valid=False)
-        )
+        groups = list(qslgen.qso_list_generator([invalid_qso], 10, check_valid=False))
 
     assert groups == [[invalid_qso]]
     is_valid.assert_not_called()
