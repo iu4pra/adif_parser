@@ -74,7 +74,7 @@ class QSLGenCLITest(unittest.TestCase):
             qslgen_cli.main()
 
     @patch("pathlib.Path.is_file")
-    @patch("adif.qso_list_from_file")
+    @patch("adif.qso_list_from_file_in_place")
     @patch(
         "sys.argv",
         ["qslgen_cli.py", "samples/test_log.txt"],
@@ -101,7 +101,7 @@ class QSLGenCLITest(unittest.TestCase):
 
 
 class QSLGenCLIValidationTest(unittest.TestCase):
-    @patch("adif.qso_list_from_file")
+    @patch("adif.qso_list_from_file_in_place")
     @patch(
         "sys.argv",
         ["qslgen_cli.py", "samples/test_log.adi", "--width", "-1"],
@@ -135,7 +135,7 @@ class QSLGenCLIValidationTest(unittest.TestCase):
         self.assertTrue(kwargs["_pdf"])
         self.assertFalse(kwargs["_image"])
 
-    @patch("adif.qso_list_from_file")
+    @patch("adif.qso_list_from_file_in_place")
     @patch(
         "sys.argv",
         ["qslgen_cli.py", "samples/test_log.adi", "--width", "0"],
@@ -145,7 +145,7 @@ class QSLGenCLIValidationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             qslgen_cli.main()
 
-    @patch("adif.qso_list_from_file")
+    @patch("adif.qso_list_from_file_in_place")
     @patch(
         "sys.argv",
         ["qslgen_cli.py", "samples/test_log.adi", "--width", "99999"],
@@ -155,7 +155,7 @@ class QSLGenCLIValidationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             qslgen_cli.main()
 
-    @patch("adif.qso_list_from_file")
+    @patch("adif.qso_list_from_file_in_place")
     @patch(
         "sys.argv",
         ["qslgen_cli.py", "samples/test_log.adi", "--height", "-1"],
@@ -165,7 +165,7 @@ class QSLGenCLIValidationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             qslgen_cli.main()
 
-    @patch("adif.qso_list_from_file")
+    @patch("adif.qso_list_from_file_in_place")
     @patch(
         "sys.argv",
         ["qslgen_cli.py", "samples/test_log.adi", "--height", "0"],
@@ -175,7 +175,7 @@ class QSLGenCLIValidationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             qslgen_cli.main()
 
-    @patch("adif.qso_list_from_file")
+    @patch("adif.qso_list_from_file_in_place")
     @patch(
         "sys.argv",
         ["qslgen_cli.py", "samples/test_log.adi", "--height", "9999"],
@@ -185,7 +185,7 @@ class QSLGenCLIValidationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             qslgen_cli.main()
 
-    @patch("adif.qso_list_from_file")
+    @patch("adif.qso_list_from_file_in_place")
     @patch(
         "sys.argv",
         ["qslgen_cli.py", "samples/test_log.adi", "--max-qso", "-1"],
@@ -195,7 +195,7 @@ class QSLGenCLIValidationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             qslgen_cli.main()
 
-    @patch("adif.qso_list_from_file")
+    @patch("adif.qso_list_from_file_in_place")
     @patch(
         "sys.argv",
         ["qslgen_cli.py", "samples/test_log.adi", "--max-qso", "0"],
@@ -207,7 +207,7 @@ class QSLGenCLIValidationTest(unittest.TestCase):
 
 
 class QSLGenCLIOutputNameTest(unittest.TestCase):
-    @patch("adif.qso_list_from_file")
+    @patch("adif.qso_list_from_file_in_place")
     @patch("qsl_generator.generate_qsl_image_pdf")
     @patch("sys.argv", ["qslgen_cli.py", "samples/test_log.adi", "custom_name"])
     def test_main_uses_output_filename_argument(self, mock_generate, mock_parse):
@@ -234,7 +234,7 @@ def test_output_selection(
 
     with (
         patch("sys.argv", argv),
-        patch("adif.qso_list_from_file", return_value=qso_list),
+        patch("adif.qso_list_from_file_in_place", return_value=qso_list),
         patch("qsl_generator.generate_qsl_image_pdf") as mock_generate,
     ):
         qslgen_cli.main()
@@ -253,7 +253,7 @@ def test_output_selection(
     [([], 3), (["--max-qso", "1"], 1), (["--max-qso", "5"], 5)],
 )
 def test_cli_grouping_limit(options, expected_limit):
-    qsos = adif.qso_list_from_file("samples/multi_qso_same_station.adi")
+    qsos = adif.qso_list_from_file_in_place("samples/multi_qso_same_station.adi")
     with (
         patch(
             "sys.argv",
@@ -526,7 +526,9 @@ class MainBehaviorTest(unittest.TestCase):
                     patch("qslgen_cli.setup_logging"),
                     patch("qslgen_cli.tqdm"),
                     patch("qsl_generator.generate_qsl_image_pdf"),
-                    patch("adif.qso_list_from_file", return_value=[]) as mock_parse,
+                    patch(
+                        "adif.qso_list_from_file_in_place", return_value=[]
+                    ) as mock_parse,
                 ):
                     qslgen_cli.main()
                 mock_parse.assert_called_once_with(str(Path(SAMPLE_LOG)), expected)
@@ -537,7 +539,7 @@ class MainBehaviorTest(unittest.TestCase):
                 "sys.argv",
                 ["qslgen_cli.py", SAMPLE_LOG, "--width", "0"],
             ),
-            patch("adif.qso_list_from_file") as mock_parse,
+            patch("adif.qso_list_from_file_in_place") as mock_parse,
             self.assertRaises(ValueError),
         ):
             qslgen_cli.main()
@@ -549,7 +551,7 @@ class MainBehaviorTest(unittest.TestCase):
             patch("pathlib.Path.is_file", return_value=True),
             patch("qslgen_cli.setup_logging"),
             patch("qslgen_cli.tqdm"),
-            patch("adif.qso_list_from_file", return_value=[]) as mock_parse,
+            patch("adif.qso_list_from_file_in_place", return_value=[]) as mock_parse,
             patch("qsl_generator.generate_qsl_image_pdf"),
         ):
             qslgen_cli.main()

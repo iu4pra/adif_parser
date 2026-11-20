@@ -223,7 +223,7 @@ def main():
         logger.info(
             f"Proceeding to parse ADIF file {args.filename}, only valid QSO: {args.only_valid}"
         )
-        qso_list = adif.qso_list_from_file(
+        qso_list = adif.qso_list_from_file_in_place(
             os.path.relpath(args.filename), args.only_valid
         )
 

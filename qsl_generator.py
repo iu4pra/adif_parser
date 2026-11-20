@@ -7,6 +7,7 @@
 import logging
 import math
 import shutil
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -76,46 +77,35 @@ def split_every(items, every):
         yield items[_from:_to]
 
 
-def qso_list_generator(qso_list, every):
-    qso_grouped = {}
+def qso_list_generator(qso_list, every, check_valid=True):
+    """Generator that yields sublists of QSOs, each one with at most 'every' elements, grouped by sending station
+    and recipient callsign.
+    If check_valid is True, only valid QSOs are included in the output."""
+    grouped = defaultdict(list)
+    unique_send_stations = set()
 
-    # Get any unique sending station callsign (typically should be only one)
-    unique_send_stations = set(
-        [
-            qso._d.get("STATION_CALLSIGN", "").upper()
-            for qso in qso_list
-            if isinstance(qso, QSO)
-        ]
-    )
+    for qso in qso_list:
+        if not isinstance(qso, QSO):
+            continue
+
+        station = qso._d.get("STATION_CALLSIGN", "").upper()
+        unique_send_stations.add(station)
+
+        if check_valid and not qso.is_valid():
+            continue
+
+        recipient = qso._d.get("CALL", "").upper()
+        grouped[(station, recipient)].append(qso)
+
     if len(unique_send_stations) > 1:
         logger.warning(
-            f"Found {len(unique_send_stations)} unique sending stations, everything should work as expected anyway"
+            f"Found {len(unique_send_stations)} unique sending stations, "
+            "everything should work as expected anyway"
         )
 
-    for _station in unique_send_stations:
-        qso_grouped[_station] = {}
-        # Get all unique recipients for each sending station
-        unique_recipients = set(
-            [
-                qso._d.get("CALL", "").upper()
-                for qso in qso_list
-                if isinstance(qso, QSO)
-                and qso._d.get("STATION_CALLSIGN", "").upper() == _station
-                and qso.is_valid()
-            ]
-        )
-        for _recipient in unique_recipients:
-            qso_grouped[_station][_recipient] = [
-                qso
-                for qso in qso_list
-                if isinstance(qso, QSO)
-                and qso._d.get("STATION_CALLSIGN", "").upper() == _station
-                and qso._d.get("CALL", "").upper() == _recipient
-                and qso.is_valid()
-            ]
-            no_qsos = len(qso_grouped[_station][_recipient])
-            logger.info(f"Detected {no_qsos} QSOs from {_station} to {_recipient}")
-            yield from split_every(qso_grouped[_station][_recipient], every)
+    for (station, recipient), qsos in grouped.items():
+        logger.info(f"Detected {len(qsos)} QSOs from {station} to {recipient}")
+        yield from split_every(qsos, every)
 
 
 def render_qsl(
@@ -276,22 +266,40 @@ def generate_qsl_image_pdf(  # noqa: C901, PLR0912, PLR0915
 
     assert isinstance(qso_list, list)
 
-    # Removed QSOs counter initialized to list length before pruning
-    removed_qsos = len(qso_list)  # Counter for debugging
+    def prune_invalid_qsos(qso_list: list[QSO]) -> tuple[list[QSO], int]:
+        """Remove invalid QSOs from the list and log how many were removed."""
+        # Removed QSOs counter initialized to list length before pruning
+        removed_qsos = len(qso_list)
 
-    # Build a list with only valid QSOs
-    qso_list = [qso for qso in qso_list if qso.is_valid()]
+        # Build a list with only valid QSOs
+        qso_list = [qso for qso in qso_list if qso.is_valid()]
 
-    # The list lenght after pruning is subtraced to get how many QSOs were removed
-    removed_qsos -= len(qso_list)
+        # The list lenght after pruning is subtraced to get how many QSOs were removed
+        removed_qsos -= len(qso_list)
 
-    for qso in qso_list:
-        assert qso.is_valid()
+        if removed_qsos > 0:
+            logger.warning(
+                f"Removed {removed_qsos} invalid QSOs from the list, which now contains {len(qso_list)} valid QSOs"
+            )
+        return (qso_list, removed_qsos)
 
-    if removed_qsos > 0:
-        logger.warning(
-            f"Removed {removed_qsos} invalid QSOs from the list, which now contains {len(qso_list)} QSOs"
-        )
+    def concatenate_pdfs(_base_name, _out_folder, _dry_run) -> None:
+        out_name = str(Path(_out_folder) / (_base_name + ".pdf"))
+        if not _dry_run:
+            writer = pypdf.PdfWriter()
+            for pdf in [str(PDF_TEMP_BASE_NAME) % i for i in range(_i)]:
+                if Path(pdf).is_file():
+                    writer.append(pdf)
+                else:
+                    logger.error(
+                        f"Error: file {pdf} not found! Check Playwright output!"
+                    )
+            writer.write(out_name)
+            writer.close()
+        else:
+            logger.info(f"Would create output file {out_name}")
+
+    qso_list, _ = prune_invalid_qsos(qso_list)
 
     if len(qso_list) == 0:
         logger.warning("No QSO found")
@@ -346,12 +354,12 @@ def generate_qsl_image_pdf(  # noqa: C901, PLR0912, PLR0915
     # Loading HTML template
     template = env.get_template(_template)
 
-    qso_batches = list(qso_list_generator(qso_list, _max_qso))
+    qso_batches = list(qso_list_generator(qso_list, _max_qso, check_valid=False))
     total_batches = len(qso_batches)
     report_progress("rendering", 0, total_batches)
 
     with playwright_wrapper.QSLRenderer() as renderer:
-        # Initialize counter
+        # QSLs index counter (used for naming temporary and output files)
         _i = 0
 
         # Generate each QSL
@@ -382,20 +390,7 @@ def generate_qsl_image_pdf(  # noqa: C901, PLR0912, PLR0915
     if _pdf:
         report_progress("assembling_pdf", 0, 1)
         # Concatenate all files to create a single PDF to print
-        out_name = str(Path(_out_folder) / (out_base_name + ".pdf"))
-        if not _dry_run:
-            writer = pypdf.PdfWriter()
-            for pdf in [str(PDF_TEMP_BASE_NAME) % i for i in range(_i)]:
-                if Path(pdf).is_file():
-                    writer.append(pdf)
-                else:
-                    logger.error(
-                        f"Error: file {pdf} not found! Check Playwright output!"
-                    )
-            writer.write(out_name)
-            writer.close()
-        else:
-            logger.info(f"Would create output file {out_name}")
+        concatenate_pdfs(out_base_name, _out_folder, _dry_run)
         report_progress("assembling_pdf", 1, 1)
 
     if _dry_run is False:

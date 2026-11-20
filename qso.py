@@ -62,6 +62,20 @@ HHMM_LENGTH = 4
 _CALLSIGN_SIMPLE_RE = re.compile(r"[A-Z0-9/]{3,}")
 
 
+def unlink_if_exists(path):
+    """Utility function to delete a file without throwing an exception if it doesn't exist
+    FIXME redefined to avoid circular imports"""
+    if path is not None and path != "":
+        try:
+            Path(path).unlink()
+        except FileNotFoundError:
+            logger.debug(f"unlink_if_exists: {path} not found")
+        except OSError as e:
+            logger.warning(f"unlink_if_exists: could not remove {path}:\n\t{e}")
+    else:
+        raise FileNotFoundError("Invalid empty path")
+
+
 class RandomCallGenerator:
     """Helper class to generate random callsigns"""
 
@@ -70,8 +84,60 @@ class RandomCallGenerator:
 
     # TODO (power-of-10): split into smaller functions
     @classmethod
-    def download_scp(cls):  # noqa: C901, PLR0911, PLR0912
+    def download_scp(cls):  # noqa: C901
         """Fetches the SuperCheckPartial file from the official source"""
+
+        def validate_response(response):
+            """Helper function to validate HTTP request response"""
+            content_encoding = response.headers.get(
+                "Content-Encoding", "identity"
+            ).lower()
+            content_length = response.headers.get("Content-Length")
+            if content_length is not None and content_encoding in ("", "identity"):
+                try:
+                    expected_length = int(content_length)
+                except (TypeError, ValueError):
+                    logger.exception(
+                        "Invalid Content-Length for SuperCheckPartial file"
+                    )
+                    return False
+                if len(response.content) != expected_length:
+                    logger.error(
+                        "Incomplete SuperCheckPartial download: expected %d bytes, "
+                        "received %d",
+                        expected_length,
+                        len(response.content),
+                    )
+                    return False
+            return True
+
+        def validate_scp_content(content):
+            """Helper function to validate SCP file contents"""
+            try:
+                text = content.decode("utf-8")
+
+                lines = text.splitlines()
+                if (
+                    not lines
+                    or not lines[0].startswith("!!Order,")
+                    or not any(
+                        line.strip() and not line.strip().startswith(("#", "!"))
+                        for line in lines[1:]
+                    )
+                ):
+                    logger.error(
+                        "SuperCheckPartial download has an invalid file format"
+                    )
+                    return False
+
+                # Validation passed
+                return True
+
+            except UnicodeDecodeError:
+                logger.exception("SuperCheckPartial download is not valid UTF-8")
+                return False
+
+        # download_scp main function body
         temp_path = None
         try:
             response = requests.get(
@@ -84,46 +150,9 @@ class RandomCallGenerator:
                 cls.scp_fail = True
                 return False
 
-            content = response.content
-            content_encoding = response.headers.get(
-                "Content-Encoding", "identity"
-            ).lower()
-            content_length = response.headers.get("Content-Length")
-            if content_length is not None and content_encoding in ("", "identity"):
-                try:
-                    expected_length = int(content_length)
-                except (TypeError, ValueError):
-                    logger.exception(
-                        "Invalid Content-Length for SuperCheckPartial file"
-                    )
-                    cls.scp_fail = True
-                    return False
-                if len(content) != expected_length:
-                    logger.error(
-                        "Incomplete SuperCheckPartial download: expected %d bytes, "
-                        "received %d",
-                        expected_length,
-                        len(content),
-                    )
-                    cls.scp_fail = True
-                    return False
-            try:
-                text = content.decode("utf-8")
-            except UnicodeDecodeError:
-                logger.exception("SuperCheckPartial download is not valid UTF-8")
-                cls.scp_fail = True
-                return False
-
-            lines = text.splitlines()
-            if (
-                not lines
-                or not lines[0].startswith("!!Order,")
-                or not any(
-                    line.strip() and not line.strip().startswith(("#", "!"))
-                    for line in lines[1:]
-                )
+            if not validate_response(response) or not validate_scp_content(
+                response.content
             ):
-                logger.error("SuperCheckPartial download has an invalid file format")
                 cls.scp_fail = True
                 return False
 
@@ -132,12 +161,12 @@ class RandomCallGenerator:
                     mode="wb", prefix=".MASTER.SCP.", dir=".", delete=False
                 ) as temp_file:
                     temp_path = temp_file.name
-                    bytes_written = temp_file.write(content)
-                if bytes_written != len(content):
+                    bytes_written = temp_file.write(response.content)
+                if bytes_written != len(response.content):
                     logger.error(
                         "Incomplete write of SuperCheckPartial file: expected %d "
                         "bytes, wrote %d",
-                        len(content),
+                        len(response.content),
                         bytes_written,
                     )
                     cls.scp_fail = True
@@ -153,20 +182,15 @@ class RandomCallGenerator:
             logger.info("SuperCheckPartial file downloaded successfully!")
             cls.scp_fail = False
             return True
+
         except requests.exceptions.RequestException as e:
             logger.warning("HTTP Error while downloading SuperCheckPartial file: %s", e)
             cls.scp_fail = True
             return False
+
         finally:
             if temp_path is not None:
-                try:
-                    Path(temp_path).unlink()
-                except FileNotFoundError:
-                    pass
-                except OSError as e:
-                    logger.warning(
-                        f"Could not remove temporary SuperCheckPartial file:\n\t{e}"
-                    )
+                unlink_if_exists(temp_path)
 
     @classmethod
     def _parse_scp(cls, _f):
@@ -181,6 +205,12 @@ class RandomCallGenerator:
     @classmethod
     def load_scp(cls):
         """Loads the SuperCheckPartial file from the local copy or downloads it if not present"""
+        # Check if scp_calls is non-empty. If so, there is no need to search for the file or download it again.
+        if cls.scp_calls:
+            logger.debug(
+                "SuperCheckPartial calls list already loaded, no action needed"
+            )
+            return True
         if not cls.scp_fail:
             try:
                 if not Path("MASTER.SCP").is_file():

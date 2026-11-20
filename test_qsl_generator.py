@@ -613,7 +613,7 @@ class TestGenerateQslImagePdf(unittest.TestCase):
     ],
 )
 def test_grouping_preserves_qsos_with_mixed_case_callsigns(filename):
-    qsos = adif.qso_list_from_file(filename)
+    qsos = adif.qso_list_from_file_in_place(filename)
     groups = list(qslgen.qso_list_generator(qsos, 10))
 
     assert len(groups) == 2
@@ -642,6 +642,102 @@ def test_grouping_keeps_portable_callsign_separate():
     groups = list(qslgen.qso_list_generator(qsos, 10))
 
     assert {group[0]._d["CALL"] for group in groups} == {"DL1ABC", "DL1ABC/P"}
+
+
+def test_grouping_splits_batches_by_station_and_recipient():
+    def make_qso(station, recipient):
+        return QSO(
+            {
+                "STATION_CALLSIGN": station,
+                "CALL": recipient,
+                "QSO_DATE": "20260912",
+                "TIME_ON": "101500",
+                "BAND": "20M",
+                "MODE": "SSB",
+            }
+        )
+
+    qsos = [
+        make_qso("IU4PRA", "DL1ABC"),
+        make_qso("IU4PRA", "DL1ABC"),
+        make_qso("IU4PRA", "DL1ABC"),
+        make_qso("IU4PRA", "K1XYZ"),
+        make_qso("W1AW", "DL1ABC"),
+    ]
+
+    groups = list(qslgen.qso_list_generator(qsos, 2, check_valid=False))
+
+    assert groups == [[qsos[0], qsos[1]], [qsos[2]], [qsos[3]], [qsos[4]]]
+
+
+def test_grouping_ignores_non_qso_entries():
+    qso = QSO(
+        {
+            "STATION_CALLSIGN": "IU4PRA",
+            "CALL": "DL1ABC",
+            "QSO_DATE": "20260912",
+            "TIME_ON": "101500",
+            "BAND": "20M",
+            "MODE": "SSB",
+        }
+    )
+
+    assert list(qslgen.qso_list_generator([None, {}, qso], 10)) == [[qso]]
+
+
+def test_grouping_validates_each_qso_once():
+    qsos = [
+        QSO(
+            {
+                "STATION_CALLSIGN": "IU4PRA",
+                "CALL": "DL1ABC",
+                "QSO_DATE": "20260912",
+                "TIME_ON": "101500",
+                "BAND": "20M",
+                "MODE": "SSB",
+            }
+        )
+        for _ in range(3)
+    ]
+
+    with patch.object(
+        QSO, "is_valid", autospec=True, side_effect=[True, False, True]
+    ) as is_valid:
+        groups = list(qslgen.qso_list_generator(qsos, 10))
+
+    assert groups == [[qsos[0], qsos[2]]]
+    assert is_valid.call_count == len(qsos)
+
+
+def test_grouping_skips_validation_when_check_valid_is_false():
+    invalid_qso = QSO({"STATION_CALLSIGN": "IU4PRA"})
+
+    with patch.object(QSO, "is_valid", autospec=True) as is_valid:
+        groups = list(qslgen.qso_list_generator([invalid_qso], 10, check_valid=False))
+
+    assert groups == [[invalid_qso]]
+    is_valid.assert_not_called()
+
+
+def test_grouping_warns_for_multiple_sending_stations(caplog):
+    qsos = [
+        QSO(
+            {
+                "STATION_CALLSIGN": station,
+                "CALL": "DL1ABC",
+                "QSO_DATE": "20260912",
+                "TIME_ON": "101500",
+                "BAND": "20M",
+                "MODE": "SSB",
+            }
+        )
+        for station in ("IU4PRA", "W1AW")
+    ]
+
+    groups = list(qslgen.qso_list_generator(qsos, 10))
+
+    assert groups == [[qso] for qso in qsos]
+    assert "Found 2 unique sending stations" in caplog.text
 
 
 def test_grouping_ignores_invalid_qso_missing_callsign_fields():
