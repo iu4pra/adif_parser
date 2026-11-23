@@ -211,56 +211,6 @@ def remove_header(_adif_fields: list):
 
 def adif_to_qso_list(_adif_fields: list, _only_valid=False):
     """Parse QSO data from an ADIF list
-
-    Header is automatically stripped if not already done.
-    Invalid QSOs are ignored by default"""
-    # Input type check
-    assert isinstance(_adif_fields, list)
-    # Strip header
-    _adif_fields, eoh_index = remove_header(_adif_fields)
-
-    logger.debug(f"Automatic header stripping: eoh_index = {eoh_index}")
-
-    _qso_list: list[QSO] = []
-
-    field_list_temp = []
-
-    while len(_adif_fields) > 0:
-        # Move one element a time on a smaller support list until EOR is reached
-        field_list_temp.append(_adif_fields.pop(0))
-
-        if field_is_type(field_list_temp[-1], "EOR"):
-            # EOR found, discard it and create QSO object
-            del field_list_temp[-1]
-
-            _dict = {}  # Support dict for creating QSO
-            for f in field_list_temp:
-                # Raise an error if a field already exists for the QSO
-                if _dict.get(f["field"]):
-                    raise AdifError(
-                        f"Duplicate field {f['field']} ({_dict.get(f['field'])})"
-                    )
-                _dict.update(adif_field_to_qso_field(f))
-
-            field_list_temp.clear()
-
-            logger.debug(f"Creating a QSO object based on {_dict}")
-            _new_qso = QSO(_dict)
-            _valid = _new_qso.is_valid()  # To avoid multiple calls to is_valid()
-            logger.debug(f"Valid QSO: {_valid}")
-            if not _only_valid or _valid:
-                _qso_list.append(_new_qso)
-            else:
-                logger.warning(f"Invalid QSO object will be ignored: {_dict}")
-        elif len(_adif_fields) == 0:
-            # End of list found before EOR, raise error
-            raise AdifError("End of list found before EOR")
-
-    return _qso_list
-
-
-def adif_to_qso_list_in_place(_adif_fields: list, _only_valid=False):
-    """Parse QSO data from an ADIF list
     In-place version, more efficient for large files
 
     Header is automatically stripped if not already done.
@@ -312,17 +262,10 @@ def adif_to_qso_list_in_place(_adif_fields: list, _only_valid=False):
 
 
 def qso_list_from_file(filename: str, _only_valid=False):
-    """Convenience function to convert an ADIF file into a QSO list"""
-    field_list = parse_adif_file(filename)
-    qso_list: list[QSO] = adif_to_qso_list(field_list, _only_valid)
-    return qso_list
-
-
-def qso_list_from_file_in_place(filename: str, _only_valid=False):
     """Convenience function to convert an ADIF file into a QSO list
     In-place variant, more efficient for large files"""
     field_list = parse_adif_file(filename)
-    qso_list: list[QSO] = adif_to_qso_list_in_place(field_list, _only_valid)
+    qso_list: list[QSO] = adif_to_qso_list(field_list, _only_valid)
     return qso_list
 
 
