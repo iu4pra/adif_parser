@@ -358,11 +358,13 @@ class RandomCallGeneratorTest(unittest.TestCase):
         self.assertIn("Error: <class 'ValueError'>: context failed", logs.output[0])
 
     def test_callsign_is_generated_1(self):
-        callgen = RandomCallGenerator()
+        with patch.object(RandomCallGenerator, "load_scp", return_value=False):
+            callgen = RandomCallGenerator()
         assert callgen.generate_call() is not None
 
     def test_callsign_is_generated_2(self):
-        callgen = RandomCallGenerator()
+        with patch.object(RandomCallGenerator, "load_scp", return_value=False):
+            callgen = RandomCallGenerator()
         assert callgen.generate_call().strip() != ""
 
     @patch("qso.randint")
@@ -636,6 +638,26 @@ class RandomCallGeneratorSCPTest(unittest.TestCase):
         self.assertEqual(RandomCallGenerator.scp_calls, ["K1ABC", "W1AW"])
         self.assertFalse(RandomCallGenerator.scp_fail)
 
+    def test_parse_scp_filters_comments_blank_and_invalid_callsigns(self):
+        lines = [
+            "!!Order,1,1\n",
+            "# comment\n",
+            "! ignored\n",
+            "\n",
+            "   \n",
+            "K1ABC\n",
+            " W1AW \n",
+            "EA/AA1\n",
+            "bad-call\n",
+            "AB\n",
+            "k1abc\n",
+        ]
+
+        self.assertEqual(
+            RandomCallGenerator._parse_scp(lines),
+            ["K1ABC", "W1AW", "EA/AA1"],
+        )
+
     def test_load_scp_uses_cached_calls_without_checking_file(self):
         RandomCallGenerator.scp_calls = ["K1ABC"]
 
@@ -671,6 +693,22 @@ class RandomCallGeneratorSCPTest(unittest.TestCase):
         ):
             self.assertFalse(RandomCallGenerator.load_scp())
 
+        self.assertTrue(RandomCallGenerator.scp_fail)
+
+    def test_load_scp_fails_when_file_has_no_valid_callsigns(self):
+        with (
+            patch("qso.Path.is_file", return_value=True),
+            patch("qso.Path.stat", return_value=Mock(st_size=29)),
+            patch(
+                "qso.Path.open",
+                mock_open(read_data="# comment\nbad-call\nAB\nk1abc\n"),
+            ),
+            patch.object(RandomCallGenerator, "download_scp") as download,
+        ):
+            self.assertFalse(RandomCallGenerator.load_scp())
+
+        download.assert_not_called()
+        self.assertEqual(RandomCallGenerator.scp_calls, [])
         self.assertTrue(RandomCallGenerator.scp_fail)
 
     def test_load_scp_does_not_retry_after_failure(self):
