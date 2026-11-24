@@ -47,11 +47,42 @@ _UPPERCASE_FIELDS = frozenset(
 
 # List of bands for random QSOs
 _BANDS_LIST = frozenset(
-    ["160m", "80m", "60m", "40m", "30m", "20m", "17m", "15m", "12m", "10m"]
+    [
+        "160m",
+        "80m",
+        "60m",
+        "40m",
+        "30m",
+        "20m",
+        "17m",
+        "15m",
+        "12m",
+        "10m",
+        "6m",
+        "2m",
+        "70cm",
+        "23cm",
+    ]
 )
 
 # Minimal list of modes for random QSOs
-_MODES_LIST = frozenset(["SSB", "CW", "RTTY", "FT4", "FT8"])
+_MODES_LIST = frozenset(
+    [
+        "SSB",
+        "CW",
+        "RTTY",
+        "FT4",
+        "FT8",
+        "PSK",
+        "PSK31",
+        "PSK63",
+        "JS8CALL",
+        "SSTV",
+        "HELL",
+        "FM",
+        "AM",
+    ]
+)
 
 # Date and time fields length:
 YYYYMMDD_LENGTH = 8
