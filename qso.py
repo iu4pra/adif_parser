@@ -500,9 +500,3 @@ class QSO:
             )
         return QSO(_dict)
         # ruff: enable [S311]
-
-
-if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.INFO)
-    callgen = RandomCallGenerator()
-    logger.warning(f"CALLSIGN: {RandomCallGenerator.generate_call_scp()}")
